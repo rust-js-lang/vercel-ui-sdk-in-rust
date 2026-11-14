@@ -1,0 +1,293 @@
+diff --git a/TESTS.md b/TESTS.md
+index df2a3f8..d8cd323 100644
+--- a/TESTS.md
++++ b/TESTS.md
+@@ -31,6 +31,8 @@ workspace/load/control/cleanup tests and five self-mutants through the
+ existing runner. Feature-owner registrations are reviewed separately.
+ Added focused #1861 coverage on 2026-11-15: a seventh source-workspace case checks a partial worker-copy failure; three child cases retain in-budget exits under a blocked loop, observed-overrun warnings and external-signal provenance; a timing case checks that a passing check job still shows the warning with its name. Local whole-gate comparison on ef8807570: 6,915 existing test-name/status multisets unchanged, five new passing names, none removed; nine of nine harness mutants caught. Recorded lines: 6,469 pass/616 skip before, 6,474 pass/616 skip after (repeated names included). Local --all samples, not a nightly/CI recount.
+ 
++Added #1867 coverage on 2026-11-15: a dedicated real-WebAPI aggregate-argument test covers objects and arrays, getter evaluation order and every thrown-value boundary, plus generated-source shape. Native owner counterexamples reject getters, computed keys, spreads and closure-written values. Two mutations remove the fix or its safety predicate. The initial object regression fails on main after ten runtime rows pass; final focused/full/mutation validation is pending.
++
+ Historical suite totals below are not a recount.
+ 
+ Added on 2026-11-15: `test/intl-arguments.test.ts` checks native Intl calls
+diff --git a/docs/decisions/0364-mir-lowering.md b/docs/decisions/0364-mir-lowering.md
+index 8abfec7..8bc5ac1 100644
+--- a/docs/decisions/0364-mir-lowering.md
++++ b/docs/decisions/0364-mir-lowering.md
+@@ -1677,3 +1677,34 @@ leftover is written and the run dropped after. `coalesce_of_a_library_as_itertoo
+ holds itertools' `next` as it writes it, its dep of the edition its crate
+ is, `//@ edition: 2018`, a directive the pairs read as the corpus's cases
+ do. Mutations `cleanup-reads-uncounted` and `cleanup-temporaries-one-each`.
++
++
++## Amendment: stable fresh literals before native argument reads (#1867)
++
++A borrowed record or array constructed directly in a call keeps its fields
++at that call. A native getter in a later argument must still run after the
++earlier fields, but making a fresh literal of already-held values runs
++nothing and exposes no identity until the call receives it. Tidy already
++answers this question for JSX through `inert_element`; ordinary object and
++array literals now consume that same answer in `read_past_calls`.
++
++This extends the existing movement rule, not the Rust source or the set of
++observable differences. The literal's inputs must be constants, immutable
++locals, imports, closures, or recursively stable literals. Getter reads,
++computed keys, object spreads, iterator spreads, and locals a closure may
++change still prevent this movement. Nothing is copied, duplicated, skipped,
++or evaluated in a different order; each fresh literal is still made once.
++Case N of ADR 0262: no observable difference is accepted.
++
++The reduced real WebAPI case exercises object and array arguments and
++retains the exact native getter order and the identity thrown at each read.
++Its source assertion permits only the two bindings the Rust names, rect and
++style; the earlier compiler retained four additional temporaries in the
++object case. A smaller plain-field/logic probe already passed and was not
++used as a purported failing regression. Direct owner counterexamples keep
++getters, spreads, computed keys and closure-written values out; mutations
++remove the extension or bypass that safety predicate.
++
++Validation is pending after the coordinated shared-machine window; this
++amendment records the implementation and proof requirements, not completed
++whole-suite or mutation results.
+diff --git a/docs/guide/interop/bindings.md b/docs/guide/interop/bindings.md
+index 9c3d3e8..ef475de 100644
+--- a/docs/guide/interop/bindings.md
++++ b/docs/guide/interop/bindings.md
+@@ -851,6 +851,14 @@ shape is `if js::truthy(a) { b } else { a }`, and `a || b` its other
+ way round, `if js::truthy(a) { a } else { b }`
+ ([ADR 0880](../../decisions/0880-a-test-of-truth-and-its-value-is-and.md)):
+ 
++Records and arrays borrowed directly in call arguments keep their stable
++fields at the call site, including before a later native getter or logical
++fallback. Write the natural Rust literals; extra locals are needed only
++when preserving evaluation order or a value used again. Getter reads,
++spreads, computed keys and values changed by callbacks still keep their
++necessary evaluation points ([ADR 0364](../../decisions/0364-mir-lowering.md),
++#1867).
++
+ ```rust
+ use js::Unknown;
+ 
+diff --git a/scripts/mutations/lower/mir/tidy.ts b/scripts/mutations/lower/mir/tidy.ts
+index 49d8538..617904f 100644
+--- a/scripts/mutations/lower/mir/tidy.ts
++++ b/scripts/mutations/lower/mir/tidy.ts
+@@ -2,6 +2,22 @@
+ import type { Mutation } from "../../../mutations";
+ 
+ export const mutations: Mutation[] = [
++  {
++    name: "mir-tidy-stable-literal-arguments-kept",
++    breaks: "stable fresh object and array arguments prevent later native getter expressions from remaining at the call site",
++    file: "src/lower/mir/tidy.rs",
++    find: "ExprKind::Jsx(_) | ExprKind::Object(..) | ExprKind::Array(_) => inert_element(e, set),",
++    replace: "ExprKind::Jsx(_) => inert_element(e, set),",
++    tests: ["test/lowering-native-aggregate-arguments.test.ts"],
++  },
++  {
++    name: "mir-tidy-literal-contents-unchecked",
++    breaks: "a literal's getters, computed keys, spreads or closure-written contents are treated as stable",
++    file: "src/lower/mir/tidy.rs",
++    find: "ExprKind::Jsx(_) | ExprKind::Object(..) | ExprKind::Array(_) => inert_element(e, set),",
++    replace: "ExprKind::Jsx(_) | ExprKind::Object(..) | ExprKind::Array(_) => true,",
++    unitTests: "fresh_literals_require_stable_contents",
++  },
+   {
+     name: "comments-before-unprinted-return-dropped",
+     breaks:
+diff --git a/src/lower/mir/tidy.rs b/src/lower/mir/tidy.rs
+index 1096a03..28b0a20 100644
+--- a/src/lower/mir/tidy.rs
++++ b/src/lower/mir/tidy.rs
+@@ -21,6 +21,8 @@ mod destructuring;
+ pub(super) mod fired;
+ mod flags;
+ mod jumps;
++#[cfg(test)]
++mod literal_movement_tests;
+ mod logicals;
+ mod loop_labels;
+ mod loops;
+@@ -510,7 +512,9 @@ fn read_past_calls(e: &Expr, set: &IndexSet<String>, plain: &IndexSet<String>) -
+                 || matches!(&of.kind, ExprKind::Var(v) if !set.contains(v.as_str()))
+                     && (of.facts.has(js::Known::BuiltIn) || of.facts.has(js::Known::Lasting))
+         }
+-        ExprKind::Jsx(_) => inert_element(e, set),
++        // Fresh literals whose inputs stay unchanged run no reads of their own.
++        // Like JSX, they can precede a later native getter inside a call.
++        ExprKind::Jsx(_) | ExprKind::Object(..) | ExprKind::Array(_) => inert_element(e, set),
+         // The items of an array nothing changes, `...first`; not a plain
+         // value's, an iterator's, a function's `inspect(see)`, which
+         // spreading steps, running what it calls (#1015).
+diff --git a/src/lower/mir/tidy/literal_movement_tests.rs b/src/lower/mir/tidy/literal_movement_tests.rs
+new file mode 100644
+index 0000000..3eab15c
+--- /dev/null
++++ b/src/lower/mir/tidy/literal_movement_tests.rs
+@@ -0,0 +1,25 @@
++//! Stability of fresh literals before another expression in a call.
++use super::read_past_calls;
++use crate::collections::IndexSet;
++use crate::js::{Expr, Prop};
++
++#[test]
++fn fresh_literals_require_stable_contents() {
++    let set = IndexSet::from_iter(["changing".to_owned()]);
++    let plain = IndexSet::default();
++    let allowed = |value: Expr| read_past_calls(&value, &set, &plain);
++    let field = |value: Expr| Expr::object(vec![Prop::Field("value".to_owned(), value)]);
++    assert!(allowed(field(Expr::array(vec![Expr::var("stable")]))));
++    assert!(allowed(Expr::array(vec![field(Expr::var("stable"))])));
++    for value in [
++        field(Expr::var("changing")),
++        field(Expr::member(Expr::var("external"), "value")),
++        field(Expr::call(Expr::var("external"), Vec::new())),
++        Expr::object(vec![Prop::Spread(Expr::var("external"))]),
++        Expr::object(vec![Prop::Keyed(Expr::var("key"), Expr::var("stable"))]),
++        Expr::array(vec![Expr::spread(Expr::var("external"))]),
++        Expr::array(vec![Expr::var("changing")]),
++    ] {
++        assert!(!allowed(value));
++    }
++}
+diff --git a/test/corpus/literal_argument_read_order.rs b/test/corpus/literal_argument_read_order.rs
+new file mode 100644
+index 0000000..0ca93fb
+--- /dev/null
++++ b/test/corpus/literal_argument_read_order.rs
+@@ -0,0 +1,47 @@
++struct Point {
++    x: f64,
++    y: f64,
++}
++
++struct Bounds {
++    width: f64,
++    top: f64,
++    left: f64,
++}
++
++fn read(name: &str, value: f64) -> f64 {
++    print!("{name} ");
++    value
++}
++
++fn total(point: &Point, bounds: &Bounds) -> f64 {
++    point.x + point.y + bounds.width + bounds.top + bounds.left
++}
++
++fn total_array(point: &[f64; 2], bounds: &Bounds) -> f64 {
++    point[0] + point[1] + bounds.width + bounds.top + bounds.left
++}
++
++fn main() {
++    let value = total(
++        &Point {
++            x: read("x", 1.0),
++            y: read("y", 2.0),
++        },
++        &Bounds {
++            width: read("width", 3.0),
++            top: read("top", 4.0),
++            left: read("left", 5.0),
++        },
++    );
++    println!("= {value}");
++    let value = total_array(
++        &[read("x", 1.0), read("y", 2.0)],
++        &Bounds {
++            width: read("width", 3.0),
++            top: read("top", 4.0),
++            left: read("left", 5.0),
++        },
++    );
++    println!("= {value}");
++}
+diff --git a/test/lowering-native-aggregate-arguments.test.ts b/test/lowering-native-aggregate-arguments.test.ts
+new file mode 100644
+index 0000000..dbc3b75
+--- /dev/null
++++ b/test/lowering-native-aggregate-arguments.test.ts
+@@ -0,0 +1,81 @@
++import {beforeAll,expect,test} from "bun:test";
++import {readFileSync,writeFileSync} from "node:fs";
++import {join} from "node:path";
++import {buildReact,compiler,fixture,run,target} from "./support";
++
++beforeAll(buildReact,600_000);
++
++// #1867: the real scrollbar case, reduced without replacing native getters
++// by plain struct fields (the latter already inlines correctly).
++test("native getter arguments stay in nested literals with evaluation order intact", async () => {
++  const dir = fixture("native-getter-aggregate-arguments");
++  writeFileSync(join(dir,"lib.rs"), `use webapi::{Element, PointerEvent, window_global};
++pub struct Point { pub x:f64, pub y:f64 }
++pub struct Edges { pub top:f64, pub left:f64 }
++pub struct Bounds { pub width:f64, pub borders:Edges }
++pub fn consume(point:&Point,bounds:&Bounds)->f64 {
++    point.x + point.y + bounds.width + bounds.borders.top + bounds.borders.left
++}
++pub fn nested(event:&PointerEvent,target:&Element)->f64 {
++    let rect=target.get_bounding_client_rect();
++    let style=window_global::get_computed_style(target,None);
++    consume(&Point { x:event.client_x()-rect.left(), y:event.client_y()-rect.top() }, &Bounds {
++        width:rect.width(),
++        borders:Edges {
++            top:js::or(js::parse_float(style.border_top_width()),0.0),
++            left:js::or(js::parse_float(style.border_left_width()),0.0),
++        },
++    })
++}
++pub fn consume_array(point:&[f64;2],bounds:&Bounds)->f64 {
++    point[0] + point[1] + bounds.width + bounds.borders.top + bounds.borders.left
++}
++pub fn nested_array(event:&PointerEvent,target:&Element)->f64 {
++    let rect=target.get_bounding_client_rect();
++    let style=window_global::get_computed_style(target,None);
++    consume_array(&[event.client_x()-rect.left(),event.client_y()-rect.top()], &Bounds {
++        width:rect.width(),
++        borders:Edges {
++            top:js::or(js::parse_float(style.border_top_width()),0.0),
++            left:js::or(js::parse_float(style.border_left_width()),0.0),
++        },
++    })
++}
++`);
++  run([compiler,join(dir,"lib.rs"),"-o",join(dir,"lib.js"),"--","--extern","js="+join(target,"libjs.rmeta"),"--extern","webapi="+join(target,"libwebapi.rmeta"),"-L",target]);
++  const lib = await import(join(dir,"lib.js"));
++  const original=Object.getOwnPropertyDescriptor(globalThis,"getComputedStyle");
++  const names=["rect()","style()","clientX","left","clientY","top","width","borderTopWidth","borderLeftWidth"];
++  try {
++    for(const name of ["nested","nestedArray"]) for(const stop of [undefined,...names]) {
++      const calls:string[]=[];const marker={};
++      const read=(name:string,value:unknown)=>{calls.push(name);if(stop===name)throw marker;return value;};
++      const fields=(values:Record<string,unknown>)=>Object.defineProperties({},Object.fromEntries(Object.entries(values).map(([name,value])=>[name,{get(){return read(name,value);}}])));
++      const rect=fields({left:1,top:2,width:100});
++      const style=fields({borderTopWidth:"3px",borderLeftWidth:"4px"});
++      const target={getBoundingClientRect(){return read("rect()",rect);}};
++      Object.defineProperty(globalThis,"getComputedStyle",{configurable:true,value(){return read("style()",style);}});
++      const event=fields({clientX:11,clientY:22});
++      let value:number|undefined;let thrown=false;
++      try{value=lib[name](event,target);}catch(error){thrown=error===marker;}
++      expect({value,thrown,calls}).toEqual(stop===undefined?{value:137,thrown:false,calls:names}:{value:undefined,thrown:true,calls:names.slice(0,names.indexOf(stop)+1)});
++    }
++  } finally {
++    if(original)Object.defineProperty(globalThis,"getComputedStyle",original);
++    else Reflect.deleteProperty(globalThis,"getComputedStyle");
++  }
++  const output=readFileSync(join(dir,"lib.js"),"utf8");
++  for(const name of ["nested","nestedArray"]) {
++    const marker="export function "+name+"(";
++    const start=output.indexOf(marker);
++    expect(start).toBeGreaterThanOrEqual(0);
++    const next=output.indexOf("\nexport function ",start+marker.length);
++    const body=output.slice(start,next<0?undefined:next);
++    expect(body.split("\n").filter(line=>line.trimStart().startsWith("const "))).toEqual([
++      "  const rect = target.getBoundingClientRect();",
++      "  const style = getComputedStyle(target);",
++    ]);
++    expect(body).toContain("event.clientX - rect.left");
++    expect(body).toContain("top: parseFloat(style.borderTopWidth) || 0");
++  }
++});
