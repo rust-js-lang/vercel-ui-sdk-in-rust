@@ -9,7 +9,7 @@ function linear(value) {
 
 const scales = {
   linear: { to: linear, from: linear },
-  log: { to: (n) => Math.log(n), from: (n) => Math.exp(n) },
+  log: { to: Math.log, from: Math.exp },
 };
 
 export function fractionOf(value, range, scale) {

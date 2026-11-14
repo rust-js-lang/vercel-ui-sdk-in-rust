@@ -10,7 +10,7 @@
     "compile": "bun rust-js/tooling/cli.js build --package ui-sdk-core-in-rust",
     "test:native": "cargo test --locked --package ui-sdk-core-in-rust",
     "test:compiled": "bun rust-js/tooling/cli.js test --package ui-sdk-core-in-rust",
-    "test": "bun test ./tests/*.test.ts",
+    "test": "bun run compile && bun test ./tests/*.test.ts",
     "check:upstream": "bun scripts/upstream-inventory.ts --check",
     "clippy": "bun rust-js/tooling/cli.js clippy --package ui-sdk-core-in-rust -- -D warnings",
     "test:browser": "bun run compile && bunx --bun playwright test"

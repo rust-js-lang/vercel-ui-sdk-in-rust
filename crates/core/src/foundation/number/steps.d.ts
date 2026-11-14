@@ -3,3 +3,25 @@
 export function clamp(value: number, min: number, max: number): number;
 
 export function wrap(value: number, min: number, max: number): number;
+
+export type StepDirection = -1 | 1;
+
+export const Backward: -1;
+
+export const Forward: 1;
+
+export type StepSize = "step" | "large" | "small";
+
+export type NumberBound = "min" | "max";
+
+export interface DirectionalMove {
+    direction: StepDirection;
+    size: StepSize;
+}
+
+export interface BoundMove {
+    bound: NumberBound;
+}
+
+/** A keyboard or gesture move: steps in a direction, or a bound. */
+export type NumberMove = BoundMove | DirectionalMove;

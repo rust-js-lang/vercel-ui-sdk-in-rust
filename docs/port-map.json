@@ -4,15 +4,37 @@
     {
       "source": "packages/core/src/foundation/number/steps.ts",
       "rust": "crates/core/src/foundation/number/steps.rs",
-      "status": "partial",
+      "status": "pending-compiler",
       "exports": [
         "clamp",
+        "decimalsOf",
+        "maxOnGrid",
+        "NumberMove",
+        "NumberRange",
+        "NumberScrub",
+        "NumberSnap",
+        "onGrid",
+        "roundTo",
+        "scrubTo",
+        "snapToStep",
+        "StepRange",
+        "stepBy",
+        "stepOnGrid",
+        "stepValue",
         "wrap"
       ],
       "evidence": [
         "tests/number-steps.test.ts",
         "crates/core/src/foundation/number/steps.rs",
-        "docs/validation.md"
+        "docs/validation.md",
+        "tests/numeric-grid.test.ts"
+      ],
+      "verifiedExports": [
+        "clamp",
+        "wrap"
+      ],
+      "issues": [
+        "https://github.com/rust-js-lang/rust-js/issues/1820"
       ]
     },
     {
@@ -63,7 +85,7 @@
     {
       "source": "packages/core/src/foundation/number/scale.ts",
       "rust": "crates/core/src/foundation/number/scale.rs",
-      "status": "pending-compiler",
+      "status": "implemented",
       "exports": [
         "fractionOf",
         "valueAt",
@@ -74,7 +96,7 @@
         "crates/core/src/foundation/number/scale.rs",
         "docs/validation.md"
       ],
-      "issues": [
+      "resolvedIssues": [
         "https://github.com/rust-js-lang/rust-js/issues/1812"
       ]
     },
@@ -133,6 +155,36 @@
       ],
       "issues": [
         "https://github.com/rust-js-lang/rust-js/issues/1817"
+      ]
+    },
+    {
+      "source": "packages/core/src/foundation/motion/physics.ts",
+      "rust": "crates/core/src/foundation/motion/physics.rs",
+      "status": "implemented",
+      "exports": [
+        "sheetPhysics",
+        "SheetPhysics"
+      ],
+      "evidence": [
+        "tests/physics.test.ts",
+        "tests/declarations.test.ts",
+        "tests/types/core-records.ts",
+        "docs/validation.md"
+      ]
+    },
+    {
+      "source": "packages/core/src/foundation/number/keys.ts",
+      "rust": "crates/core/src/foundation/number/keys.rs",
+      "status": "pending-compiler-unlinked",
+      "exports": [
+        "stepFromKey",
+        "NumberKeyOptions"
+      ],
+      "issues": [
+        "https://github.com/rust-js-lang/rust-js/issues/1818"
+      ],
+      "evidence": [
+        "docs/validation.md"
       ]
     }
   ]

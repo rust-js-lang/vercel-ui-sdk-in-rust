@@ -10,4 +10,7 @@ export function wrap(value, min, max) {
   const span = max - min;
   return span > 0 ? ((((value - min) % span) + span) % span) + min : min;
 }
+
+export const Backward = -1;
+export const Forward = 1;
 //# sourceMappingURL=steps.js.map

@@ -4,6 +4,8 @@ export { isComposing, on, selectEvent } from "./foundation/kernel/events.js";
 
 export { createUndoStack } from "./foundation/kernel/undo_stack.js";
 
+export { sheetPhysics } from "./foundation/motion/physics.js";
+
 export { chooseSnapTarget, nearestIndex, projectDistance } from "./foundation/motion/projection.js";
 
 export { rubberBand, rubberBandInverse, rubberBandSlope } from "./foundation/motion/rubber_band.js";
@@ -20,10 +22,14 @@ export type { CompositionFields, CompositionInput, NativeCompositionEvent, Wrapp
 
 export type { UndoRecordOptions, UndoStack, UndoStackOptions, UndoStackSettings } from "./foundation/kernel/undo_stack.js";
 
+export type { SheetPhysics, SheetPhysicsPresets } from "./foundation/motion/physics.js";
+
 export type { SnapTargetInput } from "./foundation/motion/projection.js";
 
 export type { SettleOptions, Spring } from "./foundation/motion/spring.js";
 
 export type { CustomScale, NumberBounds, NumberScale, ScaleKind } from "./foundation/number/scale.js";
+
+export type { BoundMove, DirectionalMove, NumberBound, NumberMove, StepDirection, StepSize } from "./foundation/number/steps.js";
 
 export type { PhysicalSide, Side } from "./foundation/platform/sides.js";

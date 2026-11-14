@@ -3,6 +3,7 @@
 /** Rust adaptation of UI SDK core. See UPSTREAM.md for provenance and current coverage. */
 export { isComposing, on, selectEvent } from "./foundation/kernel/events.js";
 export { createUndoStack } from "./foundation/kernel/undo_stack.js";
+export { sheetPhysics } from "./foundation/motion/physics.js";
 export { chooseSnapTarget, nearestIndex, projectDistance } from "./foundation/motion/projection.js";
 export { rubberBand, rubberBandInverse, rubberBandSlope } from "./foundation/motion/rubber_band.js";
 export { settleTime, solveSpring, springLinearEasing } from "./foundation/motion/spring.js";

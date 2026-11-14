@@ -2,7 +2,7 @@
 
 A Rust/rust-js port of [UI SDK](https://github.com/vercel-labs/ui), a library of composable interface behaviors. Apache-2.0 licensed, with upstream attribution retained.
 
-**Status: development checkpoint with known failing compiler regressions. Core, Web Components and the documentation deployment are not complete.**
+**Status: development snapshot. Full JavaScript compilation is currently blocked by rust-js #1820. Core, Web Components and the documentation deployment are not complete.**
 
 The first milestone ports `@ui-sdk/core` and `@ui-sdk/web`, including their accessibility, lifecycle and agent-facing contracts. The documentation application and executable examples will be written in Rust/rust-js and deployed to GitHub Pages. The SDK React adapter follows after this milestone. Vue, Svelte, Solid and other framework adapters are future work.
 
@@ -25,4 +25,4 @@ bun run clippy
 bun run check:upstream
 ```
 
-Clamping/wrapping, rubber-band resistance, analytic spring motion and RTL mapping have a verified checkpoint. Scaling, release projection, undo history and native event helpers are now in progress. Twelve native tests and ten Chromium tests pass. The reference/type suite has 20 passing tests and two active failures; compiled invariant tests are blocked by a reported compiler issue. These failures are retained so upstream fixes can be verified. This is not a release. See [validation evidence](docs/validation.md) for the current proof and remaining gates.
+Clamping/wrapping, scaling, spring motion, sheet physics and RTL foundations have reference proof. Full grid/snap algorithms and the keyboard map are written but await compiler projection/intersection fixes. Native Rust check, 14 native invariants and strict Clippy pass; full JavaScript/reference/browser commands currently stop at the build gate. Generated files reflect the last successful build. See [validation evidence](docs/validation.md) for exact current and historical results. This is not a release.

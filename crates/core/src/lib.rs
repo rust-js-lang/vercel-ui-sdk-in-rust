@@ -7,6 +7,7 @@ pub use foundation::kernel::events::{
 pub use foundation::kernel::undo_stack::{
     UndoRecordOptions, UndoStack, UndoStackOptions, UndoStackSettings, create_undo_stack,
 };
+pub use foundation::motion::physics::{SHEET_PHYSICS, SheetPhysics, SheetPhysicsPresets};
 pub use foundation::motion::projection::{
     SnapTargetInput, choose_snap_target, nearest_index, project_distance,
 };
@@ -17,5 +18,10 @@ pub use foundation::motion::spring::{
 pub use foundation::number::scale::{
     CustomScale, NumberBounds, NumberScale, ScaleKind, fraction_of, value_at,
 };
-pub use foundation::number::steps::{clamp, wrap};
+pub use foundation::number::steps::{
+    BoundMove, DirectionalMove, NumberBound, NumberMove, NumberRange, NumberScrub, NumberSnap,
+    ScrubOptions, SnapEase, StepByOptions, StepDirection, StepRange, StepSize, clamp, decimals_of,
+    max_on_grid, on_grid, round_to, scrub_to, snap_to_step, step_by, step_on_grid, step_value,
+    wrap,
+};
 pub use foundation::platform::sides::{PhysicalSide, Side, physical_side};

@@ -1,57 +1,58 @@
 # Validation checkpoint
 
-2026-11-15. Milestone one remains incomplete. This is a development checkpoint, with known failing compiler regressions kept active. It is not a release. Web Components and the documentation site are not implemented or deployed yet.
+2026-11-15. Milestone one is incomplete. The current development snapshot is blocked from a full JavaScript build by compiler issue #1820. It is not a release. Core/Web Components and the docs application/deployment are still in progress.
 
-Upstream remains pinned at 220c1a0d7278872286a620a8e4ee4210ca46f9bd, with its Apache-2.0 license retained verbatim. The private compiler submodule is published rust-js ca4ee7dfa2935c8fc06515fb20ae76d38ebabb56, unmodified. The root toolchain symlink uses its exact toolchain.
+Upstream is pinned at 220c1a0d7278872286a620a8e4ee4210ca46f9bd. Its Apache-2.0 license and notices are retained. The private compiler submodule is published bf58789fab32a204d6f9483ed5478f9c238344f8, with no local patch; the toolchain symlink follows it.
 
-## Current proof
+## Current verification
 
-| Check | Current result |
+| Gate | Evidence |
 | --- | --- |
-| Rust/rust-js library build | passes |
-| Native Rust invariants | 12 pass |
-| Same invariants compiled to JS | blocked by #1816; the earlier verified subset's 8 tests passed |
-| Bun reference/type/server tests | 20 pass, 2 fail; 198,576 assertions |
-| Chromium reference tests | 10 pass |
+| Native Rust check | passes with the complete grid/snap source |
+| Native Rust invariants | 14 pass |
 | Strict rust-js-aware Clippy | passes with -D warnings |
 | Rust formatting | passes |
-| Source/export inventory | 2,611 pinned tracked files; check passes |
+| Pinned source/export inventory | 2,611 tracked files; passes |
+| Full rust-js build | refused at five flattened StepRange borrowing sites, #1820 |
+| Full compiled invariant suite | currently refused by #1820 |
+| Full reference/type suite | stops at the build gate, #1820 |
+| Browser suite | previously 10 pass; current full command stops at the build gate |
 
-The two active Bun failures are the captured Math function regression (#1812) and lost native event declaration types (#1817). The compiled invariant test build refuses the undo settings union (#1816). Tests are neither skipped nor marked as expected failures. These failures must be fixed before the affected modules count as complete.
+The test and browser commands compile Rust first. This prevents old generated files being mistaken for the new numeric implementation. The checked-in generated JavaScript is the last successful output; the new grid/snap functions have no verified generated artifact yet.
 
-The verified motion/RTL foundation checkpoint remains 2c600f8. New scaling, release projection, undo and event modules are retained as work in progress, with source and tests available for compiler fixes.
+## Fixes verified in this project
 
-## Numeric and history behavior
+The compiler feedback loop resolved two actual regressions without changing the app code:
 
-Exact reference comparisons use the pinned TypeScript functions and Object.is, preserving NaN and signed zero without a tolerance. Matrices cover exceptional bounds, extreme magnitudes, every spring damping regime, exact easing samples, release projection and snap selection. Native tests separately cover arithmetic invariants, spring rest/initial conditions, derivative consistency and history identity/reentrancy.
+- #1812, published as 059547d93 and included in this pin: borrowed logarithmic functions capture Math.log/Math.exp at module initialization. All four unchanged scaling tests passed (27,444 assertions). The generated table was inspected and now holds the functions directly.
+- #1816, published as bfaa34073 and included here: undo tests no longer cause unrelated settings Rc values to become counted. All 12 original native invariants ran as JavaScript in Bun. After adding sheet physics, all 13 passed too. The subsequent full grid source exposed the independent #1820 refusal.
+- #1813, published as bf58789fa: the canonical to_fixed/to_precision bindings accept Option<f64>. The full stepping source now type-checks in native Rust using them. JavaScript integration still awaits #1820; do not equate binding availability with a verified complete grid port.
 
-The undo stack passes 10,000 seeded edit traces against upstream, including live limits/delays, grouped edits, undo/redo branching, mapping, resetting and exact state identity. Additional tests check default clock/getter order, detached methods and callbacks that re-enter the stack. Its compiled invariant build and generated-output audit are still pending.
+## Work added
 
-## Actual browser contracts
+The complete numeric steps algorithm is written: exponent-aware precision, native decimal/significant-digit rounding, bounded grids, fractional/directional steps, large/small moves, point snapping and eased scrubbing. It reuses a flattened StepRange inside NumberRange and keeps natural derived Copy/Clone. The new numeric-grid.test.ts compares every operation against actual upstream, including native errors and the required own point property of unsnapped results. These new reference cases cannot run until the JavaScript build succeeds.
 
-The local Playwright harness bundles the real upstream events.ts and the generated Rust events.js into separate modules and runs them in Chromium. The server verifies the upstream pin first. Browser tests compile Rust before starting and retain traces on failure; unexpected page errors fail tests.
+The numeric keyboard map is written in keys.rs but not linked from number/mod.rs. Its event must be the key/modifier record intersected with CompositionInput. Compiler #1818 currently refuses that flattening. Keeping it unlinked records unfinished work; it is not an implemented export or an alternate API. No wrapper, duplicate composition fields or manual clone is introduced to evade either refusal.
 
-The 10 passing cases cover native callback identity/receiver, capture phase, target/currentTarget, cancellation, repeated cleanup, once listeners, abort signals, mutation of the original options object, and fresh cancellable selection events.
+The shared sheet physics preset was built successfully before adding the blocked grid calls. Its JavaScript was compared with upstream: the complete object and all tuning values match, fields remain shared and mutable, and the stretch dimension retains number | null in declarations. Two Bun tests passed; a native/compiled integration invariant verifies its default spring settles monotonically without overshoot. Current native tests also prove the grid guard treats NaN steps as invalid while retaining signed zero.
 
-Composition checks include real keyboard/input events, strict boolean/numeric values, direct/wrapped/inherited nativeEvent fields, proxy membership checks, getter order, short circuiting and errors. The generated isComposing body matches upstream's membership check and property comparisons. Its explicit canonical js::cast mirrors the upstream type assertion: an Event object may lack both optional composition fields. No custom cast binding or replacement event wrapper runs.
+A real TypeScript usage fixture verifies move directions are exactly -1 or 1, sizes/bounds use the declared literals, and physics fields retain numeric/boolean/nullability contracts. It passed against the last successful declarations. Declaration issue #1817 remains independently open for native event dictionaries and event associations.
 
-A separate server test imports both event modules with window, document and Event unavailable. Imports remain safe: native event construction happens only when called.
+## Earlier browser and history proof
 
-## Declaration proof
+The Chromium harness bundles actual upstream events.ts separately from generated Rust events.js. Its 10 cases passed for native listener identity/receiver, capture, target/currentTarget, cancellation, once/abort/cleanup, options-object mutation and fresh cancellable selection events. Composition cases cover real keyboard/input events, direct/wrapped/inherited nativeEvent fields, strict values, proxy membership checks, getter order, short circuiting and errors. Server import tests passed with window/document/Event absent.
 
-A single positive/negative TypeScript usage fixture is checked with the pinned TypeScript CLI. It passes against actual upstream source. Against generated declarations, three @ts-expect-error directives are unused: invalid native event names, nonexistent event properties and incorrectly typed capture options are accepted. This proves #1817 through real API usage, rather than only matching declaration text. Current emitted any types are a defect, not accepted API design.
+Undo history passed 10,000 seeded reference traces for live settings, edit grouping, branching, map/reset and exact state identity, plus reentrant callbacks and clock/getter order. Projection and spring arithmetic matched the pinned original, including exceptional inputs and exact CSS easing samples. These earlier checks do not verify the new blocked grid code.
 
-## Compiler feedback
+## Remaining compiler work
 
-- [#1812](https://github.com/rust-js-lang/rust-js/issues/1812): borrowed Math function capture timing.
-- [#1813](https://github.com/rust-js-lang/rust-js/issues/1813): native Number formatting binding contracts required for stepping.
-- [#1814](https://github.com/rust-js-lang/rust-js/issues/1814): slice search output and proven bounds.
-- [#1815](https://github.com/rust-js-lang/rust-js/issues/1815): private history borrow guards and index output.
-- [#1816](https://github.com/rust-js-lang/rust-js/issues/1816): settings Rc union differs between library and test builds.
-- [#1817](https://github.com/rust-js-lang/rust-js/issues/1817): browser option dictionaries and event associations lose their declaration types.
+- #1814: release-projection search output and proven bounds.
+- #1815: private undo borrow guards and index output.
+- #1817: browser option dictionaries and event associations lose declaration types; the unchanged TypeScript fixture passes upstream and fails against generated any types.
+- #1818: flatten the untagged composition-event union as an event intersection.
+- #1819: the compiler team found a P0 flattened-reference aliasing bug while investigating #1818; it is ahead of the two flatten extensions.
+- #1820: readonly lending of flattened Copy/Clone range records, preserving the correct projection for any actual clone/compare/hash.
 
-The compiler team owns these fixes through agent-hub. This project has no private compiler patch. No tests, Rust types, iterators or bindings are weakened to make the pending audits green. Numerical parity alone does not close generated-output or declaration audits.
+The team owns these through agent-hub. Each has a concrete source reproduction. No tests or types are weakened, no helper bindings replace missing platform APIs, and no compiler workaround is presented as port completion. After the fixes land, rebuild, run the full numeric/reference/browser suites, inspect every generated diff and update the port map from actual evidence.
 
-The first cold compiler build took 1m50s; adopting ca4ee7d rebuilt it in 66 seconds, with later compiler checks around 0.3–0.7s. The full 10-case browser suite took approximately 1.3 seconds. Tests remain local; there is no deployment workflow or placeholder site presented as completion.
-
-Complete core/kernel behavior, Web Components, all in-scope docs/examples, Pages setup and actual public deployment verification remain open under implementation-plan.md.
+The complete kernel, behavior/component families, Web adapter/tags/events, in-scope docs/examples, Pages workflow/setup and public deployment verification remain required under implementation-plan.md. React remains the next SDK phase and other adapters remain deferred.
