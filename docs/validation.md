@@ -22,7 +22,7 @@ These runs include the canonical browser-global getter migration (#1862). active
 
 ## Current compiler review
 
-The review pin is ef8807570597a4132d4442dd78315a7b39eaba06 with a separate #1861 patch. Both independent core whole gates pass on this exact base: 7:29 before and 6:33 after, with cache differences disclosed. All 6,915 existing test-name/status multisets are unchanged; five new tests pass and none disappear. Nine harness mutants are caught. The same ordinary ten-owner Intl batch catches 10/10 in about 34 s at the restored original one-second preparation bound. The full core gate used the interim 20 s bound; the final bound was verified by the ordinary workload. Upstream review/landing and the held Intl feature full gate remain separate. See [exact evidence](mutation-preparation-1861.md).
+The review pin is ef8807570597a4132d4442dd78315a7b39eaba06 with a separate #1861 patch. Both independent core whole gates pass on this exact base: 7:29 before and 6:33 after, with cache differences disclosed. All 6,915 existing test-name/status multisets are unchanged; five new tests pass and none disappear. Nine harness mutants are caught. The same ordinary ten-owner Intl batch catches 10/10 in about 34 s at the restored original one-second preparation bound. The full core gate used the interim 20 s bound; the final bound was verified by the ordinary workload. The harness is now published as fb2e59e74 and its upstream full check passes with unchanged React regeneration. The separate Intl feature landing check remains in progress. See [exact evidence](mutation-preparation-1861.md).
 
 ## Retained failures and compiler gaps
 
@@ -55,9 +55,9 @@ Current ordinary ten-owner mutation run on the fixed harness: 10/10 caught in ab
 
 An older Intl version passed its planned full gate in 4 m 49 s, before later model changes and #1840. The isolated harness core passed in 7 m 57 s. Those scoped measurements and the earlier deadline failures remain in the compiler ledger; they are not current combined green results or isolated speed-up claims.
 
-## Latest upstream adoption (84740d5)
+## Earlier upstream adoption (84740d5)
 
-Current private compiler pin: 84740d5ec364f51ac5dda2fc92cf57e8d5ea10b5. The held feature, ten owner registrations and independent #1861 core are rebased separately. The ordered installer is verified idempotent. The SDK normal build passes; generated events.js adds only the required options ?? undefined at native add/removeEventListener boundaries. These changes were inspected; complete SDK runtime/browser gates on this pin are pending while the upstream reviewer uses the shared machine for #1861 landing. The complete SDK table above records ef8807570 and is not relabelled as a new-pin result.
+That checkpoint used private compiler pin: 84740d5ec364f51ac5dda2fc92cf57e8d5ea10b5. The held feature, ten owner registrations and independent #1861 core are rebased separately. The ordered installer is verified idempotent. The SDK normal build passes; generated events.js adds only the required options ?? undefined at native add/removeEventListener boundaries. These changes were inspected; complete SDK runtime/browser gates on this pin are pending while the upstream reviewer uses the shared machine for #1861 landing. The complete SDK table above records ef8807570 and is not relabelled as a new-pin result.
 
 The separate closest strict consumer passes against the original. Its compiled counterpart remains failing because the function is intentionally absent pending the binding design. A diagnostic generic implementation demonstrated the dropped constraint; it was removed and never pushed. The isolated compiler regression is retained in patches/rust-js/1866-webapi-inheritance-regression.patch, excluded from setup, and fails because invalid string/Text consumers are accepted.
 
@@ -68,3 +68,7 @@ The complete kernel, shared behavior/component families, page services, all Web 
 Change-source tests cover runtime source/reason/event propagation, nesting, identity and synchronous promise boundaries; full createDetails vocabulary/types and scope-guard output #1833 remain. Calendar runtime tests cover a complete Gregorian cycle and Date/error/getter behavior. Motion/history retain their reference tests, including 10,000 seeded undo traces; projection output #1814 and undo output #1815 remain under audit. Date numeric binding coverage #1837 and the Locale week-info/library-version decision #1831 are still required; no stand-in members are added.
 
 The source-hashed leaf probe harness is diagnostic only. Normal testing uses the full SDK build. Ordered patch setup validates a complete supported prefix in an isolated Git index, applies only the remainder, preserves unmatched local edits and excludes the reproduction-only #1840 patch.
+
+## Published harness adoption
+
+The current submodule adopts fb2e59e745aa80e276284c6c01325779333bda16. The obsolete private #1861 implementation is removed from the ordered series; the two pending Intl/model and owner-registration patches are rebased on this published base. The reduced installer returns0/idempotent. Upstream review accepts the feature, all ten owner mutants, focused Intl/TypeScript checks and the unchanged P0 regression; its full landing gate is still running. These upstream results do not relabel the older complete SDK table as a new-pin full run.
