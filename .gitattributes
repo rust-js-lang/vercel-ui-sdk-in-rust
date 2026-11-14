@@ -1,0 +1,2 @@
+# A blank context line in a unified patch contains one meaningful space.
+patches/rust-js/*.patch whitespace=-blank-at-eol

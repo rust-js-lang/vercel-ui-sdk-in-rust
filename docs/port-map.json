@@ -281,6 +281,41 @@
         "tests/declarations.test.ts",
         "docs/validation.md"
       ]
+    },
+    {
+      "source": "packages/core/src/foundation/platform/platform.ts",
+      "rust": "crates/core/src/foundation/platform/platform.rs",
+      "status": "partial-pending-compiler",
+      "exports": [
+        "activeElement",
+        "ariaKeyshortcuts",
+        "composedClosest",
+        "composedContains",
+        "composedHops",
+        "formatShortcut",
+        "hasCommandModifier",
+        "initialApple",
+        "isApple",
+        "matchesShortcut",
+        "portalTarget",
+        "prefersReducedMotion",
+        "setPlatform",
+        "supportsTopLayer"
+      ],
+      "remaining": "composedClosest awaits1859 optional-method design; interim lazy global read1862; bounds1863 and nonempty-split output audit remain.",
+      "issues": [
+        "https://github.com/rust-js-lang/rust-js/issues/1859",
+        "https://github.com/rust-js-lang/rust-js/issues/1862",
+        "https://github.com/rust-js-lang/rust-js/issues/1863"
+      ],
+      "evidence": [
+        "tests/platform.test.ts",
+        "tests/browser/platform.spec.ts",
+        "tests/types/platform.ts",
+        "tests/declarations.test.ts",
+        "tests/server-import.test.ts",
+        "docs/validation.md"
+      ]
     }
   ]
 }

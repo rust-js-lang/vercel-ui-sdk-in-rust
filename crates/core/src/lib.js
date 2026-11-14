@@ -47,4 +47,20 @@ export { physicalSide } from "./foundation/platform/sides.js";
 export { layoutBox, layoutOrigin, layoutSize } from "./foundation/platform/layout.js";
 
 export { isBrowser, isIOS, isRTL } from "./foundation/platform/env.js";
+
+export {
+  activeElement,
+  ariaKeyshortcuts,
+  composedContains,
+  composedHops,
+  formatShortcut,
+  hasCommandModifier,
+  initialApple,
+  isApple,
+  matchesShortcut,
+  portalTarget,
+  prefersReducedMotion,
+  setPlatform,
+  supportsTopLayer,
+} from "./foundation/platform/platform.js";
 //# sourceMappingURL=lib.js.map

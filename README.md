@@ -2,7 +2,7 @@
 
 A Rust/rust-js port of [UI SDK](https://github.com/vercel-labs/ui), a library of composable interface behaviors. Apache-2.0 licensed, with upstream attribution retained.
 
-**Status: development snapshot. The full SDK builds; the flattened-copy regression is fixed. Four reference tests still expose unresolved compiler boundary/type gaps. The Intl compiler patch remains held for P0 #1840. Core, Web Components and the documentation deployment are not complete.**
+**Status: development snapshot. The linked SDK builds. Five reference failures and one browser failure retain compiler boundary/type gaps and the missing optional closest call. Intl remains held for P0 #1840. Core, Web Components and the documentation deployment are incomplete.**
 
 The first milestone ports `@ui-sdk/core` and `@ui-sdk/web`, including their accessibility, lifecycle and agent-facing contracts. The documentation application and executable examples will be written in Rust/rust-js and deployed to GitHub Pages. The SDK React adapter follows after this milestone. Vue, Svelte, Solid and other framework adapters are future work.
 
@@ -25,4 +25,4 @@ bun run clippy
 bun run check:upstream
 ```
 
-Numeric grids, keyboard mapping, calendar arithmetic, layout measurement, environment detection, change-source propagation and the earlier motion/history foundations now build together. Local validation passes 20 native Rust tests, 19 compiled invariants and 16 Playwright Chromium tests. Full reference validation reports 53 passing tests and four retained failures for required undefined-valued arguments/properties (#1845) and membership-based union checks (#1846). Calendar type predicates and root type reexports are fixed and adopted. The independent compiler mutation harness passed its full check; upstream landing is pending. See [validation evidence](docs/validation.md). This is not a release.
+Numeric grids, keyboard mapping, calendar arithmetic, layout/environment helpers, shared platform support and the earlier motion/history foundations build together. Local validation passes 20 native tests, 19 compiled invariants and strict Clippy. The full reference suite reports61 pass / 5 fail; Chromium reports20 pass / 1 fail. Complete platform export parity and optional-method browser behavior remain red under #1859; required boundary semantics and union membership remain under #1845/#1846. The published compiler mutation harness is adopted; three of its ten feature-owner preparations are currently inconclusive under #1861. See [validation evidence](docs/validation.md). This is not a release.

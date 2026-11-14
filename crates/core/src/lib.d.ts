@@ -28,6 +28,8 @@ export { layoutBox, layoutOrigin, layoutSize } from "./foundation/platform/layou
 
 export { isBrowser, isIOS, isRTL } from "./foundation/platform/env.js";
 
+export { activeElement, ariaKeyshortcuts, composedContains, composedHops, formatShortcut, hasCommandModifier, initialApple, isApple, matchesShortcut, portalTarget, prefersReducedMotion, setPlatform, supportsTopLayer } from "./foundation/platform/platform.js";
+
 export type { DateInput, DateParts, ISODate, MonthGridOptions } from "./foundation/date/plain_date.js";
 
 export type { ChangeSource } from "./foundation/kernel/details.js";
@@ -51,3 +53,5 @@ export type { BoundMove, DirectionalMove, NumberBound, NumberMove, NumberRange, 
 export type { PhysicalSide, Side } from "./foundation/platform/sides.js";
 
 export type { LayoutBox, LayoutPoint, LayoutSize } from "./foundation/platform/layout.js";
+
+export type { Platform, PortalTarget } from "./foundation/platform/platform.js";

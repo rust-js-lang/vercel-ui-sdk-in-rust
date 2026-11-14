@@ -40,3 +40,9 @@ pub use foundation::platform::layout::{
 };
 
 pub use foundation::platform::env::{IS_BROWSER, is_ios, is_rtl};
+
+pub use foundation::platform::support::{
+    Platform, PortalTarget, active_element, aria_keyshortcuts, composed_contains, composed_hops,
+    format_shortcut, has_command_modifier, initial_apple, is_apple, matches_shortcut,
+    portal_target, prefers_reduced_motion, set_platform, supports_top_layer,
+};

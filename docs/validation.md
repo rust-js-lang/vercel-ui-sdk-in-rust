@@ -1,64 +1,60 @@
 # Validation checkpoint
 
-2026-11-15. Milestone one remains incomplete. Core, Web Components, the Rust docs application, live examples and Pages publication remain required. No partial deployment is presented as milestone completion.
+2026-11-15. Milestone one remains incomplete: the complete core and Web Components SDK, Rust docs/live examples and actual GitHub Pages publication are all still required.
 
-## Integrated SDK
+## Current integrated SDK
 
-Upstream remains pinned at 220c1a0d7278872286a620a8e4ee4210ca46f9bd, Apache-2.0. The private compiler pin is now 4652f87731e98db8f21b493f74c5a2917d128fc6 plus the ordered review patches. The integrated SDK counts below were refreshed after the layout/environment build and calendar predicate adoption. Published fixes now allow numeric grids, keyboard mapping, calendar arithmetic and change-source propagation to build together through the normal SDK build.
+Upstream:220c1a0d7278872286a620a8e4ee4210ca46f9bd (Apache-2.0). Private compiler pin:e9f75c3f39375c703f533fade10dcc7bd0bf4253 plus the ordered Intl/model review patches. Its published source-owner harness #1848 is adopted; the private implementation patch is removed. Published calendar reexport/predicate, flattened-copy, Result declaration and union-simplification fixes are included.
 
-| Gate | Current evidence |
+| Gate | Evidence at this source |
 | --- | --- |
-| Full SDK compile | passes, including numeric grids, keyboard, layout, environment and calendar predicate exports |
-| Native Rust | 20 tests pass |
-| Playwright Chromium | 16 tests pass for original versus compiled events/lifecycle, layout geometry/getters/iframes and environment detection |
-| Reference/type suite | Fresh current run: 53 pass, 4 fail, 294,173 assertions across 57 tests / 16 files |
-| Event declarations | Both unchanged original and generated consumer fixtures pass after declaring @rust-js/webapi |
-| Numeric keyboard | Four tests pass: orientation/direction/arrow/modifier matrix, composition, getter order and short circuiting |
-| Flattened-copy regression | passes unchanged after published fix ae1e605e6 |
-| Strict Clippy / compiled invariants | current -D warnings check passes; 19 compiled invariants pass |
-| Complete core/Web/docs/Pages audit | unfinished |
+| Normal full SDK compile | passes, including linked platform support functions |
+| Native Rust | 20 pass |
+| Compiled Rust invariants | 19 pass |
+| Strict Clippy | passes with -D warnings and no allows |
+| Full reference/type suite | 61 pass, 5 fail; 313,639 assertions; 66 tests in 17 files |
+| Chromium | 20 pass, 1 fail; 21 tests including real original/compiled event, layout, environment and platform behavior |
+| Strict platform declarations | original and compiled consumers pass |
+| Upstream inventory | exact source/hash pin; 2611 files; no original SDK source edits |
+| Complete core/Web/docs/deployment audit | unfinished |
 
-This reference run follows the successful linked build and includes the ordered patch-installer tests. The 16 Chromium tests, 20 native tests, 19 compiled invariants, strict Clippy and source/hash inventory also pass on this source. No later Rust source change was made. The full SDK source/output audit remains open.
+These reference and browser runs follow the final platform logic changes. A later source comment names the approved interim binding issue; regenerated output differs only by that comment. No later behavior change was made.
 
-## Failures retained, not weakened
+## Retained failures and compiler gaps
 
-- #1845: the original scrub result always owns point, even when undefined. A plain Rust Option field initialized with None is omitted. The guide documents that lowering; a required undefined-valued boundary form is missing.
-- #1846: the original stepBy checks property membership with the in operator. Untagged struct classification reads the bound field instead, changing Proxy/getter order. The existing test attribute is documented as a kind check; a membership form is needed.
-- #1847 was a P0: a copied flattened NumberRange read a nonexistent nested field. Published fix ae1e605e6 is adopted; the dedicated throwing-getter regression now passes unchanged.
-- #1829: the root ISODate reexport fix 93905c21e is adopted. #1853 was closed as a duplicate; the strict root consumer is retained.
-- #1828: the published js::Is API is adopted in Rust and the generated calendar validator now declares its type predicate. Its strict consumer additionally retains the required-input arity regression: generated declarations allow isISODate() without an argument, unlike the original. This follows the shared plain Option/optional boundary design in #1845; union simplification is separate (#1850).
-- #1840 (P0): forwarding null as a Rust None to native optional arguments differs from undefined/literal None. The separate retained regression fails; the Intl feature is held for its fix.
+- #1845: the scrub result must own point even when undefined; Rust's plain Option field currently omits it. The original calendar/environment APIs also require an input argument even when its value is undefined, while generated declarations allow omission. Both strict missing-input assertions remain failing; no assertion was weakened. This is the compiler team's shared plain Option/optional boundary design.
+- #1846: original stepBy uses property membership; current untagged object classification reads the bound getter instead, changing observable order. The numeric regression stays failing.
+- #1859: composedClosest needs a single-read optional native method call retaining this. The documented is_function-then-call form reads twice, while a captured function's .call lookup is also observable. The function is deliberately absent pending a general binding design. Complete-export parity and a real Text-node getter/own-call browser test both fail. No approximation or placeholder implementation is shipped.
+- #1862: document is a supposedly always-present Rust static even though reading its absent JS global throws. Clippy rejects the lazy unwrap_or_else form as unnecessary. The lead approved a temporary ordinary match, with an issue comment, to retain lazy SSR behavior without an allow. The explicit-document/no-global regression passes. The binding owner still needs an honest general representation.
+- #1863: generated shortcut caching retains $index for a private length-two array indexed by usize::from(bool). The source is left natural; the bounds owner is assigned the proof gap. The separate nonempty-split last().expect() helper is being routed by the lead. Full generated-source fidelity remains open.
+- #1840 (P0): the retained native optional-argument null-forwarding repro remains separately recorded. The Intl feature is held for the upstream fix; no current combined full-check success is claimed.
 
-No app casts, fake bindings or changed assertions hide these differences. The compiler team owns the fixes through agent-hub.
+Calendar narrowing and root ISODate reexports now pass; #1828 and canonical #1829 are adopted. #1853 was a duplicate. Flattened-copy #1847 is fixed and its throwing-getter regression passes unchanged.
 
-## Intl and TypeScript model review
+## Platform proof
 
-The authoritative Intl template emits sealed locale/string-list/date input traits, native record declarations and matching Date/String locale methods. localeMatcher remains its exact enum. Collator, DateTimeFormat, NumberFormat and RelativeTimeFormat supportedLocalesOf accept their full options types, following the pinned TypeScript overloads.
+layoutOrigin, layoutSize and layoutBox compare against the complete pinned original module. Four real Chromium tests cover fractional content/border boxes, transforms, scrolling, detached/inline/body elements, repeated offsetParent reads, getter order and iframe elements. A separate 72-case numerical/getter matrix covers nonfinite/fallback computed sizes. Runtime export keys and both strict consumer fixtures match. The source/output audit preserves repeated native reads and the global computed-style call.
 
-The expanded coverage derives more than 200 accepted Rust calls across exactly 26 changed sites: eight constructors, eight supportedLocalesOf statics, three Date methods, two String methods, four DateTimeFormat methods and getCanonicalLocales. It found the additional RelativeTimeFormat options narrowing before the correction.
+isBrowser, isIOS and isRTL use actual generated WebAPI bindings. 112 isolated-host scenarios compare module-time flags, server guards, platform/touch getter order, nullish elements and later global availability changes. Two Chromium tests cover inherited/changed RTL, iframe elements and real navigator getters. The original strict consumer passes; generated input arity remains failing under #1845. Primitive thread-local naming follows ADR0619; the explicit isBrowser boundary name preserves the original API.
 
-Constructor signatures now use one shared TypeScript Member model, parser and factory printer. checkedMembers validates known discriminants before consumers select or skip kinds. Eight actual Member-reading modules are migrated, including the WebAPI event-map reader; declaration-only readers and Rust JSON producers are listed in the patch review document.
+The new shared platform source implements 13 of 14 runtime exports. Five reference tests compare aliases, Unicode and lone UTF-16 surrogates, inherited dictionary getters/falsy values/repeated reads, physical keyboard-layout fallback, modifier getter order, thrown identity, platform overrides and shortcut defaults. Both strict consumers pass. Four real Chromium cases compare nested shadow focus, text/slot/shadow/iframe containment, explicit portal node identity and null/body fallback, and reduced-motion media changes. The fifth Chromium case retains #1859 rather than skipping it. SSR tests prove an explicit document works with all browser globals absent and that the missing default still throws ReferenceError.
 
-Rebased focused Intl/model/source-runner/inventory suites pass: 13 tests, 330 assertions, including native Bun/Chromium comparisons, strict declarations, rejected Rust nonmembers, all argument sites and exact construct-signature round trips. The revised readers also typecheck. This is focused proof for the combined Intl/model feature; its revised full compiler check remains pending. Dev-loop #1848 is now implemented privately: all 15 registered owner mutants are caught through the existing runner with actual-load evidence and unchanged controls. The source template takes about 1.6 s and 91 MB; the complete batch took about 62 s. The independent harness core, including its five safety mutants, passed check:fast --all on 4652 in 7m57s (296 non-browser test files, eight browser files, native/compiler/Vite/type/format gates and all planned corpus parts). The compiler lead reviewed the core as sound; upstream landing remains pending. This does not validate the dependent Intl/model feature. Its 10 Intl/model owner registrations are a separate dependent patch, so the core can land independently. Intl remains held for #1840.
+Generated JS was compared with the full original platform module. Remaining bounds/nonempty helpers and control-flow/alias differences keep the source/output audit open; runtime comparisons alone do not close it.
 
-An earlier version of the Intl patch completed all planned full-check gates in 4m49s. Its plan started before #1840 existed; it does not prove that P0 fixed, nor validate the later model changes. Earlier 480s/270s deadline attempts and warm-check costs remain recorded in the compiler dev-loop ledger. No isolated speed-up is claimed.
+## Intl/model and source-owner review
 
-## Platform layout and environment
+builtins/intl.ts owns the spec and generated Rust argument/record declarations. TypeScript construct signatures use the shared Member parser/model/factory, and checkedMembers rejects unknown discriminants. Eight actual Member-reading modules are migrated; model-review.md records the consumer audit. Native Bun/Chromium calls, strict declaration consumers, rejected Rust nonmembers and more than 200 source-derived accepted calls cover 26 changed native sites.
 
-All three layout functions are linked from Rust: layoutOrigin, layoutSize and layoutBox. Four real Chromium tests compare fractional content/border boxes, transforms, scroll offsets, detached/inline/body elements, repeated offsetParent reads, getter order and same-origin iframe elements against the pinned original. A separate 72-case numerical/getter matrix covers nonfinite and fallback computed sizes. Runtime export keys and both strict declaration consumers match. Source and generated JS were compared against the complete original module; repeated native getter reads and global computed-style calls are retained.
+After adopting the published harness, the current focused compiler review suites pass 35 tests / 42,896 assertions. The combined feature's revised full check remains pending. The independent harness core passed its own full check before landing and upstream again checked its landing; that does not prove this feature or #1840 fixed.
 
-The environment port implements isBrowser, isIOS and isRTL using generated WebAPI bindings. Its 112 isolated-host scenarios compare module-time browser flags, server guards, platform/touch getter order, nullish element handling and later changes to global availability. Two Chromium tests also exercise inherited/changed RTL, iframe elements and native navigator getters. The original strict consumer passes. The generated consumer retains a failing required-input arity assertion under #1845. ADR 0619 intentionally preserves primitive thread-local constant names; the explicit boundary name isBrowser preserves the original export without changing the Rust naming convention. As with the calendar validator, plain Option input optionality remains governed by #1845; a missing isRTL argument is still admitted by generated declarations.
+Current ten-owner mutation run: 7 caught, 3 INCONCLUSIVE at the new 1 s preparation deadline (#1861). Template 1.5 s / 91,258,880 bytes, each workspace 91,262,976 bytes; batch about 39 s. The quiet actual-workspace diagnostic measures copy 1907 ms and preparation 18 ms separately at the same deadline. A fast-child / 1.3 s parent-block probe completes normally, so that simple false-timeout hypothesis is not reproduced. No retry with a larger timeout was made. All workspaces were removed. The previous 15 of 15 proof predates this deadline and remains historical evidence only. The lead is investigating; the compiler dev-loop ledger records the measured cost and proposed diagnosis.
 
-## Remaining port work
+An older Intl version passed its planned full gate in 4 m 49 s, before later model changes and #1840. The isolated harness core passed in 7 m 57 s. Those scoped measurements and the earlier deadline failures remain in the compiler ledger; they are not current combined green results or isolated speed-up claims.
 
-Change-source runtime tests cover source/reason/event combinations, lazy tracking, nesting, exact return/thrown identity and synchronous promise boundaries; full createDetails vocabulary/types and scope-guard output (#1833) remain. Calendar runtime tests cover a complete Gregorian cycle and native Date/error/getter behavior; narrowing and root ISODate reexports now pass, while required-input arity remains pending under #1845. Motion/history foundations retain their reference tests, including 10,000 seeded undo traces. Projection search output (#1814) and undo output (#1815) still need final audit against published fixes.
+## Remaining work
 
-Date numeric binding coverage (#1837) is assigned here after Intl review: JavaScript numbers must not be narrowed to i32. Locale week information (#1831) requires a library-level decision; no stand-in members are added. Result declaration typing (#1835) is fixed upstream and adopted; the focused feature proof still needs refreshing before its review comments are updated.
+The complete kernel, shared behavior/component families, page services, all Web adapter/tags/properties/events, Rust docs shell/content/examples, Pages workflow/setup and real deployed-route verification remain unfinished. React follows milestone one; other frameworks are deferred.
 
-The one source-hashed leaf probe harness remains available for diagnostics. It is not a second implementation or substitute production entry point. Normal test commands require the full SDK build first.
+Change-source tests cover runtime source/reason/event propagation, nesting, identity and synchronous promise boundaries; full createDetails vocabulary/types and scope-guard output #1833 remain. Calendar runtime tests cover a complete Gregorian cycle and Date/error/getter behavior. Motion/history retain their reference tests, including 10,000 seeded undo traces; projection output #1814 and undo output #1815 remain under audit. Date numeric binding coverage #1837 and the Locale week-info/library-version decision #1831 are still required; no stand-in members are added.
 
-The complete kernel, component/behavior families, Web adapter/tags/properties/events, Rust docs/examples, Pages workflow/setup and deployed-route verification remain unfinished. React follows milestone one; other adapters stay deferred.
-
-## Ordered compiler patch setup
-
-Multiple retained patches can change earlier patch context, so a per-patch reverse check was insufficient for idempotence. Setup now constructs the ordered series in a scratch Git index, identifies a supported applied prefix and applies only the remainder. A full final state is a no-op; unmatched local edits are preserved and refused. Two tests use real isolated Git repositories to verify overlapping patches, repeated setup, prefix recovery and local-edit protection. The separate #1840 regression remains reproduction-only and excluded from the application series.
+The source-hashed leaf probe harness is diagnostic only. Normal testing uses the full SDK build. Ordered patch setup validates a complete supported prefix in an isolated Git index, applies only the remainder, preserves unmatched local edits and excludes the reproduction-only #1840 patch.

@@ -121,3 +121,16 @@ for (const kind of ["upstream", "compiled"] as const) test("environment declarat
     expect(check(file)).toEqual({exitCode: 0, diagnostics: ""});
   } finally {rmSync(directory, {recursive: true, force: true});}
 });
+
+for (const kind of ["upstream", "compiled"] as const) test("platform declarations preserve DOM, shortcut and platform contracts: " + kind, async () => {
+  const directory = mkdtempSync(join(tmpdir(), "ui-sdk-platform-types-"));
+  try {
+    const fixture = await Bun.file(resolve(import.meta.dir, "types/platform.ts")).text();
+    const target = kind === "upstream"
+      ? resolve(upstream, "packages/core/src/foundation/platform/platform.ts")
+      : resolve(root, "crates/core/src/foundation/platform/platform.js");
+    const file = join(directory, "consumer.ts");
+    await Bun.write(file, fixture.replace("../../crates/core/src/foundation/platform/platform.js", target));
+    expect(check(file)).toEqual({exitCode: 0, diagnostics: ""});
+  } finally {rmSync(directory, {recursive: true, force: true});}
+});

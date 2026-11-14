@@ -1,6 +1,6 @@
 # Shared TypeScript Member review
 
-Private patch base:4652f87731e98db8f21b493f74c5a2917d128fc6. This review is not yet cleared for upstream landing. The revised full check remains pending; P0#1840 holds Intl landing. Durable non-crate owner mutations are separately tracked in #1848, as approved by the lead.
+Private patch base:e9f75c3f39375c703f533fade10dcc7bd0bf4253. This review is not yet cleared for upstream landing. The revised full check remains pending; P0#1840 holds Intl landing. The durable non-crate owner harness #1848 is now published and adopted; its private implementation copy is removed.
 
 ## Model and all consumers
 
@@ -22,7 +22,7 @@ Private patch base:4652f87731e98db8f21b493f74c5a2917d128fc6. This review is not 
 
 ## Proof so far
 
-Revised model and Intl suites:10 pass326 assertions, Bun/Chromium native comparison, strict TypeScript consumer, Rust nonmember rejection and more than200 derived accepted calls across26 sites. Typecheck passes. The constructor regression failed before implementation; expanded coverage caught a real RelativeTimeFormat supportedLocalesOf options mismatch before correction.
+Revised model and Intl suites:10 pass326 assertions, Bun/Chromium native comparison, strict TypeScript consumer, Rust nonmember rejection and more than 200 derived accepted calls across26 sites. Typecheck passes. The constructor regression failed before implementation; expanded coverage caught a real RelativeTimeFormat supportedLocalesOf options mismatch before correction.
 
 The lead split isolated non-crate owner mutation execution into dev-loop issue #1848, owned here. Intl may land after #1840 without waiting for that harness. Intended durable owner mutations, to register and prove caught under #1848:
 
@@ -32,8 +32,10 @@ The lead split isolated non-crate owner mutation execution into dev-loop issue #
 
 No fake registry or README-only mutation proof is claimed. The unchanged controls, mutated generator preparation, package aliases, printer-module selection, leases and per-test target isolation must be validated by the existing runner under #1848.
 
-## Implemented owner proof
+## Current owner proof
 
-The existing runner now catches all 15 registered owner mutants: the 10 feature owners above and five source-runner safety rules. Each unchanged control executed the isolated owner and passed; the changed owner executed and its named test failed. Rebased focused model/Intl/source/inventory checks pass 13 tests / 330 assertions. The independent harness core passed check:fast --all in 7 min 57 s on 4652f8773; its core plus five self-mutants is packaged independently from the ten feature-dependent registrations, as approved by the lead. No full-compiler green claim is made.
+The published #1848 core is adopted via e9f75c3. Its five safety mutants and full checks are upstream evidence. Current combined Intl/model/registry/workspace focused suites pass 35 tests / 42,896 assertions. The ten dependent feature-owner registrations are retained in their own patch.
 
-Independent core proof is recorded in its ADR1154 and dev-loop ledger. Intl/model changes, their ten owner registrations and the #1840 reproduction were outside that core check. The earlier combined focused/mutation results remain evidence at their recorded base, and will be rechecked after feature adoption.
+Current actual owner batch catches 7 of 10; three generator preparations time out at 1 s and are INCONCLUSIVE under #1861. No larger-deadline retry was made. A quiet actual-workspace diagnostic measures 18 ms preparation after 1907 ms copying, so the concurrent failure still needs diagnosis. All workspaces are cleaned.
+
+The previous 15 of 15 combined private proof and 7 m 57 s independent-core full check belong to their recorded 4652 base, before the new preparation deadline. They do not establish current owner-batch success or validate the held Intl feature against P0#1840.

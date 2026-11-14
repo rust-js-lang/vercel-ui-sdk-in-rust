@@ -12,7 +12,7 @@ export interface DateParts {
 export type DateInput = string | Date | DateParts;
 
 /** Whether a value is a real ISO calendar date. */
-export function isISODate(value?: unknown | null | undefined): value is ISODate;
+export function isISODate(value?: unknown): value is ISODate;
 
 /** Reads calendar fields, or None for an invalid date. */
 export function dateParts(date?: string | null | undefined): DateParts | null | undefined;

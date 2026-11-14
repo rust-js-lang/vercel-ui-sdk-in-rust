@@ -1,12 +1,5 @@
 [
   {
-    "file": "1848-source-owner-mutations.patch",
-    "issues": [
-      1848
-    ],
-    "status": "Independent core check:fast --all passed on4652f8773 in7m57s; review pending"
-  },
-  {
     "file": "1830-1834-intl-arguments.patch",
     "issues": [
       1830,
@@ -23,6 +16,6 @@
       1836,
       1848
     ],
-    "status": "Owner registrations require both earlier patches"
+    "status": "Owner registrations require the Intl/model review patch and published upstream #1848 harness"
   }
 ]
