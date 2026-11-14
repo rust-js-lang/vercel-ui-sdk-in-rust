@@ -11,7 +11,7 @@ Upstream remains pinned at 220c1a0d7278872286a620a8e4ee4210ca46f9bd, Apache-2.0.
 | Full SDK compile | passes, including numeric grids and linked keyboard exports |
 | Native Rust | 20 tests pass |
 | Playwright Chromium | 10 tests pass for actual original and compiled event/lifecycle behavior |
-| Reference/type suite | Fresh current run: 46 pass, 3 fail, 294,091 assertions across 49 tests / 14 files |
+| Reference/type suite | Fresh current run: 46 pass, 4 fail, 294,092 assertions across 50 tests / 14 files |
 | Event declarations | Both unchanged original and generated consumer fixtures pass after declaring @rust-js/webapi |
 | Numeric keyboard | Four tests pass: orientation/direction/arrow/modifier matrix, composition, getter order and short circuiting |
 | Flattened-copy regression | passes unchanged after published fix ae1e605e6 |
@@ -25,6 +25,7 @@ This reference run followed the compiler upgrade and includes the ordered patch-
 - #1845: the original scrub result always owns point, even when undefined. A plain Rust Option field initialized with None is omitted. The guide documents that lowering; a required undefined-valued boundary form is missing.
 - #1846: the original stepBy checks property membership with the in operator. Untagged struct classification reads the bound field instead, changing Proxy/getter order. The existing test attribute is documented as a kind check; a membership form is needed.
 - #1847 was a P0: a copied flattened NumberRange read a nonexistent nested field. Published fix ae1e605e6 is adopted; the dedicated throwing-getter regression now passes unchanged.
+- #1853: the leaf now declares ISODate, but the root still reexports IsoDate, a name the leaf no longer exports. A new strict root consumer fails TS2724. This is a distinct uncovered reexport edge after the leaf alias fix; no Rust rename or handwritten declaration workaround is applied.
 - #1828: generated calendar declarations still lose the validator type predicate at this pin. ISODate naming (#1829) is now fixed and adopted. The original strict consumer passes; generated declarations still fail narrowing. Runtime comparisons pass. A newer published predicate API is available and adoption is next.
 - #1840 (P0): forwarding null as a Rust None to native optional arguments differs from undefined/literal None. The separate retained regression fails; the Intl feature is held for its fix.
 

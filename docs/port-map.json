@@ -211,7 +211,8 @@
         "monthGrid"
       ],
       "issues": [
-        "https://github.com/rust-js-lang/rust-js/issues/1828"
+        "https://github.com/rust-js-lang/rust-js/issues/1828",
+        "https://github.com/rust-js-lang/rust-js/issues/1853"
       ],
       "evidence": [
         "tests/calendar.test.ts",

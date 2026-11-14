@@ -91,3 +91,7 @@ for (const kind of ["upstream", "compiled"] as const) test("calendar declaration
     rmSync(directory, {recursive: true, force: true});
   }
 });
+
+test("root calendar reexports preserve the annotated ISODate name", () => {
+  expect(check(resolve(import.meta.dir, "types/root-calendar.ts"))).toEqual({exitCode: 0, diagnostics: ""});
+});
