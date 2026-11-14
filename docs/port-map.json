@@ -34,7 +34,9 @@
         "wrap"
       ],
       "issues": [
-        "https://github.com/rust-js-lang/rust-js/issues/1820"
+        "https://github.com/rust-js-lang/rust-js/issues/1845",
+        "https://github.com/rust-js-lang/rust-js/issues/1846",
+        "https://github.com/rust-js-lang/rust-js/issues/1847"
       ]
     },
     {
@@ -153,9 +155,7 @@
         "crates/core/src/foundation/kernel/events.rs",
         "docs/validation.md"
       ],
-      "issues": [
-        "https://github.com/rust-js-lang/rust-js/issues/1817"
-      ]
+      "issues": []
     },
     {
       "source": "packages/core/src/foundation/motion/physics.ts",
@@ -175,15 +175,14 @@
     {
       "source": "packages/core/src/foundation/number/keys.ts",
       "rust": "crates/core/src/foundation/number/keys.rs",
-      "status": "pending-compiler-unlinked",
+      "status": "runtime-verified-audit-pending",
       "exports": [
         "stepFromKey",
         "NumberKeyOptions"
       ],
-      "issues": [
-        "https://github.com/rust-js-lang/rust-js/issues/1818"
-      ],
+      "issues": [],
       "evidence": [
+        "tests/number-keys.test.ts",
         "docs/validation.md"
       ]
     },
@@ -213,7 +212,6 @@
         "monthGrid"
       ],
       "issues": [
-        "https://github.com/rust-js-lang/rust-js/issues/1827",
         "https://github.com/rust-js-lang/rust-js/issues/1828",
         "https://github.com/rust-js-lang/rust-js/issues/1829"
       ],

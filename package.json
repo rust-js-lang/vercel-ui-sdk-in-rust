@@ -19,7 +19,8 @@
     "test:projection": "bun scripts/build-core-probe.ts crates/core/src/foundation/motion/projection.rs && UI_SDK_PROJECTION_PROBE=1 bun test tests/projection.test.ts"
   },
   "dependencies": {
-    "@rust-js/std": "file:rust-js/std"
+    "@rust-js/std": "file:rust-js/std",
+    "@rust-js/webapi": "file:rust-js/webapi"
   },
   "devDependencies": {
     "@playwright/test": "1.65.0",

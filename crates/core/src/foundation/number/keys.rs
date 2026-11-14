@@ -1,5 +1,4 @@
 //! Rust adaptation of UI SDK foundation/number/keys.ts; see UPSTREAM.md.
-// Pending compiler #1818: not linked from number/mod.rs until the event intersection can flatten.
 // One keyboard map for numeric controls, as the APG's slider and spinbutton
 // patterns describe it, read into a move that step_by applies.
 use super::steps::{BoundMove, DirectionalMove, NumberBound, NumberMove, StepDirection, StepSize};
@@ -91,29 +90,29 @@ pub fn step_from_key(
     let flip = dir == WritingDirection::Rtl && orientation == Orientation::Horizontal;
     let vertical = if arrows == NumberArrows::Horizontal {
         None
+    } else if event.key == "ArrowUp" {
+        Some(StepDirection::Forward)
+    } else if event.key == "ArrowDown" {
+        Some(StepDirection::Backward)
     } else {
-        match event.key {
-            "ArrowUp" => Some(StepDirection::Forward),
-            "ArrowDown" => Some(StepDirection::Backward),
-            _ => None,
-        }
+        None
     };
     let horizontal = if arrows == NumberArrows::Vertical {
         None
+    } else if event.key == "ArrowRight" {
+        Some(if flip {
+            StepDirection::Backward
+        } else {
+            StepDirection::Forward
+        })
+    } else if event.key == "ArrowLeft" {
+        Some(if flip {
+            StepDirection::Forward
+        } else {
+            StepDirection::Backward
+        })
     } else {
-        match event.key {
-            "ArrowRight" => Some(if flip {
-                StepDirection::Backward
-            } else {
-                StepDirection::Forward
-            }),
-            "ArrowLeft" => Some(if flip {
-                StepDirection::Forward
-            } else {
-                StepDirection::Backward
-            }),
-            _ => None,
-        }
+        None
     };
     let direction = vertical.or(horizontal)?;
     Some(NumberMove::Directional(DirectionalMove {

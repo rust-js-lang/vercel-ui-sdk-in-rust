@@ -14,18 +14,20 @@ index b9e6a2f..a268134 100644
  
  | Suite | Size | What it proves | Time |
 diff --git a/builtins/coverage.ts b/builtins/coverage.ts
-index 9099e7f..e3f4983 100644
+index 9099e7f..c7c22ff 100644
 --- a/builtins/coverage.ts
 +++ b/builtins/coverage.ts
-@@ -12,6 +12,7 @@ import { readdirSync, readFileSync } from "node:fs";
+@@ -11,7 +11,8 @@
+ import { readdirSync, readFileSync } from "node:fs";
  import { join } from "node:path";
  
- import { open } from "@rust-js/typescript";
+-import { open } from "@rust-js/typescript";
++import { checkedMembers, open } from "@rust-js/typescript";
 +import { snake } from "../scripts/rust-names";
  
  /** The built-ins measured: classes, namespaces and objects of functions. */
  export const SCOPE = [
-@@ -45,12 +46,80 @@ export type Coverage = { all: string[]; covered: string[] };
+@@ -45,12 +46,104 @@ export type Coverage = { all: string[]; covered: string[] };
  const libs = new URL("../node_modules/typescript-es/lib/", import.meta.url).pathname;
  const src = new URL("./src/", import.meta.url).pathname;
  
@@ -37,20 +39,36 @@ index 9099e7f..e3f4983 100644
 +/** Native Rust callers derived from the pinned library's argument unions.
 + * Unknown future members fail here, rather than leaving narrower bindings green.
 + * Compile these callers: deleting a trait member must lose coverage too. */
-+export async function intlArgumentCases(): Promise<{ source: string; cases: number }> {
++export async function intlArgumentCases(): Promise<{ source: string; cases: number; sites: string[] }> {
 +  const files = libraryFiles();
 +  const session = await open(files);
 +  const aliases = new Map<string, any>();
-+  const methods = new Map<string, any[]>();
-+  let canonical: any[] | undefined;
++  const calls = new Map<string, { params: any[]; invoke: (args: string[]) => string }[]>();
++  const formatters = new Set(SCOPE.filter(name => name.startsWith("Intl.") && name !== "Intl.Locale").map(name => name.slice(5)));
++  const add = (name: string, params: any[], invoke: (args: string[]) => string) => {
++    calls.set(name, [...(calls.get(name) ?? []), {params, invoke}]);
++  };
 +  const walk = (declarations: any[], namespace = "") => {
 +    for (const d of declarations) {
 +      if (d.kind === "namespace") walk(d.declarations, namespace + d.name + ".");
 +      else if (d.kind === "type") aliases.set(namespace + d.name, d.type);
-+      else if (namespace === "Intl." && d.kind === "function" && d.name === "getCanonicalLocales") canonical = d.params;
-+      else if (namespace === "Intl." && d.kind === "interface" && d.name === "DateTimeFormat") {
-+        for (const m of d.members) if (m.kind === "method" && /^(format|formatToParts|formatRange|formatRangeToParts)$/.test(m.name)) {
-+          methods.set(m.name, m.params);
++      else if (namespace === "Intl." && d.kind === "function" && d.name === "getCanonicalLocales") {
++        add("Intl.getCanonicalLocales", d.params, args => "intl::get_canonical_locales(" + args.join(", ") + ")");
++      } else if (namespace === "Intl." && (d.kind === "interface" || (d.kind === "const" && d.type.kind === "object"))) {
++        const name = d.name.replace(/Constructor$/, "");
++        for (const m of checkedMembers(d.members ?? d.type.members)) {
++          if (formatters.has(name) && (m.kind === "construct" || (m.kind === "method" && m.name === "supportedLocalesOf"))) {
++            const method = m.kind === "construct" ? "new" : "supported_locales_of";
++            add("Intl." + name + "." + method, m.params, args => "intl::" + snake(name) + "::" + method + "(" + args.join(", ") + ")");
++          } else if (d.name === "DateTimeFormat" && m.kind === "method" && /^(format|formatToParts|formatRange|formatRangeToParts)$/.test(m.name)) {
++            add("Intl.DateTimeFormat." + m.name, m.params, args => "formatter." + snake(m.name) + "(" + args.join(", ") + ")");
++          }
++        }
++      } else if (d.kind === "interface" && (d.name === "Date" || d.name === "String")) {
++        for (const m of checkedMembers(d.members)) if (m.kind === "method" && /^toLocale(String|DateString|TimeString|LowerCase|UpperCase)$/.test(m.name) && m.params.length) {
++          add(d.name + "." + m.name, m.params, args => d.name === "Date"
++            ? "date." + snake(m.name) + "(" + args.join(", ") + ")"
++            : "js::string::" + snake(m.name) + '("TEXT", ' + args.join(", ") + ")");
 +        }
 +      }
 +    }
@@ -77,26 +95,34 @@ index 9099e7f..e3f4983 100644
 +    });
 +    throw new Error("uncovered Intl argument member: " + JSON.stringify(type));
 +  };
-+  const locale = aliases.get("Intl.LocalesArgument");
-+  if (!locale || methods.size !== 4) throw new Error("the pinned Intl argument declarations changed");
-+  const source = ['use js::intl;', 'pub fn coverage(formatter: &intl::DateTimeFormat) {'];
-+  const argument = (value: string | undefined, optional: boolean) => value === undefined ? "None" : optional ? `Some(&${value})` : value;
-+  for (const value of values(locale)) source.push(`    let _ = intl::date_time_format::new(${argument(value, true)}, None);`);
-+  if (!canonical) throw new Error("getCanonicalLocales declaration missing");
-+  for (const value of values(canonical[0].type)) source.push(`    let _ = intl::get_canonical_locales(${argument(value, true)});`);
-+  for (const [method, params] of methods) {
-+    for (let i = 0; i < params.length; i++) {
-+      const param = params[i];
-+      const variants = values(param.type);
-+      if (param.optional && !variants.includes(undefined)) variants.push(undefined);
-+      for (const value of variants) {
-+        const args = params.map((p, j) => argument(i === j ? value : values(p.type).find(v => v !== undefined), p.optional));
-+        source.push(`    let _ = formatter.${snake(method)}(${args.join(", ")});`);
++  const source = ['use js::intl;'];
++  const options = new Map<string, string>();
++  const emitted = new Set<string>();
++  for (const overloads of calls.values()) for (const {params, invoke} of overloads) {
++    const variants = params.map(p => {
++      if (p.name === "options") {
++        const name = p.type.kind === "reference" && p.type.name !== "Pick"
++          ? p.type.name.replace(/^Intl\./, "") : "SupportedLocalesOptions";
++        const value = "options_" + snake(name);
++        options.set(name, value);
++        return [value, ...(p.optional ? [undefined] : [])];
 +      }
++      const result = values(p.type);
++      return p.optional && !result.includes(undefined) ? [...result, undefined] : result;
++    });
++    const argument = (value: string | undefined, index: number) => {
++      if (value === undefined) return "None";
++      if (params[index].name === "options") return params[index].optional ? `Some(${value})` : value;
++      if (params[index].optional || variants[index].includes(undefined) || overloads.some(o => o.params[index]?.optional || (o.params[index] && o.params[index].name !== "options" && values(o.params[index].type).includes(undefined)))) return `Some(&${value})`;
++      return value;
++    };
++    for (let i = 0; i < params.length; i++) for (const value of variants[i]) {
++      const args = params.map((_, j) => argument(i === j ? value : variants[j][0], j));
++      emitted.add("    let _ = " + invoke(args) + ";");
 +    }
 +  }
-+  source.push('}');
-+  return {source: source.join("\n") + "\n", cases: source.length - 3};
++  source.push("pub fn coverage(formatter: &intl::DateTimeFormat, date: &js::Date, " + [...options].map(([name, value]) => `${value}: &intl::${name}`).join(", ") + ") {", ...emitted, "}");
++  return {source: source.join("\n") + "\n", cases: emitted.size, sites: [...calls.keys()].sort()};
 +}
 +
  /** Each built-in's members: instance ones by name, `static:` ones, and
@@ -109,8 +135,28 @@ index 9099e7f..e3f4983 100644
    const session = await open(files);
    const interfaces = new Map<string, Set<string>>();
    const heritage = new Map<string, string[]>();
+@@ -62,7 +155,7 @@ async function typescript(): Promise<Map<string, Set<string>>> {
+       const name = prefix + d.name;
+       if (d.kind === "interface") {
+         const set = interfaces.get(name) ?? new Set<string>();
+-        for (const m of d.members) if (named(m)) set.add(m.name);
++        for (const m of checkedMembers(d.members)) if (named(m)) set.add(m.name);
+         interfaces.set(name, set);
+         // What it extends, by its name in the namespace it's in.
+         const parents = d.extends.filter((e: any) => e.kind === "reference").map((e: any) => prefix + e.name);
+@@ -70,8 +163,8 @@ async function typescript(): Promise<Map<string, Set<string>>> {
+       } else if (d.kind === "const") {
+         if (d.type.kind === "reference") constructors.set(name, prefix + d.type.name);
+         else if (d.type.kind === "object") {
+-          const statics = new Set<string>(d.type.members.filter(named).map((m: any) => m.name));
+-          const ctor = d.type.members.some((m: any) => m.kind === "other" && /^new\s*[(<]/.test(m.text.replace(/\/\*[\s\S]*?\*\//g, "").trim()));
++          const statics = new Set<string>(checkedMembers(d.type.members).filter(named).map((m: any) => m.name));
++          const ctor = checkedMembers(d.type.members).some((m: any) => m.kind === "construct");
+           constructors.set(name, { statics, ctor });
+         }
+       } else if (d.kind === "function") {
 diff --git a/builtins/intl.ts b/builtins/intl.ts
-index 224a4a1..57736d4 100644
+index 224a4a1..544917c 100644
 --- a/builtins/intl.ts
 +++ b/builtins/intl.ts
 @@ -20,8 +20,11 @@ const close = () => {
@@ -163,7 +209,21 @@ index 224a4a1..57736d4 100644
    line(`#[derive(Clone, Debug, PartialEq)]`);
    line(`pub struct ${name} {`);
    for (const f of fields) field(f);
-@@ -106,12 +124,12 @@ const formatter = (name: string, doc: string, methods: [string, string, string][
+@@ -85,9 +103,12 @@ const classed = (name: string) => {
+ 
+ /** A formatter: its type, its methods, and its module's constructor and
+  * `supportedLocalesOf`. */
+-const formatter = (name: string, doc: string, methods: [string, string, string][], ctor: { options: string; result?: string; doc?: string }) => {
++// lib.es2020.intl.d.ts:453/459/465 reuse constructor options for these formatters;
++// lib.es2020.intl.d.ts also names RelativeTimeFormatOptions for its static.
++const formatter = (name: string, doc: string, methods: [string, string, string][], ctor: { options: string; result?: string; doc?: string; supportedOptions?: "constructor" }) => {
+   const js = `Intl.${name}`;
+   const module = snake(name);
++  const supportedOptions = ctor.supportedOptions === "constructor" ? ctor.options : "SupportedLocalesOptions";
+   line(`/// [\`${js}\`](${page(name)}): ${doc}`);
+   line(`#[cfg_attr(rust_js, rust_js::name = ${JSON.stringify(js)})]`);
+   line(`#[cfg_attr(rust_js, rust_js::types = ${JSON.stringify(js)})]`);
+@@ -106,12 +127,12 @@ const formatter = (name: string, doc: string, methods: [string, string, string][
    method(
      ctor.doc ?? `[\`new ${js}(locales, options)\`](${page(`${name}/${name}`)}): one of the first of \`locales\` it has, or the user's of none, as \`options\` say.`,
      `new ${js}`,
@@ -174,11 +234,11 @@ index 224a4a1..57736d4 100644
      `[\`${js}.supportedLocalesOf(locales)\`](${page(`${name}/supportedLocalesOf`)}): those of \`locales\` it has, without falling back to the user's.`,
      `${js}.supportedLocalesOf`,
 -    "supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String>",
-+    "supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String>",
++    `supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&${supportedOptions}${borrowing.has(supportedOptions) ? "<'_>" : ""}>) -> Vec<String>`,
    );
    close();
    line("}");
-@@ -123,7 +141,7 @@ const resolved = (name: string) => [`[\`${name.toLowerCase()}.resolvedOptions()\
+@@ -123,7 +144,7 @@ const resolved = (name: string) => [`[\`${name.toLowerCase()}.resolvedOptions()\
  line("//! JS's [`Intl`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl):");
  line("//! text, numbers, dates, plurals and lists as a locale writes them (ADR 0283),");
  line("//! as TypeScript's `lib.es*.intl.d.ts` and ReScript's `Stdlib_Intl` have it.");
@@ -187,7 +247,7 @@ index 224a4a1..57736d4 100644
  line("//! options, `&NumberFormatOptions { style: Some(NumberStyle::Currency), ..Default::default() }`,");
  line("//! of which JS throws a `RangeError` of one it can't have.");
  line("//! Generated by `builtins/intl.ts`; edit the shape there.");
-@@ -132,8 +150,49 @@ line();
+@@ -132,8 +153,49 @@ line();
  line("use core::cmp::Ordering;");
  line("use core::marker::PhantomData;");
  line();
@@ -238,13 +298,13 @@ index 224a4a1..57736d4 100644
  
  // ── What's shared ───────────────────────────────────────────────────────
  
-@@ -142,12 +201,13 @@ union("Style", "How wide a word is written: `\"long\"`, `\"short\"` or `\"narrow
+@@ -142,12 +204,13 @@ union("Style", "How wide a word is written: `\"long\"`, `\"short\"` or `\"narrow
  union("CaseFirst", "Which of upper and lower case is ordered first: `caseFirst`.", ["upper", "lower", "false"]);
  union("HourCycle", "How hours are counted: `hourCycle`, `\"h23\"` from 0 to 23.", ["h11", "h12", "h23", "h24"]);
  union("RangeSource", "Which of a range's ends a part is of: `source`.", ["startRange", "endRange", "shared"]);
 -options("SupportedLocalesOptions", "What `supported_locales_of` is given.", [["localeMatcher", "LocaleMatcher"]]);
 +// These two shapes are anonymous in the pinned lib; refer to their actual owner.
-+options("SupportedLocalesOptions", "What `supported_locales_of` is given.", [["localeMatcher", "&'a str"]], [], null);
++options("SupportedLocalesOptions", "What `supported_locales_of` is given.", [["localeMatcher", "LocaleMatcher"]], [], null);
  
  // ── Intl ────────────────────────────────────────────────────────────────
  
@@ -254,7 +314,25 @@ index 224a4a1..57736d4 100644
  method(`[\`Intl.supportedValuesOf(key)\`](${page("supportedValuesOf")}): the calendars, currencies, time zones or units it has.`, "Intl.supportedValuesOf", "supported_values_of(key: SupportedValuesKey) -> Vec<String>", "");
  
  // ── Collator ────────────────────────────────────────────────────────────
-@@ -248,10 +308,10 @@ record("DateTimeFormatPart", "A part of a written date: `formatToParts`'.", [["t
+@@ -165,7 +228,7 @@ record("ResolvedCollatorOptions", "What a collator uses.", [
+ formatter("Collator", "text compared as a locale orders it.", [
+   [`[\`collator.compare(a, b)\`](${page("Collator/compare")}): how \`a\` is ordered to \`b\`, \`v.sort_by(|a, b| collator.compare(a, b))\`; JS's -1, 0 or 1 (ADR 0057).`, "compare", "compare(&self, a: &str, b: &str) -> Ordering"],
+   resolved("Collator"),
+-], { options: "CollatorOptions" });
++], { options: "CollatorOptions", supportedOptions: "constructor" });
+ 
+ // ── NumberFormat ────────────────────────────────────────────────────────
+ 
+@@ -218,7 +281,7 @@ formatter("NumberFormat", "numbers written as a locale writes them.", [
+   [`[\`format.formatRange(start, end)\`](${nf("formatRange")}): the range written, \`$3–5\`.`, "formatRange", "format_range(&self, start: f64, end: f64) -> String"],
+   [`[\`format.formatRangeToParts(start, end)\`](${nf("formatRangeToParts")}): the range written, part by part.`, "formatRangeToParts", "format_range_to_parts(&self, start: f64, end: f64) -> Vec<NumberRangeFormatPart>"],
+   resolved("NumberFormat"),
+-], { options: "NumberFormatOptions" });
++], { options: "NumberFormatOptions", supportedOptions: "constructor" });
+ 
+ // ── DateTimeFormat ──────────────────────────────────────────────────────
+ 
+@@ -248,12 +311,12 @@ record("DateTimeFormatPart", "A part of a written date: `formatToParts`'.", [["t
  record("DateTimeRangeFormatPart", "A part of a written range of dates, and which end it's of.", [["type", "DateTimeFormatPartType"], ["value", "String"], ["source", "RangeSource"]]);
  const dtf = (m: string) => page(`DateTimeFormat/${m}`);
  formatter("DateTimeFormat", "dates written as a locale writes them.", [
@@ -267,9 +345,21 @@ index 224a4a1..57736d4 100644
 +  [`[\`format.formatRange(start, end)\`](${dtf("formatRange")}): the range written, \`Jan 10 – 20, 2007\`.`, "formatRange", "format_range(&self, start: impl IntoBigIntOrDateOrNumber, end: impl IntoBigIntOrDateOrNumber) -> String"],
 +  [`[\`format.formatRangeToParts(start, end)\`](${dtf("formatRangeToParts")}): the range written, part by part.`, "formatRangeToParts", "format_range_to_parts(&self, start: impl IntoBigIntOrDateOrNumber, end: impl IntoBigIntOrDateOrNumber) -> Vec<DateTimeRangeFormatPart>"],
    resolved("DateTimeFormat"),
- ], { options: "DateTimeFormatOptions" });
+-], { options: "DateTimeFormatOptions" });
++], { options: "DateTimeFormatOptions", supportedOptions: "constructor" });
  
-@@ -291,7 +351,7 @@ union("ListFormatType", "What a list says: `\"conjunction\"` `a, b, and c`, `\"d
+ // ── PluralRules ─────────────────────────────────────────────────────────
+ 
+@@ -283,7 +346,7 @@ formatter("RelativeTimeFormat", "a time from now written as a locale writes it,
+   [`[\`format.format(value, unit)\`](${rtf("format")}): \`value\` \`unit\`s from now written, ago if negative.`, "format", "format(&self, value: f64, unit: RelativeTimeUnit) -> String"],
+   [`[\`format.formatToParts(value, unit)\`](${rtf("formatToParts")}): written, part by part.`, "formatToParts", "format_to_parts(&self, value: f64, unit: RelativeTimeUnit) -> Vec<RelativeTimeFormatPart>"],
+   resolved("RelativeTimeFormat"),
+-], { options: "RelativeTimeFormatOptions" });
++], { options: "RelativeTimeFormatOptions", supportedOptions: "constructor" });
+ 
+ // ── ListFormat ──────────────────────────────────────────────────────────
+ 
+@@ -291,7 +354,7 @@ union("ListFormatType", "What a list says: `\"conjunction\"` `a, b, and c`, `\"d
  union("ListFormatPartType", "What a part of a written list is: an item, or what's between.", ["element", "literal"]);
  options("ListFormatOptions", "What [`list_format::new`] is given.", [["localeMatcher", "LocaleMatcher"], ["type", "ListFormatType"], ["style", "Style"]]);
  record("ResolvedListFormatOptions", "What a list format uses.", [["locale", "String"], ["style", "Style"], ["type", "ListFormatType"]]);
@@ -315,7 +405,7 @@ index c99fc8c..632d4d9 100644
      }
  }
 diff --git a/builtins/src/intl.rs b/builtins/src/intl.rs
-index 5370468..e56bd69 100644
+index 5370468..4103f8a 100644
 --- a/builtins/src/intl.rs
 +++ b/builtins/src/intl.rs
 @@ -1,7 +1,7 @@
@@ -414,19 +504,14 @@ index 5370468..e56bd69 100644
  
  /// How a locale is matched to `locales`: `localeMatcher`.
  #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-@@ -69,9 +147,10 @@ pub enum RangeSource {
+@@ -69,6 +147,7 @@ pub enum RangeSource {
  
  /// What `supported_locales_of` is given.
  /// A JS object of these fields, a `None` one not given: `..Default::default()` the rest.
-+#[cfg_attr(rust_js, rust_js::types = "{ localeMatcher?: string }")]
++#[cfg_attr(rust_js, rust_js::types = "{ localeMatcher?: \"lookup\" | \"best fit\" }")]
  #[derive(Default)]
--pub struct SupportedLocalesOptions {
--    pub locale_matcher: Option<LocaleMatcher>,
-+pub struct SupportedLocalesOptions<'a> {
-+    pub locale_matcher: Option<&'a str>,
- }
- 
- /// What `supported_values_of` lists.
+ pub struct SupportedLocalesOptions {
+     pub locale_matcher: Option<LocaleMatcher>,
 @@ -93,7 +172,7 @@ pub enum SupportedValuesKey {
  
  /// [`Intl.getCanonicalLocales(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/getCanonicalLocales): `locales`, each as JS writes it, once, or the `RangeError` of one that isn't a locale.
@@ -464,7 +549,7 @@ index 5370468..e56bd69 100644
      /// [`Intl.Collator.supportedLocalesOf(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/Collator/supportedLocalesOf): those of `locales` it has, without falling back to the user's.
      #[cfg_attr(rust_js, rust_js::link_name = "Intl.Collator.supportedLocalesOf")]
 -    pub fn supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String> {
-+    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String> {
++    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&CollatorOptions<'_>>) -> Vec<String> {
          unreachable!()
      }
  }
@@ -512,7 +597,7 @@ index 5370468..e56bd69 100644
      /// [`Intl.NumberFormat.supportedLocalesOf(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/supportedLocalesOf): those of `locales` it has, without falling back to the user's.
      #[cfg_attr(rust_js, rust_js::link_name = "Intl.NumberFormat.supportedLocalesOf")]
 -    pub fn supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String> {
-+    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String> {
++    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&NumberFormatOptions<'_>>) -> Vec<String> {
          unreachable!()
      }
  }
@@ -590,7 +675,7 @@ index 5370468..e56bd69 100644
      /// [`Intl.DateTimeFormat.supportedLocalesOf(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/supportedLocalesOf): those of `locales` it has, without falling back to the user's.
      #[cfg_attr(rust_js, rust_js::link_name = "Intl.DateTimeFormat.supportedLocalesOf")]
 -    pub fn supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String> {
-+    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String> {
++    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&DateTimeFormatOptions<'_>>) -> Vec<String> {
          unreachable!()
      }
  }
@@ -622,7 +707,7 @@ index 5370468..e56bd69 100644
      /// [`Intl.PluralRules.supportedLocalesOf(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/PluralRules/supportedLocalesOf): those of `locales` it has, without falling back to the user's.
      #[cfg_attr(rust_js, rust_js::link_name = "Intl.PluralRules.supportedLocalesOf")]
 -    pub fn supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String> {
-+    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String> {
++    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions>) -> Vec<String> {
          unreachable!()
      }
  }
@@ -662,7 +747,7 @@ index 5370468..e56bd69 100644
      /// [`Intl.RelativeTimeFormat.supportedLocalesOf(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/RelativeTimeFormat/supportedLocalesOf): those of `locales` it has, without falling back to the user's.
      #[cfg_attr(rust_js, rust_js::link_name = "Intl.RelativeTimeFormat.supportedLocalesOf")]
 -    pub fn supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String> {
-+    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String> {
++    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&RelativeTimeFormatOptions>) -> Vec<String> {
          unreachable!()
      }
  }
@@ -702,7 +787,7 @@ index 5370468..e56bd69 100644
      /// [`Intl.ListFormat.supportedLocalesOf(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/ListFormat/supportedLocalesOf): those of `locales` it has, without falling back to the user's.
      #[cfg_attr(rust_js, rust_js::link_name = "Intl.ListFormat.supportedLocalesOf")]
 -    pub fn supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String> {
-+    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String> {
++    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions>) -> Vec<String> {
          unreachable!()
      }
  }
@@ -734,7 +819,7 @@ index 5370468..e56bd69 100644
      /// [`Intl.DisplayNames.supportedLocalesOf(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DisplayNames/supportedLocalesOf): those of `locales` it has, without falling back to the user's.
      #[cfg_attr(rust_js, rust_js::link_name = "Intl.DisplayNames.supportedLocalesOf")]
 -    pub fn supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String> {
-+    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String> {
++    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions>) -> Vec<String> {
          unreachable!()
      }
  }
@@ -781,7 +866,7 @@ index 5370468..e56bd69 100644
      /// [`Intl.Segmenter.supportedLocalesOf(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/Segmenter/supportedLocalesOf): those of `locales` it has, without falling back to the user's.
      #[cfg_attr(rust_js, rust_js::link_name = "Intl.Segmenter.supportedLocalesOf")]
 -    pub fn supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String> {
-+    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String> {
++    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions>) -> Vec<String> {
          unreachable!()
      }
  }
@@ -807,11 +892,44 @@ index 81be932..b1bdfce 100644
          unreachable!()
      }
  }
+diff --git a/docs/decisions/0206-typescript-module.md b/docs/decisions/0206-typescript-module.md
+index 76c17a9..f8e808f 100644
+--- a/docs/decisions/0206-typescript-module.md
++++ b/docs/decisions/0206-typescript-module.md
+@@ -76,3 +76,28 @@ await ts.close();
+ - **The compiler prints through the package a project has installed**, so
+   a change to the model needs both released together: an older
+   `@rust-js/typescript` can't print a newer compiler's type parameters.
++
++## Amendment (2026-11-15): construct signatures are structured members
++
++A Member of kind construct holds typeParameters, params and returns, read
++with the existing readers and printed by TypeScript
++createConstructSignatureDeclaration. It is distinct from a method named
++new (quoted by the printer) and from a class constructor. Interfaces and
++object types share this one model. Optional and rest parameters, generic
++constraints and the return type survive a read/print/read round trip.
++
++Builtins and WebAPI coverage consume construct members to count
++constructors; the old raw-text new regexes are removed. Property/method
++readers deliberately skip construct members. checkedMembers, owned by this
++module, validates the Member discriminants before those readers select
++the kinds they consume; an unknown kind throws. It preserves the input
++type and does not validate or invent field representations. The negative
++protocol test supplies an unknown member to both the guard and printer.
++Rust transports JSON models to the printer; existing Rust declaration
++producers continue producing their existing property/method/index members.
++
++This follows ADR 0262 case N: these are TypeScript syntax/model boundaries,
++with no new Rust/JavaScript semantic exception. Tests cover both interface
++and nested object positions, a method literally named new, optional/rest
++arguments, generic constraints and exact round trips. Intl coverage uses
++the same constructor model to exercise every changed native call site.
 diff --git a/docs/decisions/0283-js-crate-covers-typescripts-es-library.md b/docs/decisions/0283-js-crate-covers-typescripts-es-library.md
-index 4b812a8..fac623e 100644
+index 4b812a8..74725a7 100644
 --- a/docs/decisions/0283-js-crate-covers-typescripts-es-library.md
 +++ b/docs/decisions/0283-js-crate-covers-typescripts-es-library.md
-@@ -439,3 +439,43 @@ the infinities among them, each beside counts 0, 1, 2.7, 15, 100, 101, -1,
+@@ -439,3 +439,54 @@ the infinities among them, each beside counts 0, 1, 2.7, 15, 100, 101, -1,
  `NaN`, `Infinity` and none, each answer or error against JS's own; the
  stepping's `Number((distance / step).toPrecision(15))`; and the JS,
  `x.toFixed(digits)` and `x.toPrecision(precision)`.
@@ -834,8 +952,11 @@ index 4b812a8..fac623e 100644
 +  input trait, reused by its methods. They forward values unchanged,
 +  including native errors and coercion; there is no runtime adapter.
 +- Options are optional where TypeScript makes them optional. DisplayNames'
-+  options remain required. SupportedLocalesOptions' localeMatcher is a
-+  string, as its anonymous native declaration says.
++  options remain required. SupportedLocalesOptions' localeMatcher remains
++  LocaleMatcher, the exact lookup/best-fit union. Collator, DateTimeFormat,
++  NumberFormat and RelativeTimeFormat supportedLocalesOf take their full
++  formatter options, as the pinned overloads specify; the others take the
++  matcher-only shape.
 +- Native Intl records/options carry their actual native TypeScript types.
 +  Named records use their names; the two anonymous records derive their
 +  structural type from the same field catalog that generates their Rust,
@@ -855,6 +976,14 @@ index 4b812a8..fac623e 100644
 +an admitted Rust member fails the derived callers. The same library-file
 +selection owns member coverage and argument coverage. Public Result return
 +declarations remain the separately tracked #1835 limitation.
++
++The argument-coverage test reads structured construct signatures through
++ADR 0206, never a regex over their source. It covers all 26 changed sites:
++eight constructors, eight supportedLocalesOf statics, three Date methods,
++two String methods, four DateTimeFormat methods and getCanonicalLocales.
++Every overload contributes accepted union members. Typed option inputs also
++catch narrowing a full formatter options type to matcher-only. Unknown
++argument members fail coverage rather than silently disappear.
 diff --git a/docs/dev-loop.md b/docs/dev-loop.md
 index 0c18d64..1476739 100644
 --- a/docs/dev-loop.md
@@ -866,10 +995,10 @@ index 0c18d64..1476739 100644
 +
 +| Intl private-clone validation, 2026-11-15 (#1830/#1834) | First check:fast --all hit its 480 s overall deadline: all 14 corpus parts passed in 191–207 s each, the browser group in 4 min, with remaining suites still active. Both private and main-clone map stores were empty; restoring 64 ancestors did not recover a map. TypeScript annotation and load-aware timeout failures were separately fixed and rechecked. Clean-base map recording then hit its 270 s deadline: counting compiler build 72 s, corpus parts 64–74 s, std-iterator parts 85–92 s, with further mapped files still running. No map was published; complete feature work was restored from its durable patch, and recorder PIDs were verified absent. Recording costs exceed the documented ~130 s on this machine. A coordinated warm rerun at the same 480 s deadline passed all planned gates in 289 s: corpus parts 34–45 s, browsers 212 s, other 291 files 244 s; cores 86% busy, under half busy 12% of the run. Cache warmth and the quiet heavy-work window both changed, so their effects are not isolated. The P0 #1840 regression was created after that run began and fails separately; this is not a claim that current HEAD plus that new regression is green. | test/intl-arguments.test.ts; scripts/testMap.ts; check logs 2026-11-14T18-58-02-436Z-64140 |
 diff --git a/docs/guide/libraries/README.md b/docs/guide/libraries/README.md
-index f08c52a..46bca07 100644
+index f08c52a..37e963b 100644
 --- a/docs/guide/libraries/README.md
 +++ b/docs/guide/libraries/README.md
-@@ -191,6 +191,19 @@ What it has:
+@@ -191,6 +191,22 @@ What it has:
    `&f64::sqrt` lent as a `&dyn Fn`, is `Math.sqrt`, and `std::f64::consts::PI` is `Math.PI`
    ([Numbers](../interop/types.md#numbers),
    [ADR 0887](../../decisions/0887-std-items-that-are-math-are-math.md)).
@@ -885,16 +1014,245 @@ index f08c52a..46bca07 100644
 +  preserve the engine's native coercion and errors. getCanonicalLocales uses
 +  its distinct string/list-only contract, with None for no locales.
 +  Date and String locale methods take the same locale union as formatters.
++  supported_locales_of takes full formatter options for Collator,
++  DateTimeFormat, NumberFormat and RelativeTimeFormat; other formatters
++  use SupportedLocalesOptions with a LocaleMatcher enum.
 +  Native formatter records remain typed when exported from Rust.
  - **The rest of the ES library:** `Date`, `Intl`'s formatters, typed arrays
    and `ArrayBuffer`, `Atomics`, `Symbol`, `WeakMap`, `WeakRef`,
    `FinalizationRegistry`, `Proxy`, `Reflect`, `encode_uri_component` and
+diff --git a/next/coverage.ts b/next/coverage.ts
+index f4debd2..f2486a1 100644
+--- a/next/coverage.ts
++++ b/next/coverage.ts
+@@ -7,7 +7,7 @@
+ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+ import { dirname, join, resolve } from "node:path";
+ 
+-import { open } from "@rust-js/typescript";
++import { checkedMembers, open } from "@rust-js/typescript";
+ import { camelCase } from "../scripts/rust-names";
+ 
+ const next = join(import.meta.dir, "../examples/next/node_modules/next");
+@@ -108,7 +108,7 @@ function shapesOf(path: string, declarations: any[]) {
+     seen.add(d);
+     if (d.kind === "interface") {
+       const inherited = (d.extends ?? []).flatMap((e: any) => (e.kind === "reference" ? of(index.get(e.name), seen) : []));
+-      return [...d.members.filter(named).map((m: any) => m.name), ...inherited];
++      return [...checkedMembers(d.members).filter(named).map((m: any) => m.name), ...inherited];
+     }
+     if (d.kind === "type") return typed(d.type, seen);
+     if (d.kind === "class") return d.members;
+@@ -118,7 +118,7 @@ function shapesOf(path: string, declarations: any[]) {
+     if (!t) return [];
+     switch (t.kind) {
+       case "object":
+-        return t.members.filter(named).map((m: any) => m.name);
++        return checkedMembers(t.members).filter(named).map((m: any) => m.name);
+       case "intersection":
+       case "union":
+         return t.types.flatMap((part: any) => typed(part, seen));
+diff --git a/next/generate-fonts.ts b/next/generate-fonts.ts
+index b7d737e..019dafe 100644
+--- a/next/generate-fonts.ts
++++ b/next/generate-fonts.ts
+@@ -12,7 +12,7 @@
+ import { readFileSync, writeFileSync } from "node:fs";
+ import { join } from "node:path";
+ 
+-import { open } from "@rust-js/typescript";
++import { checkedMembers, open } from "@rust-js/typescript";
+ 
+ const next = join(import.meta.dir, "../examples/next/node_modules/next");
+ const declarations = join(next, "dist/compiled/@next/font/dist/google/index.d.ts");
+@@ -55,7 +55,7 @@ const fonts: Font[] = [];
+ for (const d of found) {
+   if (d.kind !== "function") continue;
+   const [options] = d.params;
+-  const members: Member[] = options.type.members;
++  const members: Member[] = checkedMembers(options.type.members).filter((m: Member) => m.kind === "property");
+   for (const m of members) {
+     if (m.name in values) literals(m.type).forEach((v) => values[m.name as keyof typeof values].add(v));
+   }
+diff --git a/node/coverage.ts b/node/coverage.ts
+index 42ad9e7..b04842c 100644
+--- a/node/coverage.ts
++++ b/node/coverage.ts
+@@ -11,7 +11,7 @@
+ import { readdirSync, readFileSync, statSync } from "node:fs";
+ import { join } from "node:path";
+ 
+-import { open } from "@rust-js/typescript";
++import { checkedMembers, open } from "@rust-js/typescript";
+ 
+ const types = join(import.meta.dir, "../node_modules/@types/node");
+ const src = join(import.meta.dir, "src");
+@@ -120,7 +120,7 @@ async function declared(): Promise<Map<string, Map<string, Kind>>> {
+         for (const d of module.declarations) {
+           if (d.kind === "const" && d.name === assigned && d.type?.kind === "reference") {
+             const shape = interfaces.get(d.type.name.split(".").pop());
+-            for (const m of shape?.members ?? []) if ((m.kind === "method" || m.kind === "property") && /^[A-Za-z_$][\w$]*$/.test(m.name)) own.set(m.name, "value");
++            for (const m of checkedMembers(shape?.members ?? [])) if ((m.kind === "method" || m.kind === "property") && /^[A-Za-z_$][\w$]*$/.test(m.name)) own.set(m.name, "value");
+           }
+           if (d.kind === "namespace" && d.name === assigned) {
+             for (const inner of d.declarations) {
+@@ -150,7 +150,7 @@ async function declared(): Promise<Map<string, Map<string, Kind>>> {
+     const find = (list: any[]) => {
+       for (const d of list) {
+         if (d.kind === "interface" && d.name === shape) {
+-          for (const m of d.members) if ((m.kind === "method" || m.kind === "property") && /^[A-Za-z_$][\w$]*$/.test(m.name)) members.set(m.name, "value");
++          for (const m of checkedMembers(d.members)) if ((m.kind === "method" || m.kind === "property") && /^[A-Za-z_$][\w$]*$/.test(m.name)) members.set(m.name, "value");
+         }
+         if (d.declarations) find(d.declarations);
+       }
+diff --git a/react/attributes.ts b/react/attributes.ts
+index bc2d486..e9bc8ae 100644
+--- a/react/attributes.ts
++++ b/react/attributes.ts
+@@ -9,7 +9,7 @@
+ 
+ import { readFileSync, writeFileSync } from "node:fs";
+ import { join } from "node:path";
+-import { open } from "@rust-js/typescript";
++import { checkedMembers, open } from "@rust-js/typescript";
+ import { needsJsName, snake } from "../scripts/rust-names";
+ import { EVENT_TYPES } from "./names";
+ 
+@@ -36,7 +36,7 @@ const aliases = new Map<string, Model>(
+ // The element each interface types, `HTMLAnchorElement` of `<a>`'s: one
+ // interface of several elements' is their base's.
+ const elementOf = new Map<string, Set<string>>();
+-for (const member of intrinsic.members) {
++for (const member of checkedMembers(intrinsic.members).filter((m: Model) => m.kind === "property")) {
+   const [attributes, element] = member.type.args ?? [];
+   const props = attributes?.kind === "reference" && attributes.args?.[0]?.kind === "reference" ? attributes : null;
+   if (!props || element?.kind !== "reference") continue;
+@@ -60,7 +60,7 @@ const element = (name: string, base: string) => {
+ // a struct flattens one other only.
+ type Struct = { rust: string; ts: string; element: string; own: Model[]; flatten?: { field: string; struct: string } };
+ const structs: Struct[] = [];
+-const flat = (name: string) => [interfaces.get("AriaAttributes"), interfaces.get("DOMAttributes"), interfaces.get(name)].flatMap((i) => i.members);
++const flat = (name: string) => [interfaces.get("AriaAttributes"), interfaces.get("DOMAttributes"), interfaces.get(name)].flatMap((i) => checkedMembers(i.members));
+ structs.push({ rust: "HTMLAttributes", ts: "HTMLAttributes", element: "HTMLElement", own: flat("HTMLAttributes") });
+ structs.push({ rust: "SVGAttributes", ts: "SVGAttributes", element: "SVGElement", own: flat("SVGAttributes") });
+ // As @types/react names it: `AnchorHTMLAttributes`.
+@@ -75,7 +75,7 @@ for (const [name, declaration] of interfaces) {
+     rust: rustName(name),
+     ts: name,
+     element: element(name, "HTMLElement"),
+-    own: declaration.members,
++    own: checkedMembers(declaration.members),
+     flatten: { field: base.name === "HTMLAttributes" ? "html" : snake(base.name.replace("HTMLAttributes", "")), struct: rustName(base.name) },
+   });
+ }
+@@ -197,7 +197,7 @@ for (const struct of structs) {
+ // `ClassAttributes`'s, is hand-written).
+ for (const [name, declaration] of interfaces) {
+   if (!/^SVG\w+ElementAttributes$/.test(name)) continue;
+-  if (declaration.members.length || declaration.extends.length !== 1 || declaration.extends[0].name !== "SVGProps") {
++  if (checkedMembers(declaration.members).length || declaration.extends.length !== 1 || declaration.extends[0].name !== "SVGProps") {
+     throw new Error(`${name} isn't SVGProps alone`);
+   }
+   const of = name.replace(/Attributes$/, "");
+diff --git a/react/generate.ts b/react/generate.ts
+index 4fd37fd..1daef68 100644
+--- a/react/generate.ts
++++ b/react/generate.ts
+@@ -19,7 +19,7 @@ import { spawnSync } from "node:child_process";
+ import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+ import { createRequire } from "node:module";
+ import { join } from "node:path";
+-import { open } from "@rust-js/typescript";
++import { checkedMembers, open } from "@rust-js/typescript";
+ import { snake } from "../scripts/rust-names";
+ import { EVENT_TYPES } from "./names";
+ 
+@@ -190,7 +190,7 @@ await ts.close();
+ const typed: string[] = declarations
+   .find((d: any) => d.kind === "namespace" && d.name === "React")
+   .declarations.filter((d: any) => d.kind === "interface" && /(HTML|SVG)Attributes$/.test(d.name))
+-  .flatMap((d: any) => d.members)
++  .flatMap((d: any) => checkedMembers(d.members))
+   .filter((m: any) => m.kind === "property" && /^[a-zA-Z]+$/.test(m.name))
+   .map((m: any) => m.name);
+ // What each attribute takes, as @types/react types it in every interface
+@@ -224,7 +224,7 @@ const kindsOf = (t: any): string[] => {
+ const valueKinds = new Map<string, Set<string>>();
+ for (const d of reactNamespace) {
+   if (d.kind !== "interface" || !/(HTML|SVG)Attributes$/.test(d.name)) continue;
+-  for (const m of d.members) {
++  for (const m of checkedMembers(d.members)) {
+     if (m.kind !== "property" || !/^[a-zA-Z][a-zA-Z0-9]*$/.test(m.name)) continue;
+     if (!valueKinds.has(m.name)) valueKinds.set(m.name, new Set());
+     for (const kind of kindsOf(m.type)) valueKinds.get(m.name)!.add(kind);
+@@ -274,7 +274,7 @@ const interfaces = new Map<string, any>(reactTypes.filter((d: any) => d.kind ===
+ const propsOf = (name: string): Set<string> => {
+   const i = interfaces.get(name.replace(/^React\./, ""));
+   if (!i) return new Set();
+-  const own = i.members.filter((m: any) => m.kind === "property" && /^[a-zA-Z][a-zA-Z0-9]*$/.test(m.name)).map((m: any) => m.name);
++  const own = checkedMembers(i.members).filter((m: any) => m.kind === "property" && /^[a-zA-Z][a-zA-Z0-9]*$/.test(m.name)).map((m: any) => m.name);
+   return new Set([...own, ...i.extends.flatMap((e: any) => [...propsOf(e.name)])]);
+ };
+ const everyElements = propsOf("HTMLAttributes");
+@@ -283,7 +283,7 @@ const intrinsic = reactTypes
+   .find((d: any) => d.kind === "namespace" && d.name === "JSX")
+   .declarations.find((d: any) => d.kind === "interface" && d.name === "IntrinsicElements");
+ const accepts = new Map<string, { elements: Set<string>; tags: Set<string> }>();
+-for (const member of intrinsic.members) {
++for (const member of checkedMembers(intrinsic.members).filter((m: any) => m.kind === "property")) {
+   const [props] = member.type.name === "React.DetailedHTMLProps" ? member.type.args : [];
+   const element = tagElements.get(member.name);
+   if (!props || !element) continue;
+@@ -448,7 +448,7 @@ const cssKinds = (t: any): string[] => {
+ const cssTypes = new Map<string, string>();
+ for (const d of cssDeclarations) {
+   if (d.kind !== "interface" || !/Properties$/.test(d.name) || /Hyphen|Fallback/.test(d.name)) continue;
+-  for (const m of d.members) {
++  for (const m of checkedMembers(d.members)) {
+     if (m.kind !== "property" || cssTypes.has(m.name)) continue;
+     const kinds = new Set(cssKinds(m.type));
+     if (kinds.has("other") || kinds.size === 0) continue;
+@@ -464,7 +464,7 @@ const vendorProperties = [
+   ...new Set(
+     cssDeclarations
+       .filter((d: any) => d.kind === "interface" && /Properties$/.test(d.name) && !/Hyphen|Fallback/.test(d.name))
+-      .flatMap((d: any) => d.members.filter((m: any) => m.kind === "property" && vendored.test(m.name)).map((m: any) => m.name as string)),
++      .flatMap((d: any) => checkedMembers(d.members).filter((m: any) => m.kind === "property" && vendored.test(m.name)).map((m: any) => m.name as string)),
+   ),
+ ].sort();
+ lines.push("/// CSS properties: `background_color` is `backgroundColor`. A number is in", "/// pixels where CSS needs a unit, as React makes it. Each takes what", "/// csstype types it as (ADR 0228). A vendor's, `webkit_mask_image`, is", "/// `WebkitMaskImage`, as csstype names it (#1806).", "impl CSSProperties {");
+diff --git a/react/literals.ts b/react/literals.ts
+index b1d7104..1a8e59f 100644
+--- a/react/literals.ts
++++ b/react/literals.ts
+@@ -10,7 +10,7 @@
+ import { spawnSync } from "node:child_process";
+ import { readFileSync, writeFileSync } from "node:fs";
+ import { join } from "node:path";
+-import { open } from "@rust-js/typescript";
++import { checkedMembers, open } from "@rust-js/typescript";
+ 
+ type Model = any;
+ 
+@@ -57,10 +57,10 @@ function strings(t: Model): string[] | null {
+ const membersOf = (name: string): Model[] => {
+   const i = interfaces.get(name.replace(/^React\./, ""));
+   if (!i) return [];
+-  return [...i.members.filter((m: Model) => m.kind === "property"), ...i.extends.flatMap((e: Model) => membersOf(e.name))];
++  return [...checkedMembers(i.members).filter((m: Model) => m.kind === "property"), ...i.extends.flatMap((e: Model) => membersOf(e.name))];
+ };
+ const byAttribute = new Map<string, Map<string, string[]>>();
+-for (const member of intrinsic.members) {
++for (const member of checkedMembers(intrinsic.members).filter((m: Model) => m.kind === "property")) {
+   const props =
+     member.type.name === "React.DetailedHTMLProps" ? member.type.args[0].name : /^React\.SVG/.test(member.type.name) ? member.type.name : null;
+   if (!props) continue;
 diff --git a/test/intl-arguments.test.ts b/test/intl-arguments.test.ts
 new file mode 100644
-index 0000000..76f5422
+index 0000000..bafd24b
 --- /dev/null
 +++ b/test/intl-arguments.test.ts
-@@ -0,0 +1,145 @@
+@@ -0,0 +1,146 @@
 +import {beforeAll, expect, test} from "bun:test";
 +import {readFileSync, writeFileSync} from "node:fs";
 +import {join} from "node:path";
@@ -1017,7 +1375,8 @@ index 0000000..76f5422
 +// Member-count coverage alone would miss the original narrowing bugs.
 +test("pinned TypeScript argument unions are admitted by the Rust bindings", async () => {
 +  const generated = await intlArgumentCases();
-+  expect(generated.cases).toBeGreaterThan(20);
++  expect(generated.sites).toHaveLength(26);
++  expect(generated.cases).toBeGreaterThan(200);
 +  const dir = fixture("intl-argument-coverage");
 +  const input = join(dir, "lib.rs");
 +  writeFileSync(input, generated.source);
@@ -1091,3 +1450,218 @@ index b08278c..a7752f8 100644
      (maximal, locale::new("not a tag!", &LocaleOptions::default()).is_err(), canonical, intl::supported_values_of(SupportedValuesKey::Currency).len() > 10)
  }
  `);
+diff --git a/test/typescript.test.ts b/test/typescript.test.ts
+index ae512d5..6b444c1 100644
+--- a/test/typescript.test.ts
++++ b/test/typescript.test.ts
+@@ -5,7 +5,7 @@
+ import { expect, test } from "bun:test";
+ import { writeFileSync } from "node:fs";
+ import { join } from "node:path";
+-import { open } from "@rust-js/typescript";
++import { checkedMembers, open } from "@rust-js/typescript";
+ import { fixture, root } from "./support";
+ import { underLoad } from "../scripts/timing";
+ 
+@@ -242,3 +242,43 @@ test("print writes erasable syntax only", async () => {
+     await ts.close();
+   }
+ });
++
++// Construct signatures are callable with new; a method named "new" is not.
++test("construct signatures retain generics and optional/rest arguments in every member position", async () => {
++  const dir = fixture("typescript-construct");
++  const file = join(dir, "construct.d.ts");
++  writeFileSync(file, `export interface Factory {
++    new <T extends object>(value: T, label?: string, ...rest: number[]): T;
++    "new"(): string;
++}
++
++export type Nested = {
++    new (value?: string): Factory;
++};
++`);
++  const ts = await open([file]);
++  try {
++    const model = await ts.read(file);
++    const factory = model.declarations[0];
++    expect(factory).toMatchObject({kind: "interface", members: [
++      {kind: "construct", typeParameters: [{name: "T", constraint: {kind: "keyword", keyword: "object"}}], params: [
++        {name: "value", optional: false, rest: false},
++        {name: "label", optional: true, rest: false},
++        {name: "rest", optional: false, rest: true},
++      ], returns: {kind: "reference", name: "T"}},
++      {kind: "method", name: "new"},
++    ]});
++    expect(model.declarations[1]).toMatchObject({kind: "type", type: {kind: "object", members: [{kind: "construct", params: [{optional: true}], returns: {kind: "reference", name: "Factory"}}]}});
++    if (factory.kind !== "interface") throw new Error("expected the factory interface");
++    expect(checkedMembers(factory.members)).toBe(factory.members);
++    expect(() => checkedMembers([{kind: "future-member"}] as any)).toThrow("isn't one TypeScript is given");
++    const printed = await ts.print(model);
++    expect(printed).toBe(await Bun.file(file).text());
++    const again = join(dir, "again.d.ts");
++    writeFileSync(again, printed);
++    const reopened = await open([again]);
++    try { expect(await reopened.read(again)).toEqual(model); }
++    finally { await reopened.close(); }
++    await expect(ts.print({declarations: [{...factory, members: [{kind: "unrecognized-member"}]}]} as any)).rejects.toThrow("isn't one TypeScript is given");
++  } finally { await ts.close(); }
++});
+diff --git a/typescript/index.js b/typescript/index.js
+index 5486c21..3ab42ad 100644
+--- a/typescript/index.js
++++ b/typescript/index.js
+@@ -37,6 +37,7 @@ import { isIdentifierText } from "typescript/ast/scanner";
+  *
+  * @typedef {{ kind: "property", name: MemberName, optional: boolean, readonly: boolean, type: Type, docs?: string }
+  *   | { kind: "method", name: MemberName, optional: boolean, typeParameters: TypeParameter[], params: Param[], returns: Type }
++ *   | { kind: "construct", typeParameters: TypeParameter[], params: Param[], returns: Type }
+  *   | { kind: "index", readonly?: boolean, parameter: string, key: Type, type: Type }
+  *   | { kind: "other", text: string }} Member
+  *
+@@ -65,6 +66,28 @@ import { isIdentifierText } from "typescript/ast/scanner";
+  *   | { kind: "other", text: string }} Type
+  */
+ 
++/** Check the Member protocol before a reader selects the kinds it consumes.
++ * A construct signature is deliberately distinct from a class constructor.
++ * @template {readonly {kind: string}[]} T
++ * @param {T} members
++ * @returns {T}
++ */
++export function checkedMembers(members) {
++  for (const m of members) {
++    switch (m.kind) {
++      case "property":
++      case "method":
++      case "construct":
++      case "index":
++      case "other":
++        break;
++      default:
++        throw new Error(`a member isn't one TypeScript is given: ${JSON.stringify(m)}`);
++    }
++  }
++  return members;
++}
++
+ const KEYWORDS = {
+   [SyntaxKind.StringKeyword]: "string",
+   [SyntaxKind.NumberKeyword]: "number",
+@@ -404,6 +427,15 @@ function readMember(node, text) {
+           ? readType(node.type, text)
+           : { kind: "keyword", keyword: "any" },
+       };
++    case SyntaxKind.ConstructSignature:
++      return {
++        kind: "construct",
++        typeParameters: typeParameters(node, text),
++        params: node.parameters.map((p) => readParam(p, text)),
++        returns: node.type
++          ? readType(node.type, text)
++          : { kind: "keyword", keyword: "any" },
++      };
+     case SyntaxKind.IndexSignature: {
+       const [parameter] = node.parameters;
+       return {
+@@ -755,6 +787,12 @@ function member(m) {
+         m.params.map(param),
+         typeNode(m.returns),
+       );
++    case "construct":
++      return f.createConstructSignatureDeclaration(
++        typeParameterNodes(m.typeParameters),
++        m.params.map(param),
++        typeNode(m.returns),
++      );
+     case "index":
+       return f.createIndexSignatureDeclaration(
+         m.readonly ? [f.createToken(SyntaxKind.ReadonlyKeyword)] : undefined,
+diff --git a/webapi/coverage.ts b/webapi/coverage.ts
+index 104c514..f1fdba1 100644
+--- a/webapi/coverage.ts
++++ b/webapi/coverage.ts
+@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
+ import { dirname, join } from "node:path";
+ 
+ import idl from "@webref/idl";
+-import { open } from "@rust-js/typescript";
++import { checkedMembers, open } from "@rust-js/typescript";
+ 
+ /** A class's members, and of them its methods, and what each that gives a
+  * `NodeListOf<X>` lists, `querySelectorAll`'s `Element`. */
+@@ -94,7 +94,7 @@ export async function typescriptInterfaces(): Promise<Map<string, { members: Set
+   for (const d of declarations as any[]) {
+     if (d.kind !== "interface") continue;
+     const known = interfaces.get(d.name) ?? { members: new Set<string>(), required: new Set<string>() };
+-    for (const member of d.members) {
++    for (const member of checkedMembers(d.members)) {
+       if (member.kind === "method" || member.kind === "property") known.members.add(member.name);
+       if (member.kind === "property" && !member.optional) known.required.add(member.name);
+     }
+@@ -166,7 +166,7 @@ export async function typescript(): Promise<Map<string, Members>> {
+     const ds = declared.get(name) ?? [];
+     const params = ds.flatMap((d) => (d.typeParameters ?? []).map((p: any) => p.name));
+     for (const d of ds) {
+-      const index = d.members.find((m: any) => m.kind === "index" && m.key?.keyword === "number");
++      const index = checkedMembers(d.members).find((m: any) => m.kind === "index" && m.key?.keyword === "number");
+       if (index?.type?.kind === "reference" && !params.includes(index.type.name)) return index.type.name;
+       if (index) return undefined;
+     }
+@@ -174,7 +174,7 @@ export async function typescript(): Promise<Map<string, Members>> {
+       if (e.kind !== "reference") continue;
+       const parentDs = declared.get(e.name) ?? [];
+       const parentParams = parentDs.flatMap((d) => (d.typeParameters ?? []).map((p: any) => p.name));
+-      const index = parentDs.flatMap((d) => d.members).find((m: any) => m.kind === "index" && m.key?.keyword === "number");
++      const index = parentDs.flatMap((d) => checkedMembers(d.members)).find((m: any) => m.kind === "index" && m.key?.keyword === "number");
+       const at = index?.type?.kind === "reference" ? parentParams.indexOf(index.type.name) : -1;
+       if (at >= 0 && e.args[at]?.kind === "reference") return e.args[at].name;
+       const inherited = indexed(e.name, seen);
+@@ -186,24 +186,24 @@ export async function typescript(): Promise<Map<string, Members>> {
+     if (d.kind === "interface") {
+       const m = of(d.name);
+       for (const e of d.extends) if (e.kind === "reference") m.extends.push(e.name);
+-      for (const member of d.members) if (member.kind === "method" || member.kind === "property") m.members.add(member.name);
+-      for (const member of d.members) if (member.kind === "method") m.methods.add(member.name);
+-      for (const member of d.members) if (member.kind === "property" && isFunction(member.type)) m.functions.add(member.name);
++      for (const member of checkedMembers(d.members)) if (member.kind === "method" || member.kind === "property") m.members.add(member.name);
++      for (const member of checkedMembers(d.members)) if (member.kind === "method") m.methods.add(member.name);
++      for (const member of checkedMembers(d.members)) if (member.kind === "property" && isFunction(member.type)) m.functions.add(member.name);
+       // What may be `null`, `T | null` or `null`, and what can't, of its own.
+       const isNull = (t: any) => t?.kind === "keyword" && t.keyword === "null";
+       const mayBeNull = (t: any) => isNull(t) || (t?.kind === "union" && t.types.some(isNull));
+-      for (const member of d.members) if (member.kind === "property") (mayBeNull(member.type) ? m.nullable : m.narrowed).add(member.name);
+-      for (const member of d.members) {
++      for (const member of checkedMembers(d.members)) if (member.kind === "property") (mayBeNull(member.type) ? m.nullable : m.narrowed).add(member.name);
++      for (const member of checkedMembers(d.members)) {
+         const back = member.kind === "method" ? givenBack(member) : undefined;
+         if (back) m.givesBack.set(member.name, back);
+         const item = listed(member);
+         if (item && !m.lists.has(member.name)) m.lists.set(member.name, item);
+       }
+-    } else if (d.kind === "const" && d.type.kind === "object" && d.type.members.some((x: any) => x.name === "prototype")) {
++    } else if (d.kind === "const" && d.type.kind === "object" && checkedMembers(d.type.members).some((x: any) => x.name === "prototype")) {
+       classes.add(d.name);
+       const m = of(d.name);
+-      for (const x of d.type.members) {
+-        if (x.kind === "other" && /^new\s*[(<]/.test(x.text)) m.ctor = true;
++      for (const x of checkedMembers(d.type.members)) {
++        if (x.kind === "construct") m.ctor = true;
+         else if (x.name && x.name !== "prototype") m.statics.add(x.name);
+       }
+     }
+@@ -384,12 +384,12 @@ export async function typescriptEventMaps(): Promise<{
+     if (d.kind !== "interface") continue;
+     const parents = (d.extends as any[]).filter((e) => e.kind === "reference").map((e) => e.name as string);
+     extendsOf.set(d.name, [...(extendsOf.get(d.name) ?? []), ...parents]);
+-    const listen = (d.members as any[]).find((m) => m.kind === "method" && m.name === "addEventListener" && m.typeParameters?.length);
++    const listen = checkedMembers(d.members as any[]).find((m) => m.kind === "method" && m.name === "addEventListener" && m.typeParameters?.length);
+     const map = listen?.typeParameters[0].constraint?.text?.match(/^keyof (\w+)$/)?.[1];
+     if (map) mapOf.set(d.name, map);
+     if (d.name.endsWith("EventMap")) {
+       const events = own.get(d.name)?.events ?? new Map<string, string>();
+-      for (const m of d.members as any[]) if (m.kind === "property") events.set(m.name, text(m.type));
++      for (const m of checkedMembers(d.members as any[])) if (m.kind === "property") events.set(m.name, text(m.type));
+       own.set(d.name, { extends: [...(own.get(d.name)?.extends ?? []), ...parents], events });
+     }
+   }

@@ -25,3 +25,63 @@ export interface BoundMove {
 
 /** A keyboard or gesture move: steps in a direction, or a bound. */
 export type NumberMove = BoundMove | DirectionalMove;
+
+/** Decimals in a finite number, counting exponent notation. */
+export function decimalsOf(value: number): number;
+
+/** Rounds decimal noise with JavaScript's toFixed conversion and errors. */
+export function roundTo(value: number, decimals: number): number;
+
+export interface StepRange {
+    min: number;
+    max: number;
+    step: number;
+}
+
+/** The highest value on the grid, which may be below max. */
+export function maxOnGrid(range: StepRange): number;
+
+/** An unbounded grid value, using the supplied rounding function. */
+export function onGrid(value: number, range: StepRange, round?: ((value: number) => number) | null | undefined): number;
+
+export function snapToStep(value: number, range: StepRange): number;
+
+/** Moves by a count of grid steps. An off-grid value reaches the grid first. */
+export function stepValue(value: number, steps: number, range: StepRange): number;
+
+export interface NumberSnap {
+    points: number[];
+    threshold: number;
+}
+
+export interface NumberRange extends StepRange {
+    largeStep?: number | undefined;
+    smallStep?: number | undefined;
+    snap?: NumberSnap | undefined;
+}
+
+/** A move on the grid without snap-point handling. */
+export function stepOnGrid(value: number, movement: DirectionalMove, range: NumberRange): number;
+
+export interface StepByOptions {
+    snap?: boolean | undefined;
+}
+
+/** A grid move that stops at the first snap point reached ahead. */
+export function stepBy(value: number, movement: NumberMove, range: NumberRange, options?: StepByOptions | null | undefined): number;
+
+export type SnapEase = boolean | ((value: number) => number);
+
+export interface ScrubOptions {
+    snap?: boolean | undefined;
+    ease?: SnapEase | undefined;
+}
+
+/** A scrubbed value and the snap point it is pulled toward. */
+export interface NumberScrub {
+    value: number;
+    point?: number | undefined;
+}
+
+/** Finds the nearest snap point, or the grid, with an optional easing curve. */
+export function scrubTo(value: number, range: NumberRange, options?: ScrubOptions | null | undefined): NumberScrub;

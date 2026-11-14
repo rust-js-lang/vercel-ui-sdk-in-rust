@@ -6,6 +6,7 @@
       "name": "vercel-ui-sdk-in-rust",
       "dependencies": {
         "@rust-js/std": "file:rust-js/std",
+        "@rust-js/webapi": "file:rust-js/webapi",
       },
       "devDependencies": {
         "@playwright/test": "1.65.0",
@@ -17,6 +18,10 @@
     "@playwright/test": ["@playwright/test@1.65.0", "", { "dependencies": { "playwright": "1.65.0" }, "bin": { "playwright": "cli.js" } }, "sha512-iGURLGuKDLakSEl7Pgfv8h7f+XLT+V861Wfhz0zlEl5nyFuKUopdkFBPKqTllTUp06aOwPuH8iuUEb3yp3MpbQ=="],
 
     "@rust-js/std": ["@rust-js/std@file:rust-js/std", {}],
+
+    "@rust-js/webapi": ["@rust-js/webapi@file:rust-js/webapi", { "devDependencies": { "@types/web": "0.0.366", "@webref/elements": "2.9.2", "@webref/events": "1.28.0", "@webref/idl": "3.87.0", "webidl2": "24.5.0" } }],
+
+    "@types/web": ["@types/web@0.0.366", "", {}, "sha512-FVWugvJbiLOypkgOeRhEGCw7vfGarhx5njkGQqN2CPzGZLGp7AXB5Tui/N93u7tFc2YhF1ORhz2+pLWQzSHuKg=="],
 
     "@typescript/typescript-aix-ppc64": ["@typescript/typescript-aix-ppc64@7.1.0-beta", "", { "os": "aix", "cpu": "ppc64" }, "sha512-DXDG+jIWxBHGdoO70tcHON33rCnSzsEZj9P13oyf/r/KEGIo6awsdSNVNjAw0uMwEpqRu75IrgCcW58YcVkZHg=="],
 
@@ -60,10 +65,18 @@
 
     "@typescript/typescript-win32-x64": ["@typescript/typescript-win32-x64@7.1.0-beta", "", { "os": "win32", "cpu": "x64" }, "sha512-UKcHvbybY2tDTvFW2b1vwiAvDlIRooo69lh8CXWVhOQejcvpM5+IgbiFW9EIwR5Wi5X/v+BdN7gdWbigBuJ3rw=="],
 
+    "@webref/elements": ["@webref/elements@2.9.2", "", {}, "sha512-NjGr2/UMDsHc4yBYTLoXOxmt+hQW1YcsBZTX+w1SrEKA0fHJtapqMoFXWYrE4MhtZOjh7PjwKNgE+7w9qVxA9Q=="],
+
+    "@webref/events": ["@webref/events@1.28.0", "", {}, "sha512-eWWRclgKDCt9oR/i0O/HiXMJIW5zbxPy3sHnSFII0lNWwz7LyOcg+5Q2mOEarovrkf/9cL+KTgqnLXm5N/Jtew=="],
+
+    "@webref/idl": ["@webref/idl@3.87.0", "", { "peerDependencies": { "webidl2": "^24.5.0" } }, "sha512-28JokxfNnINrMafSAWDnqiNkDIATuwWBJydHcVfdVz/RH9GyJdCWd9v+jv5+UNX0X4u0byOysIePiYZKlrjxyA=="],
+
     "playwright": ["playwright@1.65.0", "", { "dependencies": { "playwright-core": "1.65.0" }, "bin": { "playwright": "cli.js" } }, "sha512-F3AMWcR44qMBt4kq+6Kb6mX7bjGXshktKFOPULd7reED6ZJWevjbNRqysP7q+AATE9kdPEZBibex1BYsvpVoeA=="],
 
     "playwright-core": ["playwright-core@1.65.0", "", { "bin": { "playwright-core": "cli.js" } }, "sha512-vNSKgH6YqtN7cdT/L334zo0a+YwkrpicyrHJlWWPIm/Q+Nn2SWInil01oT0mbu96U4GgoRtCYQD9CzJQgju+lA=="],
 
     "typescript": ["typescript@7.1.0-beta", "", { "optionalDependencies": { "@typescript/typescript-aix-ppc64": "7.1.0-beta", "@typescript/typescript-android-arm64": "7.1.0-beta", "@typescript/typescript-darwin-arm64": "7.1.0-beta", "@typescript/typescript-darwin-x64": "7.1.0-beta", "@typescript/typescript-freebsd-arm64": "7.1.0-beta", "@typescript/typescript-freebsd-x64": "7.1.0-beta", "@typescript/typescript-linux-arm": "7.1.0-beta", "@typescript/typescript-linux-arm64": "7.1.0-beta", "@typescript/typescript-linux-loong64": "7.1.0-beta", "@typescript/typescript-linux-mips64el": "7.1.0-beta", "@typescript/typescript-linux-ppc64": "7.1.0-beta", "@typescript/typescript-linux-riscv64": "7.1.0-beta", "@typescript/typescript-linux-s390x": "7.1.0-beta", "@typescript/typescript-linux-x64": "7.1.0-beta", "@typescript/typescript-netbsd-arm64": "7.1.0-beta", "@typescript/typescript-netbsd-x64": "7.1.0-beta", "@typescript/typescript-openbsd-arm64": "7.1.0-beta", "@typescript/typescript-openbsd-x64": "7.1.0-beta", "@typescript/typescript-sunos-x64": "7.1.0-beta", "@typescript/typescript-win32-arm64": "7.1.0-beta", "@typescript/typescript-win32-x64": "7.1.0-beta" }, "bin": { "tsc": "bin/tsc" } }, "sha512-cjWjZAJDsmZzsNC5GwHNlW0YPM65jZa5oR0KyQcYX3KSVIfTvtBq//vewISyatKk4OLi5grZjHhIVE9fdrw1UQ=="],
+
+    "webidl2": ["webidl2@24.5.0", "", {}, "sha512-fxOigKkIem1iAgQ9t4cFOP+kWEA8y6Be/uh50FpJh0FijoeeT/VMrOyJzNLUgjy0rGMEcHeReKDCqj0g9dIe9A=="],
   }
 }

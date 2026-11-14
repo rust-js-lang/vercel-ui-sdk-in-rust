@@ -307,3 +307,13 @@ test("numeric callbacks, range getters and union checks retain upstream evaluati
     expect(results[0], operation).toEqual(results[1]);
   }
 });
+
+test("copying a flattened range never reads an absent nested range property", () => {
+  const range = Object.assign(Object.create({
+    get range() { throw new Error("unexpected nested range read"); },
+  }), {min: 0, max: 10, step: 1, smallStep: 0.25});
+  const movement = {direction: 1, size: "small"};
+  const expected = original.stepOnGrid(1.3, movement, range);
+  expect(expected).toBe(1.5);
+  expect(ported.stepOnGrid(1.3, movement, range)).toBe(expected);
+});

@@ -1,12 +1,13 @@
 # Compiler fixes
 
-The published compiler pin is 44b38fb198b70d563baa7f7d00b6db8a0a585feb. It includes #1827 Ordering predicates; that obsolete patch is removed.
+Published compiler pin:710e93c549f224bd1e47db1d99e5dae8be7a5dc5. Earlier Ordering, flattened lending and event declaration fixes are included; obsolete patches are removed.
 
-series.json is the single application list. Setup applies it idempotently and refuses a mismatch.
+series.json is the single application list. Setup applies it idempotently and refuses mismatches.
 
-- 1830-1834-intl-arguments.patch: canonical locales, string/list-only canonical names, optional Date/number formatting and required Date/number/bigint ranges; native Intl record metadata (#1836). It changes the existing template and regenerates its output, with no app casts or stand-in bindings.
-- Proof: Bun and Chromium native comparisons, TypeScript-derived argument coverage, negative Rust callers, strict TypeScript consumer, existing Intl/String cases. The planned full check passed in 4m49s. Initial full and map-recording attempts reached 480s/270s deadlines; the compiler dev-loop ledger records them.
-- The feature is held for confirmed P0 #1840. Both null and undefined mean Rust None, but forwarding null into optional native arguments changes behavior. A separate regression patch is retained here and deliberately not part of setup's feature series; it fails until the upstream fix lands.
-- The complete task's recorded wall time was 44m33s at proof collection. Completed checks took 5m54s; including the two terminated attempts, check time is at least 18m24s. Small isolated probes are additional.
+- 1830-1834-intl-arguments.patch: Intl argument unions, native records, exact matcher/full-formatter options and the shared TypeScript construct-signature model. Generated Rust follows builtins/intl.ts; no app casts or stand-in bindings. See model-review.md for every Member consumer and current validation.
+- Revised focused proof:10 model/Intl tests326 assertions, including Bun/Chromium native calls, strict TypeScript consumer, rejected Rust nonmembers and accepted calls across26 changed native sites. Typecheck passes. Revised full-check is pending. The lead split durable non-crate owner mutation execution into dev-loop #1848; intended owner mutants are listed in model-review.md, and Intl does not wait on that harness.
+- A prior patch version completed all planned full-check gates in4m49s. It predates both the new model changes and P0#1840, so does not validate either. Initial480s/270s deadline attempts are recorded in the compiler dev-loop ledger; no isolated speed-up claimed.
+- The feature remains held for confirmed P0#1840. Separate1840-nullish-native-regression.patch is reproduction only, deliberately excluded from setup. It fails until the upstream fix lands.
+- The integrated SDK additionally exposes P0#1847 in flattened record copies and boundary gaps#1845/#1846. Those are reported upstream; no private fix for them is applied.
 
-The upstream lead coordinates landing. Remove patches only after adopting published fixes and rerunning the affected gates. These are development checkpoints, not release evidence for the full SDK.
+The upstream lead coordinates landing. Remove retained patches after adopting published fixes and rerunning affected gates. Development checkpoints are not release evidence for the full SDK.
