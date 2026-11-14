@@ -5,6 +5,7 @@ pub use foundation::date::plain_date::{
     date_parts, days_between, days_in_month, end_of_month, end_of_week, is_iso_date, is_same_month,
     iso_date, month_grid, start_of_month, start_of_week, to_iso_date, weekday,
 };
+pub use foundation::kernel::details::{ChangeSource, is_dismissal, resolve_source, with_source};
 pub use foundation::kernel::events::{
     CompositionFields, CompositionInput, NativeCompositionEvent, WrappedCompositionEvent,
     is_composing, on, select_event,

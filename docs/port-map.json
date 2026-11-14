@@ -220,7 +220,27 @@
       "evidence": [
         "tests/calendar.test.ts",
         "tests/types/calendar.ts",
-        "scripts/build-calendar-probe.ts",
+        "scripts/build-core-probe.ts",
+        "docs/validation.md"
+      ]
+    },
+    {
+      "source": "packages/core/src/foundation/kernel/details.ts",
+      "rust": "crates/core/src/foundation/kernel/details.rs",
+      "status": "partial-pending-compiler",
+      "exports": [
+        "ChangeSource",
+        "isDismissal",
+        "resolveSource",
+        "withSource"
+      ],
+      "remaining": "createDetails, complete reason/event vocabulary and generic detail declarations; #1828 type predicates and #1833 scope-guard output",
+      "issues": [
+        "https://github.com/rust-js-lang/rust-js/issues/1828",
+        "https://github.com/rust-js-lang/rust-js/issues/1833"
+      ],
+      "evidence": [
+        "tests/change-source.test.ts",
         "docs/validation.md"
       ]
     }

@@ -83,7 +83,7 @@ for (const kind of ["upstream", "compiled"] as const) test("calendar declaration
     const fixture = await Bun.file(resolve(import.meta.dir, "types/calendar.ts")).text();
     const target = kind === "upstream"
       ? resolve(upstream, "packages/core/src/foundation/date/plain-date.ts")
-      : resolve(root, process.env.UI_SDK_CALENDAR_PROBE === "1" ? "test-results/calendar-probe/src/lib.js" : "crates/core/src/foundation/date/plain_date.js");
+      : resolve(root, process.env.UI_SDK_CALENDAR_PROBE === "1" ? "test-results/core-probes/foundation/date/plain_date/src/lib.js" : "crates/core/src/foundation/date/plain_date.js");
     const file = join(directory, "consumer.ts");
     await Bun.write(file, fixture.replace("../../crates/core/src/foundation/date/plain_date.js", target));
     expect(check(file)).toEqual({exitCode: 0, diagnostics: ""});

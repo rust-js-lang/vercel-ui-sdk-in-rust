@@ -14,7 +14,9 @@
     "check:upstream": "bun scripts/upstream-inventory.ts --check",
     "clippy": "bun rust-js/tooling/cli.js clippy --package ui-sdk-core-in-rust -- -D warnings",
     "test:browser": "bun run compile && bunx --bun playwright test",
-    "test:calendar": "bun scripts/build-calendar-probe.ts && UI_SDK_CALENDAR_PROBE=1 bun test tests/calendar.test.ts"
+    "test:calendar": "bun scripts/build-core-probe.ts crates/core/src/foundation/date/plain_date.rs && UI_SDK_CALENDAR_PROBE=1 bun test tests/calendar.test.ts",
+    "test:details": "bun scripts/build-core-probe.ts crates/core/src/foundation/kernel/details.rs && UI_SDK_DETAILS_PROBE=1 bun test tests/change-source.test.ts",
+    "test:projection": "bun scripts/build-core-probe.ts crates/core/src/foundation/motion/projection.rs && UI_SDK_PROJECTION_PROBE=1 bun test tests/projection.test.ts"
   },
   "dependencies": {
     "@rust-js/std": "file:rust-js/std"

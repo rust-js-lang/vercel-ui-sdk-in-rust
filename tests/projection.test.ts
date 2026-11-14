@@ -1,8 +1,14 @@
 import { beforeAll, expect, test } from "bun:test";
 import { resolve } from "node:path";
-import { projectDistance, nearestIndex, chooseSnapTarget } from "../crates/core/src/foundation/motion/projection.js";
+
 
 const root = resolve(import.meta.dir, "..");
+const probe = process.env.UI_SDK_PROJECTION_PROBE === "1";
+if (probe) {
+  const provenance = await Bun.file(resolve(root, "test-results/core-probes/foundation/motion/projection/provenance.json")).json();
+  expect(new Bun.CryptoHasher("sha256").update(await Bun.file(resolve(root, provenance.source)).text()).digest("hex")).toBe(provenance.sha256);
+}
+const {projectDistance, nearestIndex, chooseSnapTarget} = await import(resolve(root, probe ? "test-results/core-probes/foundation/motion/projection/src/lib.js" : "crates/core/src/foundation/motion/projection.js"));
 const source = resolve(process.env.UI_SDK_UPSTREAM_DIR ?? resolve(root, "../vercel-ui"));
 const config = await Bun.file(resolve(root, "upstream.json")).json();
 beforeAll(() => {

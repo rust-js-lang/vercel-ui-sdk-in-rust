@@ -6,11 +6,11 @@ const upstream = resolve(process.env.UI_SDK_UPSTREAM_DIR ?? resolve(root, "../ve
 const config = await Bun.file(resolve(root, "upstream.json")).json();
 const probe = process.env.UI_SDK_CALENDAR_PROBE === "1";
 if (probe) {
-  const provenance = await Bun.file(resolve(root, "test-results/calendar-probe/provenance.json")).json();
+  const provenance = await Bun.file(resolve(root, "test-results/core-probes/foundation/date/plain_date/provenance.json")).json();
   const source = await Bun.file(resolve(root, provenance.source)).text();
   expect(new Bun.CryptoHasher("sha256").update(source).digest("hex")).toBe(provenance.sha256);
 }
-const port = await import(resolve(root, probe ? "test-results/calendar-probe/src/lib.js" : "crates/core/src/foundation/date/plain_date.js"));
+const port = await import(resolve(root, probe ? "test-results/core-probes/foundation/date/plain_date/src/lib.js" : "crates/core/src/foundation/date/plain_date.js"));
 const original = await import(resolve(upstream, "packages/core/src/foundation/date/plain-date.ts"));
 beforeAll(() => {
   const revision = Bun.spawnSync(["git", "-C", upstream, "rev-parse", "HEAD"], {timeout: 10000});
