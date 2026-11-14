@@ -1,14 +1,14 @@
 diff --git a/TESTS.md b/TESTS.md
-index f9facee..186d339 100644
+index 93798c7..472405f 100644
 --- a/TESTS.md
 +++ b/TESTS.md
-@@ -12,6 +12,10 @@ The new `map_key_changed_between_test_and_index.rs` covers keys whose lookup a
- call may change, each `m[k]` checked as Rust panics (#1844).
- The historical suite totals and CI timings below have not been remeasured.
+@@ -19,6 +19,10 @@ workspace/load/control/cleanup tests and five self-mutants through the
+ existing runner. Feature-owner registrations are reviewed separately.
+ Historical suite totals below are not a recount.
  
 +Added on 2026-11-15: `test/intl-arguments.test.ts` checks native Intl calls
 +in Bun and Chromium, derives accepted Rust callers from pinned TypeScript
-+unions, checks declarations and rejects nonmembers (#1830, #1834).
++unions across 26 sites, checks declarations and rejects nonmembers (#1830, #1834).
 +
  As of 2026-10-30, `main` at `120772e2`; times are CI's, check run 41022723550.
  
@@ -909,10 +909,10 @@ index 5370468..4103f8a 100644
      }
  }
 diff --git a/builtins/src/lib.rs b/builtins/src/lib.rs
-index 81be932..b1bdfce 100644
+index 96f1e66..0e99cec 100644
 --- a/builtins/src/lib.rs
 +++ b/builtins/src/lib.rs
-@@ -2539,7 +2539,7 @@ pub mod string {
+@@ -2579,7 +2579,7 @@ pub mod string {
      /// host's of `None`, left out: Turkish's `I` is a dotless `ı`, where
      /// `str::to_lowercase`, which is no locale's, gives `i`.
      #[cfg_attr(rust_js, rust_js::link_name = "toLocaleLowerCase")]
@@ -921,7 +921,7 @@ index 81be932..b1bdfce 100644
          unreachable!()
      }
  
-@@ -2548,7 +2548,7 @@ pub mod string {
+@@ -2588,7 +2588,7 @@ pub mod string {
      /// host's of `None`, left out: Turkish's `i` is a dotted `İ`, where
      /// `str::to_uppercase` gives `I`.
      #[cfg_attr(rust_js, rust_js::link_name = "toLocaleUpperCase")]
@@ -1023,13 +1023,13 @@ index 4b812a8..74725a7 100644
 +catch narrowing a full formatter options type to matcher-only. Unknown
 +argument members fail coverage rather than silently disappear.
 diff --git a/docs/dev-loop.md b/docs/dev-loop.md
-index f3a4fd0..64427a5 100644
+index d70b837..3882bee 100644
 --- a/docs/dev-loop.md
 +++ b/docs/dev-loop.md
-@@ -180,3 +180,5 @@ Also in use, with no single before and after:
- | Experiment | Status | Where |
- |---|---|---|
- | The metamorphic net's 16 rewrites of #1203 and #1204, timed on their first run (ldAC, 2026-11-10) | Measured, not yet sped up. On the 12-core M6, every case in both builds: the five loud rewrites 6.5 min in 12 parts (one part 15 min with #1214's hang, since fixed); the eleven contexts 47 min in 11 parts, most of it `test/reduced.ts` reducing each of their 68 failures, up to 300 s each, one after another in its part, the same program's plain and std failures reduced apart. A listed failure isn't reduced, so once the 68 are in `test/metamorphic-known.txt` the nightly pays their runs, not their reductions. Its reductions now run at once within each case's test, within its timeout (#1365, Active); one program's reduction shared by its builds, and across a part's cases, is still to do | `test/reduced.ts`, `test/metamorphic.test.ts` |
+@@ -184,3 +184,5 @@ Also in use, with no single before and after:
+ | Tracked JS/TS owner mutations, 2026-11-15 (#1848, ADR1154) | New coverage, not a measured speed-up over an existing equivalent. First three pure TypeScript mutants caught in about 22 s under another checkout's validation load, each workspace 90,992,640 bytes; prep 4.8–5.6s, tests 9.3–12s. After an unchanged template and real negative-path controls, all 15 owner mutants caught in about 62 s: template 1.6 s/91,021,312 bytes, each workspace 91,025,408 bytes, generator prep 4.9–9.5s and tests 22–28s in the concurrent batch. 11 baseline tests, 42,367 assertions pass. Current costs include full tracked-source copies to preserve dynamic file inputs; narrower import-closure copying is not assumed safe. Isolated warm/cold differences are unmeasured. All source workspaces removed after the run. | scripts/source-mutations.ts; scripts/mutations.ts; target/mutants/logs |
+ 
+ | Independent source-mutation core full gate, 2026-11-15 (#1848) | check:fast --all passes on 4652f87731e98db8f21b493f74c5a2917d128fc6 in 7 min 57 s; Intl/model changes and their reproduction-only P0 test were not in this core patch. Startup: compiler build 30 s, pruning kept tests 30 s, pruning compile cache 7 s, node bindings 3 s. Fourteen corpus parts 2 min 10 s–2 min 36 s; eight browser files 4 min 47 s; 296 other files 7 min 16 s. Five source self-mutants pass in 1 min 6 s within the full run. Cores 83% busy, under half busy 18%. No test map was available, so the std-iterator corpus ran whole. These are whole-gate contention costs, not isolated per-job benchmarks. Pruning startup remains a measured slow spot; avoid rescanning unchanged stores if the disk ledger can safely prove them unchanged. | /tmp/ui-sdk-core-full-check.log; scripts/checkFast.ts |
 +
 +| Intl private-clone validation, 2026-11-15 (#1830/#1834) | First check:fast --all hit its 480 s overall deadline: all 14 corpus parts passed in 191–207 s each, the browser group in 4 min, with remaining suites still active. Both private and main-clone map stores were empty; restoring 64 ancestors did not recover a map. TypeScript annotation and load-aware timeout failures were separately fixed and rechecked. Clean-base map recording then hit its 270 s deadline: counting compiler build 72 s, corpus parts 64–74 s, std-iterator parts 85–92 s, with further mapped files still running. No map was published; complete feature work was restored from its durable patch, and recorder PIDs were verified absent. Recording costs exceed the documented ~130 s on this machine. A coordinated warm rerun at the same 480 s deadline passed all planned gates in 289 s: corpus parts 34–45 s, browsers 212 s, other 291 files 244 s; cores 86% busy, under half busy 12% of the run. Cache warmth and the quiet heavy-work window both changed, so their effects are not isolated. The P0 #1840 regression was created after that run began and fails separately; this is not a claim that current HEAD plus that new regression is green. | test/intl-arguments.test.ts; scripts/testMap.ts; check logs 2026-11-14T18-58-02-436Z-64140 |
 diff --git a/docs/guide/libraries/README.md b/docs/guide/libraries/README.md
@@ -1546,7 +1546,7 @@ index ae512d5..6b444c1 100644
 +  } finally { await ts.close(); }
 +});
 diff --git a/typescript/index.js b/typescript/index.js
-index 5486c21..3ab42ad 100644
+index 44256cc..f55f3d0 100644
 --- a/typescript/index.js
 +++ b/typescript/index.js
 @@ -37,6 +37,7 @@ import { isIdentifierText } from "typescript/ast/scanner";
@@ -1557,7 +1557,7 @@ index 5486c21..3ab42ad 100644
   *   | { kind: "index", readonly?: boolean, parameter: string, key: Type, type: Type }
   *   | { kind: "other", text: string }} Member
   *
-@@ -65,6 +66,28 @@ import { isIdentifierText } from "typescript/ast/scanner";
+@@ -66,6 +67,28 @@ import { isIdentifierText } from "typescript/ast/scanner";
   *   | { kind: "other", text: string }} Type
   */
  
@@ -1586,7 +1586,7 @@ index 5486c21..3ab42ad 100644
  const KEYWORDS = {
    [SyntaxKind.StringKeyword]: "string",
    [SyntaxKind.NumberKeyword]: "number",
-@@ -404,6 +427,15 @@ function readMember(node, text) {
+@@ -405,6 +428,15 @@ function readMember(node, text) {
            ? readType(node.type, text)
            : { kind: "keyword", keyword: "any" },
        };
@@ -1602,7 +1602,7 @@ index 5486c21..3ab42ad 100644
      case SyntaxKind.IndexSignature: {
        const [parameter] = node.parameters;
        return {
-@@ -755,6 +787,12 @@ function member(m) {
+@@ -756,6 +788,12 @@ function member(m) {
          m.params.map(param),
          typeNode(m.returns),
        );

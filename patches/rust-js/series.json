@@ -1,5 +1,12 @@
 [
   {
+    "file": "1848-source-owner-mutations.patch",
+    "issues": [
+      1848
+    ],
+    "status": "Independent core check:fast --all passed on4652f8773 in7m57s; review pending"
+  },
+  {
     "file": "1830-1834-intl-arguments.patch",
     "issues": [
       1830,
@@ -7,13 +14,6 @@
       1836
     ],
     "status": "Pending upstream landing; held for P0 #1840"
-  },
-  {
-    "file": "1848-source-owner-mutations.patch",
-    "issues": [
-      1848
-    ],
-    "status": "15 combined owner mutants caught; independent core full check pending"
   },
   {
     "file": "1830-1834-owner-mutations.patch",

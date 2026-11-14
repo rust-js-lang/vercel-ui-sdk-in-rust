@@ -1,6 +1,6 @@
 # Shared TypeScript Member review
 
-Private patch base:0ab884b086e1e03f582fb13152824f63d7705e88. This review is not yet cleared for upstream landing. The revised full check remains pending; P0#1840 holds Intl landing. Durable non-crate owner mutations are separately tracked in #1848, as approved by the lead.
+Private patch base:4652f87731e98db8f21b493f74c5a2917d128fc6. This review is not yet cleared for upstream landing. The revised full check remains pending; P0#1840 holds Intl landing. Durable non-crate owner mutations are separately tracked in #1848, as approved by the lead.
 
 ## Model and all consumers
 
@@ -34,4 +34,6 @@ No fake registry or README-only mutation proof is claimed. The unchanged control
 
 ## Implemented owner proof
 
-The existing runner now catches all 15 registered owner mutants: the 10 feature owners above and five source-runner safety rules. Each unchanged control executed the isolated owner and passed; the changed owner executed and its named test failed. Rebased focused model/Intl/source/inventory checks pass 13 tests / 330 assertions. The harness-core full check remains pending; its core plus five self-mutants is packaged independently from the ten feature-dependent registrations, as approved by the lead. No full-compiler green claim is made.
+The existing runner now catches all 15 registered owner mutants: the 10 feature owners above and five source-runner safety rules. Each unchanged control executed the isolated owner and passed; the changed owner executed and its named test failed. Rebased focused model/Intl/source/inventory checks pass 13 tests / 330 assertions. The independent harness core passed check:fast --all in 7 min 57 s on 4652f8773; its core plus five self-mutants is packaged independently from the ten feature-dependent registrations, as approved by the lead. No full-compiler green claim is made.
+
+Independent core proof is recorded in its ADR1154 and dev-loop ledger. Intl/model changes, their ten owner registrations and the #1840 reproduction were outside that core check. The earlier combined focused/mutation results remain evidence at their recorded base, and will be rechecked after feature adoption.

@@ -1,6 +1,6 @@
 # Compiler fixes
 
-Published compiler pin:0ab884b086e1e03f582fb13152824f63d7705e88. Earlier Ordering, flattened lending and event declaration fixes are included; obsolete patches are removed.
+Published compiler pin:4652f87731e98db8f21b493f74c5a2917d128fc6. Earlier Ordering, flattened lending and event declaration fixes are included; obsolete patches are removed.
 
 series.json is the single application list. Setup applies it idempotently and refuses mismatches.
 
@@ -12,4 +12,6 @@ series.json is the single application list. Setup applies it idempotently and re
 
 The upstream lead coordinates landing. Remove retained patches after adopting published fixes and rerunning affected gates. Development checkpoints are not release evidence for the full SDK.
 
-The ordered series additionally retains 1848-source-owner-mutations.patch (independent harness core plus five self-mutants) and 1830-1834-owner-mutations.patch (ten registrations requiring both the Intl feature and harness). All 15 were caught in the combined private review; current focused checks pass. The independent core full check is still pending. Setup validates the whole series with an isolated Git index, so overlapping contexts and repeated application are handled without overwriting local edits.
+The ordered series additionally retains 1848-source-owner-mutations.patch (independent harness core plus five self-mutants) and 1830-1834-owner-mutations.patch (ten registrations requiring both the Intl feature and harness). All 15 were caught in the combined private review; current focused checks pass. The independent core full check passes on 4652f8773 in 7 min 57 s. Setup validates the whole series with an isolated Git index, so overlapping contexts and repeated application are handled without overwriting local edits.
+
+The series now applies the independent #1848 core first, then the separately reviewed Intl/model feature, then its ten owner registrations. The core contains only five self-mutants and has its own full proof: 14 corpus parts, 8 browser files, 296 other test files, native/lint/format/Vite/matrix gates, all passing. The Intl/model feature still waits for #1840 and does not inherit that full-check claim.
