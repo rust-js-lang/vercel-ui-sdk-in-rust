@@ -2,7 +2,17 @@
 
 2026-11-15. Milestone one is incomplete. The current development snapshot is blocked from a full JavaScript build by compiler issue #1820. It is not a release. Core/Web Components and the docs application/deployment are still in progress.
 
-Upstream is pinned at 220c1a0d7278872286a620a8e4ee4210ca46f9bd. Its Apache-2.0 license and notices are retained. The private compiler submodule is published 05949ee198208cc36b5599b41bc7b6f64f5d645f, plus the reproducible #1827 Ordering patch in patches/rust-js; the toolchain symlink follows it.
+Upstream is pinned at 220c1a0d7278872286a620a8e4ee4210ca46f9bd. Its Apache-2.0 license and notices are retained. The private compiler submodule is published 44b38fb198b70d563baa7f7d00b6db8a0a585feb, plus the retained Intl feature patch for #1830/#1834/#1836. #1827 is now published and its redundant patch has been removed; the toolchain symlink follows it.
+
+## Intl compiler checkpoint
+
+The authoritative Intl template now emits shared sealed input forms for locales (including mixed Locale/string lists), a distinct string/list-only getCanonicalLocales contract, optional Date/number formatting, required Date/number/bigint ranges, and native record declarations. Date and String methods reuse the same locale form. The two anonymous native records derive structural types from the existing field catalog; generated Rust is not edited by hand.
+
+Focused Bun/Chromium comparisons, pinned-TypeScript-derived Rust callers, negative Rust members and a strict TypeScript consumer pass. The warm full compiler check completed all planned gates in 4m49s after two local annotation/timeout-rule fixes. Its plan included 14 corpus parts, eight browser files and 291 other test files. Earlier full/map runs reached their 480s/270s deadlines; the dev-loop ledger records the measured costs and the coordinated warm rerun.
+
+That successful plan started before the new #1840 regression was created. The separately run regression fails: Rust treats null and undefined as None, but forwarding null into native toPrecision throws RangeError while undefined and literal None return the value. The new optional date formatting form also formats null as 1970 while undefined gives the current year. This is a confirmed P0 assigned to the upstream argument/nullability owner; the Intl feature is held until it is fixed. The separate regression patch is retained for reproduction and is not part of setup's feature application series. Do not read the earlier full-check success as proof that the newly found P0 is fixed.
+
+The next date port also exposed #1837: Date components/setters narrow number inputs to i32. A native probe fails with f64 inputs; app casts would change NaN/infinity semantics. This is assigned here after the Intl fix. #1835 independently tracks Result exports becoming any.
 
 ## Current verification
 
@@ -22,7 +32,7 @@ The test and browser commands compile Rust first. This prevents old generated fi
 
 ## Fixes verified in this project
 
-The compiler feedback loop resolved two actual regressions without changing the app code:
+The compiler feedback loop resolved actual regressions without changing the app code:
 
 - #1812, published as 059547d93 and included in this pin: borrowed logarithmic functions capture Math.log/Math.exp at module initialization. All four unchanged scaling tests passed (27,444 assertions). The generated table was inspected and now holds the functions directly.
 - #1816, published as bfaa34073 and included here: undo tests no longer cause unrelated settings Rc values to become counted. All 12 original native invariants ran as JavaScript in Bun. After adding sheet physics, all 13 passed too. The subsequent full grid source exposed the independent #1820 refusal.
@@ -50,7 +60,7 @@ The canonical plain_date.rs source is freshly compiled in an isolated test packa
 
 Calendar declarations remain pending: #1828 loses the isISODate type predicate; #1829 ignores the explicit ISODate alias name. The same strict TypeScript consumer passes upstream and fails generated declarations. Runtime success does not complete this module.
 
-The #1827 compiler patch shares predicate recognition and numeric zero comparison between calls and function values. Its new corpus case failed before the change and passes against native Rust after it, including production and library builds; all three mutations were caught. Compiler TypeScript typecheck passes. Compiler all-target clippy is blocked by pre-existing items-after-test-module in comments.rs and lower/mir/tidy/stages.rs; the patch adds no suppressions. App strict Clippy passes. The upstream lead owns full checks and publication.
+The #1827 compiler fix is published in the current 44b38fb pin. Calls and function values share predicate recognition and numeric zero comparison. Its failing-first corpus case now passes against native Rust, including production and library builds; all three mutations were caught. The upstream lead corrected the dispatcher-size/mutation-catalog placement house rules and landed it with credit. The earlier unrelated Clippy blockers were fixed before publication; current compiler Clippy passes.
 
 ## Work added
 
@@ -72,13 +82,13 @@ Undo history passed 10,000 seeded reference traces for live settings, edit group
 
 - #1814: release-projection search output and proven bounds.
 - #1815: private undo borrow guards and index output.
-- #1817: browser option dictionaries and event associations lose declaration types; the unchanged TypeScript fixture passes upstream and fails against generated any types.
-- #1818: flatten the untagged composition-event union as an event intersection.
-- #1819: the compiler team found a P0 flattened-reference aliasing bug while investigating #1818; it is ahead of the two flatten extensions.
-- #1830/#1834: canonical Intl locales and timestamp inputs; assigned here, generator design confirmed by the lead.
+- #1817: fixed upstream through 9f022f769; adoption and downstream fixture recheck remain pending.
+- #1818: fixed upstream in fa3a41fcc; adoption and linking the numeric key map remain pending.
+- #1819: the earlier flattened-reference aliasing P0 is fixed upstream.
+- #1830/#1834/#1836: retained Intl argument/native-record patch, held for P0 #1840.
 - #1831: Locale week information is absent from the pinned coverage library; no stand-in members will be added.
 - #1833: nonthrowing scope-guard drop output.
-- #1827: downstream Ordering predicate patch proven locally; awaiting upstream landing.
+- #1827: published in the current 44b38fb pin; private patch removed.
 - #1828/#1829: calendar type-predicate and alias-name declarations.
 - #1820: readonly lending of flattened Copy/Clone range records, preserving the correct projection for any actual clone/compare/hash.
 

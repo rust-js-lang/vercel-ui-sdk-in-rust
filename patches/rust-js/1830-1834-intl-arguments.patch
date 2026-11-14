@@ -1,0 +1,1093 @@
+diff --git a/TESTS.md b/TESTS.md
+index b9e6a2f..a268134 100644
+--- a/TESTS.md
++++ b/TESTS.md
+@@ -8,6 +8,10 @@ Corpus recount on 2026-11-15: 2,545 Rust programs. The new
+ evaluation and UTF-16 ordering against native Rust in both builds (#1827).
+ The historical suite totals and CI timings below have not been remeasured.
+ 
++Added on 2026-11-15: `test/intl-arguments.test.ts` checks native Intl calls
++in Bun and Chromium, derives accepted Rust callers from pinned TypeScript
++unions, checks declarations and rejects nonmembers (#1830, #1834).
++
+ As of 2026-10-30, `main` at `120772e2`; times are CI's, check run 41022723550.
+ 
+ | Suite | Size | What it proves | Time |
+diff --git a/builtins/coverage.ts b/builtins/coverage.ts
+index 9099e7f..e3f4983 100644
+--- a/builtins/coverage.ts
++++ b/builtins/coverage.ts
+@@ -12,6 +12,7 @@ import { readdirSync, readFileSync } from "node:fs";
+ import { join } from "node:path";
+ 
+ import { open } from "@rust-js/typescript";
++import { snake } from "../scripts/rust-names";
+ 
+ /** The built-ins measured: classes, namespaces and objects of functions. */
+ export const SCOPE = [
+@@ -45,12 +46,80 @@ export type Coverage = { all: string[]; covered: string[] };
+ const libs = new URL("../node_modules/typescript-es/lib/", import.meta.url).pathname;
+ const src = new URL("./src/", import.meta.url).pathname;
+ 
++/** The one library-level selection for member and argument coverage. */
++const libraryFiles = () => readdirSync(libs)
++  .filter((f) => /^lib\.es(5|20(1[5-9]|2[0-4]))(\.[a-z.]+)?\.d\.ts$/.test(f) && !f.includes(".full."))
++  .map((f) => join(libs, f));
++
++/** Native Rust callers derived from the pinned library's argument unions.
++ * Unknown future members fail here, rather than leaving narrower bindings green.
++ * Compile these callers: deleting a trait member must lose coverage too. */
++export async function intlArgumentCases(): Promise<{ source: string; cases: number }> {
++  const files = libraryFiles();
++  const session = await open(files);
++  const aliases = new Map<string, any>();
++  const methods = new Map<string, any[]>();
++  let canonical: any[] | undefined;
++  const walk = (declarations: any[], namespace = "") => {
++    for (const d of declarations) {
++      if (d.kind === "namespace") walk(d.declarations, namespace + d.name + ".");
++      else if (d.kind === "type") aliases.set(namespace + d.name, d.type);
++      else if (namespace === "Intl." && d.kind === "function" && d.name === "getCanonicalLocales") canonical = d.params;
++      else if (namespace === "Intl." && d.kind === "interface" && d.name === "DateTimeFormat") {
++        for (const m of d.members) if (m.kind === "method" && /^(format|formatToParts|formatRange|formatRangeToParts)$/.test(m.name)) {
++          methods.set(m.name, m.params);
++        }
++      }
++    }
++  };
++  try { for (const file of files) walk((await session.read(file)).declarations); }
++  finally { await session.close(); }
++  const values = (type: any): (string | undefined)[] => {
++    if (type.kind === "union") return [...new Set<string | undefined>(type.types.flatMap(values))];
++    if (type.kind === "reference") {
++      const alias = aliases.get(type.name) ?? aliases.get("Intl." + type.name);
++      if (alias) return values(alias);
++      if (type.name === "Locale") return ['intl::locale::new("de-DE", &intl::LocaleOptions::default()).unwrap()'];
++      if (type.name === "Date") return ['js::date::new(Some(&0.0))'];
++    }
++    if (type.kind === "keyword") {
++      if (type.keyword === "string") return ['"en-US"', 'String::from("en-US")', '&String::from("en-US")'];
++      if (type.keyword === "number") return ["0.0"];
++      if (type.keyword === "bigint") return ["0_i64", "0_u64"];
++      if (type.keyword === "undefined") return [undefined];
++    }
++    if (type.kind === "array") return values(type.element).flatMap(value => {
++      if (value === undefined) throw new Error("an Intl array element admits undefined; extend its Rust union");
++      return [`&[${value}]`, `vec![${value}]`];
++    });
++    throw new Error("uncovered Intl argument member: " + JSON.stringify(type));
++  };
++  const locale = aliases.get("Intl.LocalesArgument");
++  if (!locale || methods.size !== 4) throw new Error("the pinned Intl argument declarations changed");
++  const source = ['use js::intl;', 'pub fn coverage(formatter: &intl::DateTimeFormat) {'];
++  const argument = (value: string | undefined, optional: boolean) => value === undefined ? "None" : optional ? `Some(&${value})` : value;
++  for (const value of values(locale)) source.push(`    let _ = intl::date_time_format::new(${argument(value, true)}, None);`);
++  if (!canonical) throw new Error("getCanonicalLocales declaration missing");
++  for (const value of values(canonical[0].type)) source.push(`    let _ = intl::get_canonical_locales(${argument(value, true)});`);
++  for (const [method, params] of methods) {
++    for (let i = 0; i < params.length; i++) {
++      const param = params[i];
++      const variants = values(param.type);
++      if (param.optional && !variants.includes(undefined)) variants.push(undefined);
++      for (const value of variants) {
++        const args = params.map((p, j) => argument(i === j ? value : values(p.type).find(v => v !== undefined), p.optional));
++        source.push(`    let _ = formatter.${snake(method)}(${args.join(", ")});`);
++      }
++    }
++  }
++  source.push('}');
++  return {source: source.join("\n") + "\n", cases: source.length - 3};
++}
++
+ /** Each built-in's members: instance ones by name, `static:` ones, and
+  * `constructor` where `new` makes one. */
+ async function typescript(): Promise<Map<string, Set<string>>> {
+-  const files = readdirSync(libs)
+-    .filter((f) => /^lib\.es(5|20(1[5-9]|2[0-4]))(\.[a-z.]+)?\.d\.ts$/.test(f) && !f.includes(".full."))
+-    .map((f) => join(libs, f));
++  const files = libraryFiles();
+   const session = await open(files);
+   const interfaces = new Map<string, Set<string>>();
+   const heritage = new Map<string, string[]>();
+diff --git a/builtins/intl.ts b/builtins/intl.ts
+index 224a4a1..57736d4 100644
+--- a/builtins/intl.ts
++++ b/builtins/intl.ts
+@@ -20,8 +20,11 @@ const close = () => {
+   if (out.at(-1) === "") out.pop();
+ };
+ 
++const stringUnions = new Map<string, string[]>();
++
+ /** An enum of a string union's values, each its JS. */
+ const union = (name: string, doc: string, values: string[]) => {
++  stringUnions.set(name, values);
+   line(`/// ${doc}`);
+   line(`#[derive(Clone, Copy, Debug, PartialEq, Eq)]`);
+   line(`pub enum ${name} {`);
+@@ -44,20 +47,35 @@ const field = ([js, ty]: Field) => {
+  * an `undefined` option. A field given as required isn't. */
+ /** The options structs that borrow text, `<'a>`. */
+ const borrowing = new Set<string>();
+-const options = (name: string, doc: string, fields: Field[], required: string[] = []) => {
++const options = (name: string, doc: string, fields: Field[], required: string[] = [], types: string | null = `Intl.${name}`) => {
+   const lifetime = fields.some(([, ty]) => ty.includes("'a"));
+   if (lifetime) borrowing.add(name);
+   line(`/// ${doc}`);
+   line(`/// A JS object of these fields, a \`None\` one not given${required.length ? "" : ": `..Default::default()` the rest"}.`);
++  line(`#[cfg_attr(rust_js, rust_js::types = ${JSON.stringify(types ?? anonymous(fields, required))})]`);
+   if (!required.length) line("#[derive(Default)]");
+   line(`pub struct ${name}${lifetime ? "<'a>" : ""} {`);
+   for (const [js, ty] of fields) field([js, required.includes(js) ? ty : `Option<${ty}>`]);
+   line("}");
+   line();
+ };
++/** An anonymous native record, from the same fields that write its Rust.
++ * Intl has no names for SupportedLocalesOptions or ListFormat's part. */
++const anonymous = (fields: Field[], required: string[]) => "{ " + fields.map(([js, rust]) => {
++  const optional = rust.startsWith("Option<");
++  const type = optional ? rust.slice(7, -1) : rust;
++  const union = stringUnions.get(type);
++  const value = type === "String" || /^&(?:'\w+ )?str$/.test(type) ? "string"
++    : union ? union.map(value => JSON.stringify(value)).join(" | ")
++    : undefined;
++  if (!value) throw new Error("anonymous Intl field type is not supported: " + rust);
++  return js + (optional || !required.includes(js) ? "?" : "") + ": " + value;
++}).join("; ") + " }";
++
+ /** What's read: a JS object's fields as it gives them. */
+-const record = (name: string, doc: string, fields: Field[]) => {
++const record = (name: string, doc: string, fields: Field[], types: string | null = `Intl.${name}`) => {
+   line(`/// ${doc}`);
++  line(`#[cfg_attr(rust_js, rust_js::types = ${JSON.stringify(types ?? anonymous(fields, fields.map(([name]) => name)))})]`);
+   line(`#[derive(Clone, Debug, PartialEq)]`);
+   line(`pub struct ${name} {`);
+   for (const f of fields) field(f);
+@@ -106,12 +124,12 @@ const formatter = (name: string, doc: string, methods: [string, string, string][
+   method(
+     ctor.doc ?? `[\`new ${js}(locales, options)\`](${page(`${name}/${name}`)}): one of the first of \`locales\` it has, or the user's of none, as \`options\` say.`,
+     `new ${js}`,
+-    `new(locales: &[&str], options: &${ctor.options}${borrowing.has(ctor.options) ? "<'_>" : ""}) -> ${ctor.result ?? `&'static ${name}`}`,
++    `new(locales: Option<&dyn IntoLocalesArgument>, options: ${name === "DisplayNames" ? "&" : "Option<&"}${ctor.options}${borrowing.has(ctor.options) ? "<'_>" : ""}${name === "DisplayNames" ? "" : ">"}) -> ${ctor.result ?? `&'static ${name}`}`,
+   );
+   method(
+     `[\`${js}.supportedLocalesOf(locales)\`](${page(`${name}/supportedLocalesOf`)}): those of \`locales\` it has, without falling back to the user's.`,
+     `${js}.supportedLocalesOf`,
+-    "supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String>",
++    "supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String>",
+   );
+   close();
+   line("}");
+@@ -123,7 +141,7 @@ const resolved = (name: string) => [`[\`${name.toLowerCase()}.resolvedOptions()\
+ line("//! JS's [`Intl`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl):");
+ line("//! text, numbers, dates, plurals and lists as a locale writes them (ADR 0283),");
+ line("//! as TypeScript's `lib.es*.intl.d.ts` and ReScript's `Stdlib_Intl` have it.");
+-line("//! A formatter is made of `locales`, `&[\"de-DE\"]`, the user's of none, and");
++line("//! A formatter takes an optional locale or list, `Some(&\"de-DE\")`, the user's of `None`, and");
+ line("//! options, `&NumberFormatOptions { style: Some(NumberStyle::Currency), ..Default::default() }`,");
+ line("//! of which JS throws a `RangeError` of one it can't have.");
+ line("//! Generated by `builtins/intl.ts`; edit the shape there.");
+@@ -132,8 +150,49 @@ line();
+ line("use core::cmp::Ordering;");
+ line("use core::marker::PhantomData;");
+ line();
+-line("use super::{Date, JsError, JsObject};");
++line("use super::{BigInt, Date, JsError, JsObject};");
++line();
++
++// Argument membership is written once here; sealed implementations and the
++// public erased input trait are derived from it (ADRs 0229, 0443).
++const argument = (name: string, type: string, members: string[], lists = false) => {
++  const module = snake(name);
++  line(`mod ${module} {`);
++  if (members.some(member => /Date|Locale|BigInt/.test(member))) line("    use super::*;");
++  line("    pub trait Sealed {}");
++  if (lists) line("    pub trait Element {}");
++  for (const member of members) {
++    line(`    impl Sealed for ${member} {}`);
++    if (lists) line(`    impl Element for ${member} {}`);
++  }
++  if (lists) {
++    for (const member of ["&[T]", "Vec<T>", "&Vec<T>"]) line(`    impl<T: Element> Sealed for ${member} {}`);
++    for (const member of ["[T; N]", "&[T; N]"]) line(`    impl<T: Element, const N: usize> Sealed for ${member} {}`);
++  }
++  line("}");
++  line(`/// A \`${type}\` input: each member as it is, without a wrapper.`);
++  line(`#[cfg_attr(rust_js, rust_js::types = ${JSON.stringify(type)})]`);
++  line(`pub trait ${name}: ${module}::Sealed {}`);
++  line(`impl<T: ${module}::Sealed> ${name} for T {}`);
++  line();
++};
++// typescript-es 5.9.3 lib.es2020.intl.d.ts:98 (LocalesArgument).
++line("/// A member of a mixed locales list, a string or Intl.Locale.");
++line("#[cfg_attr(rust_js, rust_js::untagged)]");
++line("pub enum LocaleElement<'a> {");
++line("    Text(&'a str),");
++line("    #[cfg_attr(rust_js, rust_js::otherwise)]");
++line("    Locale(&'a Locale),");
++line("}");
+ line();
++argument("IntoLocalesArgument", "Intl.LocalesArgument", ["&str", "String", "&String", "&Locale", "LocaleElement<'_>"], true);
++// lib.es2016.intl.d.ts:24: getCanonicalLocales accepts strings, not Locale.
++argument("IntoStrOrStrList", "string | readonly string[]", ["&str", "String", "&String"], true);
++// lib.es5.d.ts:4548 and lib.es2017.intl.d.ts:42: optional Date | number.
++const dateMembers = ["&Date", "f64"];
++argument("IntoDateOrNumber", "Date | number", dateMembers);
++// lib.es2021.intl.d.ts:37-38: required Date | number | bigint.
++argument("IntoBigIntOrDateOrNumber", "bigint | Date | number", [...dateMembers, "&BigInt", "i64", "u64"]);
+ 
+ // ── What's shared ───────────────────────────────────────────────────────
+ 
+@@ -142,12 +201,13 @@ union("Style", "How wide a word is written: `\"long\"`, `\"short\"` or `\"narrow
+ union("CaseFirst", "Which of upper and lower case is ordered first: `caseFirst`.", ["upper", "lower", "false"]);
+ union("HourCycle", "How hours are counted: `hourCycle`, `\"h23\"` from 0 to 23.", ["h11", "h12", "h23", "h24"]);
+ union("RangeSource", "Which of a range's ends a part is of: `source`.", ["startRange", "endRange", "shared"]);
+-options("SupportedLocalesOptions", "What `supported_locales_of` is given.", [["localeMatcher", "LocaleMatcher"]]);
++// These two shapes are anonymous in the pinned lib; refer to their actual owner.
++options("SupportedLocalesOptions", "What `supported_locales_of` is given.", [["localeMatcher", "&'a str"]], [], null);
+ 
+ // ── Intl ────────────────────────────────────────────────────────────────
+ 
+ union("SupportedValuesKey", "What `supported_values_of` lists.", ["calendar", "collation", "currency", "numberingSystem", "timeZone", "unit"]);
+-method(`[\`Intl.getCanonicalLocales(locales)\`](${page("getCanonicalLocales")}): \`locales\`, each as JS writes it, once, or the \`RangeError\` of one that isn't a locale.`, "Intl.getCanonicalLocales", "get_canonical_locales(locales: &[&str]) -> Result<Vec<String>, &'static JsError>", "");
++method(`[\`Intl.getCanonicalLocales(locales)\`](${page("getCanonicalLocales")}): \`locales\`, each as JS writes it, once, or the \`RangeError\` of one that isn't a locale.`, "Intl.getCanonicalLocales", "get_canonical_locales(locales: Option<&dyn IntoStrOrStrList>) -> Result<Vec<String>, &'static JsError>", "");
+ method(`[\`Intl.supportedValuesOf(key)\`](${page("supportedValuesOf")}): the calendars, currencies, time zones or units it has.`, "Intl.supportedValuesOf", "supported_values_of(key: SupportedValuesKey) -> Vec<String>", "");
+ 
+ // ── Collator ────────────────────────────────────────────────────────────
+@@ -248,10 +308,10 @@ record("DateTimeFormatPart", "A part of a written date: `formatToParts`'.", [["t
+ record("DateTimeRangeFormatPart", "A part of a written range of dates, and which end it's of.", [["type", "DateTimeFormatPartType"], ["value", "String"], ["source", "RangeSource"]]);
+ const dtf = (m: string) => page(`DateTimeFormat/${m}`);
+ formatter("DateTimeFormat", "dates written as a locale writes them.", [
+-  [`[\`format.format(date)\`](${dtf("format")}): \`date\` written.`, "format", "format(&self, date: &Date) -> String"],
+-  [`[\`format.formatToParts(date)\`](${dtf("formatToParts")}): \`date\` written, part by part.`, "formatToParts", "format_to_parts(&self, date: &Date) -> Vec<DateTimeFormatPart>"],
+-  [`[\`format.formatRange(start, end)\`](${dtf("formatRange")}): the range written, \`Jan 10 – 20, 2007\`.`, "formatRange", "format_range(&self, start: &Date, end: &Date) -> String"],
+-  [`[\`format.formatRangeToParts(start, end)\`](${dtf("formatRangeToParts")}): the range written, part by part.`, "formatRangeToParts", "format_range_to_parts(&self, start: &Date, end: &Date) -> Vec<DateTimeRangeFormatPart>"],
++  [`[\`format.format(date)\`](${dtf("format")}): \`date\` written.`, "format", "format(&self, date: Option<&dyn IntoDateOrNumber>) -> String"],
++  [`[\`format.formatToParts(date)\`](${dtf("formatToParts")}): \`date\` written, part by part.`, "formatToParts", "format_to_parts(&self, date: Option<&dyn IntoDateOrNumber>) -> Vec<DateTimeFormatPart>"],
++  [`[\`format.formatRange(start, end)\`](${dtf("formatRange")}): the range written, \`Jan 10 – 20, 2007\`.`, "formatRange", "format_range(&self, start: impl IntoBigIntOrDateOrNumber, end: impl IntoBigIntOrDateOrNumber) -> String"],
++  [`[\`format.formatRangeToParts(start, end)\`](${dtf("formatRangeToParts")}): the range written, part by part.`, "formatRangeToParts", "format_range_to_parts(&self, start: impl IntoBigIntOrDateOrNumber, end: impl IntoBigIntOrDateOrNumber) -> Vec<DateTimeRangeFormatPart>"],
+   resolved("DateTimeFormat"),
+ ], { options: "DateTimeFormatOptions" });
+ 
+@@ -291,7 +351,7 @@ union("ListFormatType", "What a list says: `\"conjunction\"` `a, b, and c`, `\"d
+ union("ListFormatPartType", "What a part of a written list is: an item, or what's between.", ["element", "literal"]);
+ options("ListFormatOptions", "What [`list_format::new`] is given.", [["localeMatcher", "LocaleMatcher"], ["type", "ListFormatType"], ["style", "Style"]]);
+ record("ResolvedListFormatOptions", "What a list format uses.", [["locale", "String"], ["style", "Style"], ["type", "ListFormatType"]]);
+-record("ListFormatPart", "A part of a written list.", [["type", "ListFormatPartType"], ["value", "String"]]);
++record("ListFormatPart", "A part of a written list.", [["type", "ListFormatPartType"], ["value", "String"]], null);
+ formatter("ListFormat", "lists written as a locale writes them.", [
+   [`[\`format.format(list)\`](${page("ListFormat/format")}): \`list\` written.`, "format", "format(&self, list: &[&str]) -> String"],
+   [`[\`format.formatToParts(list)\`](${page("ListFormat/formatToParts")}): \`list\` written, part by part.`, "formatToParts", "format_to_parts(&self, list: &[&str]) -> Vec<ListFormatPart>"],
+diff --git a/builtins/src/date.rs b/builtins/src/date.rs
+index c99fc8c..632d4d9 100644
+--- a/builtins/src/date.rs
++++ b/builtins/src/date.rs
+@@ -5,7 +5,7 @@
+ //! an `i32`, as ReScript's Stdlib has them.
+ 
+ 
+-use super::intl::DateTimeFormatOptions;
++use super::intl::{DateTimeFormatOptions, IntoLocalesArgument};
+ use super::{JsError, JsObject};
+ use core::marker::PhantomData;
+ 
+@@ -263,19 +263,19 @@ impl Date {
+ 
+     /// [`date.toLocaleString(locales, options)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Date/toLocaleString): its date and time as `intl::date_time_format::new(locales, options)` writes it, the user's locale's where they aren't given.
+     #[cfg_attr(rust_js, rust_js::link_name = "toLocaleString")]
+-    pub fn to_locale_string(&self, locales: Option<&[&str]>, options: Option<&DateTimeFormatOptions<'_>>) -> String {
++    pub fn to_locale_string(&self, locales: Option<&dyn IntoLocalesArgument>, options: Option<&DateTimeFormatOptions<'_>>) -> String {
+         unreachable!()
+     }
+ 
+     /// [`date.toLocaleDateString(locales, options)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Date/toLocaleDateString): its date as `intl::date_time_format::new(locales, options)` writes it, the user's locale's where they aren't given.
+     #[cfg_attr(rust_js, rust_js::link_name = "toLocaleDateString")]
+-    pub fn to_locale_date_string(&self, locales: Option<&[&str]>, options: Option<&DateTimeFormatOptions<'_>>) -> String {
++    pub fn to_locale_date_string(&self, locales: Option<&dyn IntoLocalesArgument>, options: Option<&DateTimeFormatOptions<'_>>) -> String {
+         unreachable!()
+     }
+ 
+     /// [`date.toLocaleTimeString(locales, options)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Date/toLocaleTimeString): its time as `intl::date_time_format::new(locales, options)` writes it, the user's locale's where they aren't given.
+     #[cfg_attr(rust_js, rust_js::link_name = "toLocaleTimeString")]
+-    pub fn to_locale_time_string(&self, locales: Option<&[&str]>, options: Option<&DateTimeFormatOptions<'_>>) -> String {
++    pub fn to_locale_time_string(&self, locales: Option<&dyn IntoLocalesArgument>, options: Option<&DateTimeFormatOptions<'_>>) -> String {
+         unreachable!()
+     }
+ }
+diff --git a/builtins/src/intl.rs b/builtins/src/intl.rs
+index 5370468..e56bd69 100644
+--- a/builtins/src/intl.rs
++++ b/builtins/src/intl.rs
+@@ -1,7 +1,7 @@
+ //! JS's [`Intl`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl):
+ //! text, numbers, dates, plurals and lists as a locale writes them (ADR 0283),
+ //! as TypeScript's `lib.es*.intl.d.ts` and ReScript's `Stdlib_Intl` have it.
+-//! A formatter is made of `locales`, `&["de-DE"]`, the user's of none, and
++//! A formatter takes an optional locale or list, `Some(&"de-DE")`, the user's of `None`, and
+ //! options, `&NumberFormatOptions { style: Some(NumberStyle::Currency), ..Default::default() }`,
+ //! of which JS throws a `RangeError` of one it can't have.
+ //! Generated by `builtins/intl.ts`; edit the shape there.
+@@ -10,7 +10,85 @@
+ use core::cmp::Ordering;
+ use core::marker::PhantomData;
+ 
+-use super::{Date, JsError, JsObject};
++use super::{BigInt, Date, JsError, JsObject};
++
++/// A member of a mixed locales list, a string or Intl.Locale.
++#[cfg_attr(rust_js, rust_js::untagged)]
++pub enum LocaleElement<'a> {
++    Text(&'a str),
++    #[cfg_attr(rust_js, rust_js::otherwise)]
++    Locale(&'a Locale),
++}
++
++mod into_locales_argument {
++    use super::*;
++    pub trait Sealed {}
++    pub trait Element {}
++    impl Sealed for &str {}
++    impl Element for &str {}
++    impl Sealed for String {}
++    impl Element for String {}
++    impl Sealed for &String {}
++    impl Element for &String {}
++    impl Sealed for &Locale {}
++    impl Element for &Locale {}
++    impl Sealed for LocaleElement<'_> {}
++    impl Element for LocaleElement<'_> {}
++    impl<T: Element> Sealed for &[T] {}
++    impl<T: Element> Sealed for Vec<T> {}
++    impl<T: Element> Sealed for &Vec<T> {}
++    impl<T: Element, const N: usize> Sealed for [T; N] {}
++    impl<T: Element, const N: usize> Sealed for &[T; N] {}
++}
++/// A `Intl.LocalesArgument` input: each member as it is, without a wrapper.
++#[cfg_attr(rust_js, rust_js::types = "Intl.LocalesArgument")]
++pub trait IntoLocalesArgument: into_locales_argument::Sealed {}
++impl<T: into_locales_argument::Sealed> IntoLocalesArgument for T {}
++
++mod into_str_or_str_list {
++    pub trait Sealed {}
++    pub trait Element {}
++    impl Sealed for &str {}
++    impl Element for &str {}
++    impl Sealed for String {}
++    impl Element for String {}
++    impl Sealed for &String {}
++    impl Element for &String {}
++    impl<T: Element> Sealed for &[T] {}
++    impl<T: Element> Sealed for Vec<T> {}
++    impl<T: Element> Sealed for &Vec<T> {}
++    impl<T: Element, const N: usize> Sealed for [T; N] {}
++    impl<T: Element, const N: usize> Sealed for &[T; N] {}
++}
++/// A `string | readonly string[]` input: each member as it is, without a wrapper.
++#[cfg_attr(rust_js, rust_js::types = "string | readonly string[]")]
++pub trait IntoStrOrStrList: into_str_or_str_list::Sealed {}
++impl<T: into_str_or_str_list::Sealed> IntoStrOrStrList for T {}
++
++mod into_date_or_number {
++    use super::*;
++    pub trait Sealed {}
++    impl Sealed for &Date {}
++    impl Sealed for f64 {}
++}
++/// A `Date | number` input: each member as it is, without a wrapper.
++#[cfg_attr(rust_js, rust_js::types = "Date | number")]
++pub trait IntoDateOrNumber: into_date_or_number::Sealed {}
++impl<T: into_date_or_number::Sealed> IntoDateOrNumber for T {}
++
++mod into_big_int_or_date_or_number {
++    use super::*;
++    pub trait Sealed {}
++    impl Sealed for &Date {}
++    impl Sealed for f64 {}
++    impl Sealed for &BigInt {}
++    impl Sealed for i64 {}
++    impl Sealed for u64 {}
++}
++/// A `bigint | Date | number` input: each member as it is, without a wrapper.
++#[cfg_attr(rust_js, rust_js::types = "bigint | Date | number")]
++pub trait IntoBigIntOrDateOrNumber: into_big_int_or_date_or_number::Sealed {}
++impl<T: into_big_int_or_date_or_number::Sealed> IntoBigIntOrDateOrNumber for T {}
+ 
+ /// How a locale is matched to `locales`: `localeMatcher`.
+ #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+@@ -69,9 +147,10 @@ pub enum RangeSource {
+ 
+ /// What `supported_locales_of` is given.
+ /// A JS object of these fields, a `None` one not given: `..Default::default()` the rest.
++#[cfg_attr(rust_js, rust_js::types = "{ localeMatcher?: string }")]
+ #[derive(Default)]
+-pub struct SupportedLocalesOptions {
+-    pub locale_matcher: Option<LocaleMatcher>,
++pub struct SupportedLocalesOptions<'a> {
++    pub locale_matcher: Option<&'a str>,
+ }
+ 
+ /// What `supported_values_of` lists.
+@@ -93,7 +172,7 @@ pub enum SupportedValuesKey {
+ 
+ /// [`Intl.getCanonicalLocales(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/getCanonicalLocales): `locales`, each as JS writes it, once, or the `RangeError` of one that isn't a locale.
+ #[cfg_attr(rust_js, rust_js::link_name = "Intl.getCanonicalLocales")]
+-pub fn get_canonical_locales(locales: &[&str]) -> Result<Vec<String>, &'static JsError> {
++pub fn get_canonical_locales(locales: Option<&dyn IntoStrOrStrList>) -> Result<Vec<String>, &'static JsError> {
+     unreachable!()
+ }
+ 
+@@ -127,6 +206,7 @@ pub enum Sensitivity {
+ 
+ /// What [`collator::new`] is given.
+ /// A JS object of these fields, a `None` one not given: `..Default::default()` the rest.
++#[cfg_attr(rust_js, rust_js::types = "Intl.CollatorOptions")]
+ #[derive(Default)]
+ pub struct CollatorOptions<'a> {
+     pub usage: Option<CollatorUsage>,
+@@ -139,6 +219,7 @@ pub struct CollatorOptions<'a> {
+ }
+ 
+ /// What a collator uses.
++#[cfg_attr(rust_js, rust_js::types = "Intl.ResolvedCollatorOptions")]
+ #[derive(Clone, Debug, PartialEq)]
+ pub struct ResolvedCollatorOptions {
+     pub locale: String,
+@@ -178,13 +259,13 @@ pub mod collator {
+ 
+     /// [`new Intl.Collator(locales, options)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/Collator/Collator): one of the first of `locales` it has, or the user's of none, as `options` say.
+     #[cfg_attr(rust_js, rust_js::link_name = "new Intl.Collator")]
+-    pub fn new(locales: &[&str], options: &CollatorOptions<'_>) -> &'static Collator {
++    pub fn new(locales: Option<&dyn IntoLocalesArgument>, options: Option<&CollatorOptions<'_>>) -> &'static Collator {
+         unreachable!()
+     }
+ 
+     /// [`Intl.Collator.supportedLocalesOf(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/Collator/supportedLocalesOf): those of `locales` it has, without falling back to the user's.
+     #[cfg_attr(rust_js, rust_js::link_name = "Intl.Collator.supportedLocalesOf")]
+-    pub fn supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String> {
++    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String> {
+         unreachable!()
+     }
+ }
+@@ -367,6 +448,7 @@ pub enum NumberFormatPartType {
+ 
+ /// What [`number_format::new`] is given: `currency` a code, `"USD"`, `unit` a unit, `"kilometer"`.
+ /// A JS object of these fields, a `None` one not given: `..Default::default()` the rest.
++#[cfg_attr(rust_js, rust_js::types = "Intl.NumberFormatOptions")]
+ #[derive(Default)]
+ pub struct NumberFormatOptions<'a> {
+     pub locale_matcher: Option<LocaleMatcher>,
+@@ -393,6 +475,7 @@ pub struct NumberFormatOptions<'a> {
+ }
+ 
+ /// What a number format uses.
++#[cfg_attr(rust_js, rust_js::types = "Intl.ResolvedNumberFormatOptions")]
+ #[derive(Clone, Debug, PartialEq)]
+ pub struct ResolvedNumberFormatOptions {
+     pub locale: String,
+@@ -419,6 +502,7 @@ pub struct ResolvedNumberFormatOptions {
+ }
+ 
+ /// A part of a written number: `formatToParts`'.
++#[cfg_attr(rust_js, rust_js::types = "Intl.NumberFormatPart")]
+ #[derive(Clone, Debug, PartialEq)]
+ pub struct NumberFormatPart {
+     pub r#type: NumberFormatPartType,
+@@ -426,6 +510,7 @@ pub struct NumberFormatPart {
+ }
+ 
+ /// A part of a written range of numbers, and which end it's of.
++#[cfg_attr(rust_js, rust_js::types = "Intl.NumberRangeFormatPart")]
+ #[derive(Clone, Debug, PartialEq)]
+ pub struct NumberRangeFormatPart {
+     pub r#type: NumberFormatPartType,
+@@ -491,13 +576,13 @@ pub mod number_format {
+ 
+     /// [`new Intl.NumberFormat(locales, options)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat): one of the first of `locales` it has, or the user's of none, as `options` say.
+     #[cfg_attr(rust_js, rust_js::link_name = "new Intl.NumberFormat")]
+-    pub fn new(locales: &[&str], options: &NumberFormatOptions<'_>) -> &'static NumberFormat {
++    pub fn new(locales: Option<&dyn IntoLocalesArgument>, options: Option<&NumberFormatOptions<'_>>) -> &'static NumberFormat {
+         unreachable!()
+     }
+ 
+     /// [`Intl.NumberFormat.supportedLocalesOf(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/supportedLocalesOf): those of `locales` it has, without falling back to the user's.
+     #[cfg_attr(rust_js, rust_js::link_name = "Intl.NumberFormat.supportedLocalesOf")]
+-    pub fn supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String> {
++    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String> {
+         unreachable!()
+     }
+ }
+@@ -596,6 +681,7 @@ pub enum DateTimeFormatPartType {
+ 
+ /// What [`date_time_format::new`] and a date's `to_locale_string` are given: `time_zone` an IANA name, `"Asia/Tokyo"`.
+ /// A JS object of these fields, a `None` one not given: `..Default::default()` the rest.
++#[cfg_attr(rust_js, rust_js::types = "Intl.DateTimeFormatOptions")]
+ #[derive(Default)]
+ pub struct DateTimeFormatOptions<'a> {
+     pub locale_matcher: Option<LocaleMatcher>,
+@@ -621,6 +707,7 @@ pub struct DateTimeFormatOptions<'a> {
+ }
+ 
+ /// What a date format uses.
++#[cfg_attr(rust_js, rust_js::types = "Intl.ResolvedDateTimeFormatOptions")]
+ #[derive(Clone, Debug, PartialEq)]
+ pub struct ResolvedDateTimeFormatOptions {
+     pub locale: String,
+@@ -646,6 +733,7 @@ pub struct ResolvedDateTimeFormatOptions {
+ }
+ 
+ /// A part of a written date: `formatToParts`'.
++#[cfg_attr(rust_js, rust_js::types = "Intl.DateTimeFormatPart")]
+ #[derive(Clone, Debug, PartialEq)]
+ pub struct DateTimeFormatPart {
+     pub r#type: DateTimeFormatPartType,
+@@ -653,6 +741,7 @@ pub struct DateTimeFormatPart {
+ }
+ 
+ /// A part of a written range of dates, and which end it's of.
++#[cfg_attr(rust_js, rust_js::types = "Intl.DateTimeRangeFormatPart")]
+ #[derive(Clone, Debug, PartialEq)]
+ pub struct DateTimeRangeFormatPart {
+     pub r#type: DateTimeFormatPartType,
+@@ -672,25 +761,25 @@ impl super::Classed for DateTimeFormat {
+ impl DateTimeFormat {
+     /// [`format.format(date)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/format): `date` written.
+     #[cfg_attr(rust_js, rust_js::link_name = "format")]
+-    pub fn format(&self, date: &Date) -> String {
++    pub fn format(&self, date: Option<&dyn IntoDateOrNumber>) -> String {
+         unreachable!()
+     }
+ 
+     /// [`format.formatToParts(date)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/formatToParts): `date` written, part by part.
+     #[cfg_attr(rust_js, rust_js::link_name = "formatToParts")]
+-    pub fn format_to_parts(&self, date: &Date) -> Vec<DateTimeFormatPart> {
++    pub fn format_to_parts(&self, date: Option<&dyn IntoDateOrNumber>) -> Vec<DateTimeFormatPart> {
+         unreachable!()
+     }
+ 
+     /// [`format.formatRange(start, end)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/formatRange): the range written, `Jan 10 – 20, 2007`.
+     #[cfg_attr(rust_js, rust_js::link_name = "formatRange")]
+-    pub fn format_range(&self, start: &Date, end: &Date) -> String {
++    pub fn format_range(&self, start: impl IntoBigIntOrDateOrNumber, end: impl IntoBigIntOrDateOrNumber) -> String {
+         unreachable!()
+     }
+ 
+     /// [`format.formatRangeToParts(start, end)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/formatRangeToParts): the range written, part by part.
+     #[cfg_attr(rust_js, rust_js::link_name = "formatRangeToParts")]
+-    pub fn format_range_to_parts(&self, start: &Date, end: &Date) -> Vec<DateTimeRangeFormatPart> {
++    pub fn format_range_to_parts(&self, start: impl IntoBigIntOrDateOrNumber, end: impl IntoBigIntOrDateOrNumber) -> Vec<DateTimeRangeFormatPart> {
+         unreachable!()
+     }
+ 
+@@ -706,13 +795,13 @@ pub mod date_time_format {
+ 
+     /// [`new Intl.DateTimeFormat(locales, options)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat): one of the first of `locales` it has, or the user's of none, as `options` say.
+     #[cfg_attr(rust_js, rust_js::link_name = "new Intl.DateTimeFormat")]
+-    pub fn new(locales: &[&str], options: &DateTimeFormatOptions<'_>) -> &'static DateTimeFormat {
++    pub fn new(locales: Option<&dyn IntoLocalesArgument>, options: Option<&DateTimeFormatOptions<'_>>) -> &'static DateTimeFormat {
+         unreachable!()
+     }
+ 
+     /// [`Intl.DateTimeFormat.supportedLocalesOf(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/supportedLocalesOf): those of `locales` it has, without falling back to the user's.
+     #[cfg_attr(rust_js, rust_js::link_name = "Intl.DateTimeFormat.supportedLocalesOf")]
+-    pub fn supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String> {
++    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String> {
+         unreachable!()
+     }
+ }
+@@ -745,6 +834,7 @@ pub enum PluralRuleType {
+ 
+ /// What [`plural_rules::new`] is given.
+ /// A JS object of these fields, a `None` one not given: `..Default::default()` the rest.
++#[cfg_attr(rust_js, rust_js::types = "Intl.PluralRulesOptions")]
+ #[derive(Default)]
+ pub struct PluralRulesOptions {
+     pub locale_matcher: Option<LocaleMatcher>,
+@@ -757,6 +847,7 @@ pub struct PluralRulesOptions {
+ }
+ 
+ /// What plural rules use.
++#[cfg_attr(rust_js, rust_js::types = "Intl.ResolvedPluralRulesOptions")]
+ #[derive(Clone, Debug, PartialEq)]
+ pub struct ResolvedPluralRulesOptions {
+     pub locale: String,
+@@ -797,13 +888,13 @@ pub mod plural_rules {
+ 
+     /// [`new Intl.PluralRules(locales, options)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/PluralRules/PluralRules): one of the first of `locales` it has, or the user's of none, as `options` say.
+     #[cfg_attr(rust_js, rust_js::link_name = "new Intl.PluralRules")]
+-    pub fn new(locales: &[&str], options: &PluralRulesOptions) -> &'static PluralRules {
++    pub fn new(locales: Option<&dyn IntoLocalesArgument>, options: Option<&PluralRulesOptions>) -> &'static PluralRules {
+         unreachable!()
+     }
+ 
+     /// [`Intl.PluralRules.supportedLocalesOf(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/PluralRules/supportedLocalesOf): those of `locales` it has, without falling back to the user's.
+     #[cfg_attr(rust_js, rust_js::link_name = "Intl.PluralRules.supportedLocalesOf")]
+-    pub fn supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String> {
++    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String> {
+         unreachable!()
+     }
+ }
+@@ -840,6 +931,7 @@ pub enum RelativeTimeNumeric {
+ 
+ /// What [`relative_time_format::new`] is given.
+ /// A JS object of these fields, a `None` one not given: `..Default::default()` the rest.
++#[cfg_attr(rust_js, rust_js::types = "Intl.RelativeTimeFormatOptions")]
+ #[derive(Default)]
+ pub struct RelativeTimeFormatOptions {
+     pub locale_matcher: Option<LocaleMatcher>,
+@@ -848,6 +940,7 @@ pub struct RelativeTimeFormatOptions {
+ }
+ 
+ /// What a relative time format uses.
++#[cfg_attr(rust_js, rust_js::types = "Intl.ResolvedRelativeTimeFormatOptions")]
+ #[derive(Clone, Debug, PartialEq)]
+ pub struct ResolvedRelativeTimeFormatOptions {
+     pub locale: String,
+@@ -857,6 +950,7 @@ pub struct ResolvedRelativeTimeFormatOptions {
+ }
+ 
+ /// A part of a written time: its number's parts are of its `unit`, which a literal has none of.
++#[cfg_attr(rust_js, rust_js::types = "Intl.RelativeTimeFormatPart")]
+ #[derive(Clone, Debug, PartialEq)]
+ pub struct RelativeTimeFormatPart {
+     pub r#type: NumberFormatPartType,
+@@ -898,13 +992,13 @@ pub mod relative_time_format {
+ 
+     /// [`new Intl.RelativeTimeFormat(locales, options)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/RelativeTimeFormat/RelativeTimeFormat): one of the first of `locales` it has, or the user's of none, as `options` say.
+     #[cfg_attr(rust_js, rust_js::link_name = "new Intl.RelativeTimeFormat")]
+-    pub fn new(locales: &[&str], options: &RelativeTimeFormatOptions) -> &'static RelativeTimeFormat {
++    pub fn new(locales: Option<&dyn IntoLocalesArgument>, options: Option<&RelativeTimeFormatOptions>) -> &'static RelativeTimeFormat {
+         unreachable!()
+     }
+ 
+     /// [`Intl.RelativeTimeFormat.supportedLocalesOf(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/RelativeTimeFormat/supportedLocalesOf): those of `locales` it has, without falling back to the user's.
+     #[cfg_attr(rust_js, rust_js::link_name = "Intl.RelativeTimeFormat.supportedLocalesOf")]
+-    pub fn supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String> {
++    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String> {
+         unreachable!()
+     }
+ }
+@@ -931,6 +1025,7 @@ pub enum ListFormatPartType {
+ 
+ /// What [`list_format::new`] is given.
+ /// A JS object of these fields, a `None` one not given: `..Default::default()` the rest.
++#[cfg_attr(rust_js, rust_js::types = "Intl.ListFormatOptions")]
+ #[derive(Default)]
+ pub struct ListFormatOptions {
+     pub locale_matcher: Option<LocaleMatcher>,
+@@ -939,6 +1034,7 @@ pub struct ListFormatOptions {
+ }
+ 
+ /// What a list format uses.
++#[cfg_attr(rust_js, rust_js::types = "Intl.ResolvedListFormatOptions")]
+ #[derive(Clone, Debug, PartialEq)]
+ pub struct ResolvedListFormatOptions {
+     pub locale: String,
+@@ -947,6 +1043,7 @@ pub struct ResolvedListFormatOptions {
+ }
+ 
+ /// A part of a written list.
++#[cfg_attr(rust_js, rust_js::types = "{ type: \"element\" | \"literal\"; value: string }")]
+ #[derive(Clone, Debug, PartialEq)]
+ pub struct ListFormatPart {
+     pub r#type: ListFormatPartType,
+@@ -987,13 +1084,13 @@ pub mod list_format {
+ 
+     /// [`new Intl.ListFormat(locales, options)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/ListFormat/ListFormat): one of the first of `locales` it has, or the user's of none, as `options` say.
+     #[cfg_attr(rust_js, rust_js::link_name = "new Intl.ListFormat")]
+-    pub fn new(locales: &[&str], options: &ListFormatOptions) -> &'static ListFormat {
++    pub fn new(locales: Option<&dyn IntoLocalesArgument>, options: Option<&ListFormatOptions>) -> &'static ListFormat {
+         unreachable!()
+     }
+ 
+     /// [`Intl.ListFormat.supportedLocalesOf(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/ListFormat/supportedLocalesOf): those of `locales` it has, without falling back to the user's.
+     #[cfg_attr(rust_js, rust_js::link_name = "Intl.ListFormat.supportedLocalesOf")]
+-    pub fn supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String> {
++    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String> {
+         unreachable!()
+     }
+ }
+@@ -1035,6 +1132,7 @@ pub enum LanguageDisplay {
+ 
+ /// What [`display_names::new`] is given; its `type` is required, as JS's is.
+ /// A JS object of these fields, a `None` one not given.
++#[cfg_attr(rust_js, rust_js::types = "Intl.DisplayNamesOptions")]
+ pub struct DisplayNamesOptions {
+     pub locale_matcher: Option<LocaleMatcher>,
+     pub style: Option<Style>,
+@@ -1044,6 +1142,7 @@ pub struct DisplayNamesOptions {
+ }
+ 
+ /// What display names use.
++#[cfg_attr(rust_js, rust_js::types = "Intl.ResolvedDisplayNamesOptions")]
+ #[derive(Clone, Debug, PartialEq)]
+ pub struct ResolvedDisplayNamesOptions {
+     pub locale: String,
+@@ -1081,19 +1180,20 @@ pub mod display_names {
+ 
+     /// [`new Intl.DisplayNames(locales, options)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DisplayNames/DisplayNames): one of the first of `locales` it has, or the user's of none, as `options` say.
+     #[cfg_attr(rust_js, rust_js::link_name = "new Intl.DisplayNames")]
+-    pub fn new(locales: &[&str], options: &DisplayNamesOptions) -> &'static DisplayNames {
++    pub fn new(locales: Option<&dyn IntoLocalesArgument>, options: &DisplayNamesOptions) -> &'static DisplayNames {
+         unreachable!()
+     }
+ 
+     /// [`Intl.DisplayNames.supportedLocalesOf(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/DisplayNames/supportedLocalesOf): those of `locales` it has, without falling back to the user's.
+     #[cfg_attr(rust_js, rust_js::link_name = "Intl.DisplayNames.supportedLocalesOf")]
+-    pub fn supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String> {
++    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String> {
+         unreachable!()
+     }
+ }
+ 
+ /// What [`locale::new`] is given: each a part of the locale it makes, over its tag's.
+ /// A JS object of these fields, a `None` one not given: `..Default::default()` the rest.
++#[cfg_attr(rust_js, rust_js::types = "Intl.LocaleOptions")]
+ #[derive(Default)]
+ pub struct LocaleOptions<'a> {
+     pub calendar: Option<&'a str>,
+@@ -1219,6 +1319,7 @@ pub enum Granularity {
+ 
+ /// What [`segmenter::new`] is given.
+ /// A JS object of these fields, a `None` one not given: `..Default::default()` the rest.
++#[cfg_attr(rust_js, rust_js::types = "Intl.SegmenterOptions")]
+ #[derive(Default)]
+ pub struct SegmenterOptions {
+     pub locale_matcher: Option<LocaleMatcher>,
+@@ -1226,6 +1327,7 @@ pub struct SegmenterOptions {
+ }
+ 
+ /// What a segmenter uses.
++#[cfg_attr(rust_js, rust_js::types = "Intl.ResolvedSegmenterOptions")]
+ #[derive(Clone, Debug, PartialEq)]
+ pub struct ResolvedSegmenterOptions {
+     pub locale: String,
+@@ -1233,6 +1335,7 @@ pub struct ResolvedSegmenterOptions {
+ }
+ 
+ /// A segment of text: what it is, where it starts in `input`, and whether it's a word.
++#[cfg_attr(rust_js, rust_js::types = "Intl.SegmentData")]
+ #[derive(Clone, Debug, PartialEq)]
+ pub struct SegmentData {
+     pub segment: String,
+@@ -1290,13 +1393,13 @@ pub mod segmenter {
+ 
+     /// [`new Intl.Segmenter(locales, options)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/Segmenter/Segmenter): one of the first of `locales` it has, or the user's of none, as `options` say.
+     #[cfg_attr(rust_js, rust_js::link_name = "new Intl.Segmenter")]
+-    pub fn new(locales: &[&str], options: &SegmenterOptions) -> &'static Segmenter {
++    pub fn new(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SegmenterOptions>) -> &'static Segmenter {
+         unreachable!()
+     }
+ 
+     /// [`Intl.Segmenter.supportedLocalesOf(locales)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Intl/Segmenter/supportedLocalesOf): those of `locales` it has, without falling back to the user's.
+     #[cfg_attr(rust_js, rust_js::link_name = "Intl.Segmenter.supportedLocalesOf")]
+-    pub fn supported_locales_of(locales: &[&str], options: &SupportedLocalesOptions) -> Vec<String> {
++    pub fn supported_locales_of(locales: Option<&dyn IntoLocalesArgument>, options: Option<&SupportedLocalesOptions<'_>>) -> Vec<String> {
+         unreachable!()
+     }
+ }
+diff --git a/builtins/src/lib.rs b/builtins/src/lib.rs
+index 81be932..b1bdfce 100644
+--- a/builtins/src/lib.rs
++++ b/builtins/src/lib.rs
+@@ -2539,7 +2539,7 @@ pub mod string {
+     /// host's of `None`, left out: Turkish's `I` is a dotless `ı`, where
+     /// `str::to_lowercase`, which is no locale's, gives `i`.
+     #[cfg_attr(rust_js, rust_js::link_name = "toLocaleLowerCase")]
+-    pub fn to_locale_lower_case(this: &str, locales: Option<&[&str]>) -> String {
++    pub fn to_locale_lower_case(this: &str, locales: Option<&dyn super::intl::IntoLocalesArgument>) -> String {
+         unreachable!()
+     }
+ 
+@@ -2548,7 +2548,7 @@ pub mod string {
+     /// host's of `None`, left out: Turkish's `i` is a dotted `İ`, where
+     /// `str::to_uppercase` gives `I`.
+     #[cfg_attr(rust_js, rust_js::link_name = "toLocaleUpperCase")]
+-    pub fn to_locale_upper_case(this: &str, locales: Option<&[&str]>) -> String {
++    pub fn to_locale_upper_case(this: &str, locales: Option<&dyn super::intl::IntoLocalesArgument>) -> String {
+         unreachable!()
+     }
+ }
+diff --git a/docs/decisions/0283-js-crate-covers-typescripts-es-library.md b/docs/decisions/0283-js-crate-covers-typescripts-es-library.md
+index 4b812a8..fac623e 100644
+--- a/docs/decisions/0283-js-crate-covers-typescripts-es-library.md
++++ b/docs/decisions/0283-js-crate-covers-typescripts-es-library.md
+@@ -439,3 +439,43 @@ the infinities among them, each beside counts 0, 1, 2.7, 15, 100, 101, -1,
+ `NaN`, `Infinity` and none, each answer or error against JS's own; the
+ stepping's `Number((distance / step).toPrecision(15))`; and the JS,
+ `x.toFixed(digits)` and `x.toPrecision(precision)`.
++
++## Amendment (2026-11-15): exact Intl argument unions (#1830, #1834)
++
++The hand-written Intl spec remains the one authority. The pinned coverage
++library is typescript-es 5.9.3, ES5 through ES2024. Its declarations, cited
++beside the spec's input definitions, determine the unions and optionality.
++
++- Formatter constructors and supportedLocalesOf share IntoLocalesArgument:
++  a string, Intl.Locale, or a list mixing them. Borrowed and owned strings,
++  slices, arrays and vectors use that form; LocaleElement represents a mixed
++  list's elements. An optional union is Option<&dyn IntoLocalesArgument>.
++  Date and String locale methods consume this same form.
++- getCanonicalLocales has a distinct string/list-only union, IntoStrOrStrList.
++  It does not admit Locale in its Rust contract. Undefined is None.
++- format and formatToParts take an optional Date | number. Range methods
++  take required Date | number | bigint arguments. Each union has one sealed
++  input trait, reused by its methods. They forward values unchanged,
++  including native errors and coercion; there is no runtime adapter.
++- Options are optional where TypeScript makes them optional. DisplayNames'
++  options remain required. SupportedLocalesOptions' localeMatcher is a
++  string, as its anonymous native declaration says.
++- Native Intl records/options carry their actual native TypeScript types.
++  Named records use their names; the two anonymous records derive their
++  structural type from the same field catalog that generates their Rust,
++  with string-union membership shared with enum generation.
++
++This follows ADR 0262's first case: there is no observable difference at
++these foreign API boundaries. Rustc checks membership; no cast or wrapper
++admits another shape. Negative caller tests reject nonmembers. Bun and
++Chromium compare compiled Rust calls with the same engine's native Intl,
++including invalid tags, invalid dates, range ordering and bigint errors.
++The APIs have no native Rust implementation; the oracle is JavaScript's
++actual Intl, not an approximate Rust locale library.
++
++Member-count coverage is supplemented by callers derived from the pinned
++TypeScript union model. A future union member cannot silently leave a
++narrower Rust binding green: an unknown member fails coverage, and removing
++an admitted Rust member fails the derived callers. The same library-file
++selection owns member coverage and argument coverage. Public Result return
++declarations remain the separately tracked #1835 limitation.
+diff --git a/docs/dev-loop.md b/docs/dev-loop.md
+index 0c18d64..1476739 100644
+--- a/docs/dev-loop.md
++++ b/docs/dev-loop.md
+@@ -179,3 +179,5 @@ Also in use, with no single before and after:
+ | Experiment | Status | Where |
+ |---|---|---|
+ | The metamorphic net's 16 rewrites of #1203 and #1204, timed on their first run (ldAC, 2026-11-10) | Measured, not yet sped up. On the 12-core M6, every case in both builds: the five loud rewrites 6.5 min in 12 parts (one part 15 min with #1214's hang, since fixed); the eleven contexts 47 min in 11 parts, most of it `test/reduced.ts` reducing each of their 68 failures, up to 300 s each, one after another in its part, the same program's plain and std failures reduced apart. A listed failure isn't reduced, so once the 68 are in `test/metamorphic-known.txt` the nightly pays their runs, not their reductions. Its reductions now run at once within each case's test, within its timeout (#1365, Active); one program's reduction shared by its builds, and across a part's cases, is still to do | `test/reduced.ts`, `test/metamorphic.test.ts` |
++
++| Intl private-clone validation, 2026-11-15 (#1830/#1834) | First check:fast --all hit its 480 s overall deadline: all 14 corpus parts passed in 191–207 s each, the browser group in 4 min, with remaining suites still active. Both private and main-clone map stores were empty; restoring 64 ancestors did not recover a map. TypeScript annotation and load-aware timeout failures were separately fixed and rechecked. Clean-base map recording then hit its 270 s deadline: counting compiler build 72 s, corpus parts 64–74 s, std-iterator parts 85–92 s, with further mapped files still running. No map was published; complete feature work was restored from its durable patch, and recorder PIDs were verified absent. Recording costs exceed the documented ~130 s on this machine. A coordinated warm rerun at the same 480 s deadline passed all planned gates in 289 s: corpus parts 34–45 s, browsers 212 s, other 291 files 244 s; cores 86% busy, under half busy 12% of the run. Cache warmth and the quiet heavy-work window both changed, so their effects are not isolated. The P0 #1840 regression was created after that run began and fails separately; this is not a claim that current HEAD plus that new regression is green. | test/intl-arguments.test.ts; scripts/testMap.ts; check logs 2026-11-14T18-58-02-436Z-64140 |
+diff --git a/docs/guide/libraries/README.md b/docs/guide/libraries/README.md
+index f08c52a..46bca07 100644
+--- a/docs/guide/libraries/README.md
++++ b/docs/guide/libraries/README.md
+@@ -191,6 +191,19 @@ What it has:
+   `&f64::sqrt` lent as a `&dyn Fn`, is `Math.sqrt`, and `std::f64::consts::PI` is `Math.PI`
+   ([Numbers](../interop/types.md#numbers),
+   [ADR 0887](../../decisions/0887-std-items-that-are-math-are-math.md)).
++- **Intl inputs:** `js::intl::date_time_format::new(Some(&"en-US"), Some(&options))`
++  takes a locale string, an Intl.Locale, or a list. Use None for the runtime's
++  locale or default options. Owned strings/vectors and borrowed arrays/slices
++  use the same input trait; a mixed list uses LocaleElement::Text and
++  LocaleElement::Locale. DisplayNames still requires its options.
++  A formatter's `format(Some(&timestamp))` and `format(Some(&date))`
++  accept numbers and Date objects; `format(None)` uses the current time.
++  formatToParts follows the same rule. Range methods take their two values
++  directly, including the pinned TypeScript library's bigint form. Bindings
++  preserve the engine's native coercion and errors. getCanonicalLocales uses
++  its distinct string/list-only contract, with None for no locales.
++  Date and String locale methods take the same locale union as formatters.
++  Native formatter records remain typed when exported from Rust.
+ - **The rest of the ES library:** `Date`, `Intl`'s formatters, typed arrays
+   and `ArrayBuffer`, `Atomics`, `Symbol`, `WeakMap`, `WeakRef`,
+   `FinalizationRegistry`, `Proxy`, `Reflect`, `encode_uri_component` and
+diff --git a/test/intl-arguments.test.ts b/test/intl-arguments.test.ts
+new file mode 100644
+index 0000000..76f5422
+--- /dev/null
++++ b/test/intl-arguments.test.ts
+@@ -0,0 +1,145 @@
++import {beforeAll, expect, test} from "bun:test";
++import {readFileSync, writeFileSync} from "node:fs";
++import {join} from "node:path";
++import {chromium} from "playwright";
++import {underLoad} from "../scripts/timing";
++import {intlArgumentCases} from "../builtins/coverage";
++import {runSync} from "./child";
++import {buildReact, compiler, fixture, root, run, target} from "./support";
++
++beforeAll(buildReact, 600_000);
++const source = `use js::intl::{self, DateTimeFormatOptions, IntoLocalesArgument, IntoStrOrStrList, IntoDateOrNumber, IntoBigIntOrDateOrNumber, LocaleElement, LocaleOptions};
++use js::{Date, JsError};
++pub fn locales(value: Option<&dyn IntoStrOrStrList>) -> Result<Vec<String>, &'static JsError> {
++    intl::get_canonical_locales(value)
++}
++pub fn formatted(locales: Option<&dyn IntoLocalesArgument>, value: Option<&dyn IntoDateOrNumber>) -> String {
++    let formatter = intl::date_time_format::new(locales, Some(&DateTimeFormatOptions { time_zone: Some("UTC"), ..Default::default() }));
++    formatter.format(value)
++}
++pub fn parts(locales: Option<&dyn IntoLocalesArgument>, value: Option<&dyn IntoDateOrNumber>) -> Vec<intl::DateTimeFormatPart> {
++    intl::date_time_format::new(locales, Some(&DateTimeFormatOptions { time_zone: Some("UTC"), ..Default::default() })).format_to_parts(value)
++}
++pub fn range(start: impl IntoBigIntOrDateOrNumber, end: impl IntoBigIntOrDateOrNumber) -> String {
++    intl::date_time_format::new(Some(&"en-US"), Some(&DateTimeFormatOptions { time_zone: Some("UTC"), ..Default::default() })).format_range(start, end)
++}
++pub fn range_parts(start: impl IntoBigIntOrDateOrNumber, end: impl IntoBigIntOrDateOrNumber) -> Vec<intl::DateTimeRangeFormatPart> {
++    intl::date_time_format::new(Some(&"en-US"), Some(&DateTimeFormatOptions { time_zone: Some("UTC"), ..Default::default() })).format_range_to_parts(start, end)
++}
++pub fn rust_forms(date: &Date) -> Vec<String> {
++    let locale = intl::locale::new("de-DE", &LocaleOptions::default()).unwrap();
++    let mixed = [LocaleElement::Text("en-US"), LocaleElement::Locale(locale)];
++    let owned = vec![String::from("fr-FR")];
++    let formatter = intl::date_time_format::new(Some(&mixed), None);
++    let _ = formatter.format(Some(&0.0));
++    let _ = formatter.format(Some(&date));
++    let _ = intl::date_time_format::new(Some(&owned), None);
++    let _ = intl::date_time_format::new(Some(&owned.as_slice()), None);
++    let _ = intl::date_time_format::new(Some(&String::from("ja-JP")), None);
++    let _ = intl::date_time_format::new(Some(&locale), None);
++    intl::get_canonical_locales(Some(&["en-US", "de-DE"])).unwrap()
++}
++`;
++
++test("Intl locale unions and date inputs preserve native calls in Bun and Chromium", async () => {
++  const dir = fixture("intl-arguments");
++  const rust = join(dir, "lib.rs"), output = join(dir, "lib.js");
++  writeFileSync(rust, source);
++  run([compiler, "--declarations", rust, "-o", output, "--", "--extern", `js=${join(target, "libjs.rmeta")}`, "-L", target]);
++  const js = readFileSync(output, "utf8");
++  expect(js).toContain("Intl.getCanonicalLocales(value)");
++  expect(js).toContain("formatter.format(value)");
++  const declarations = readFileSync(join(dir, "lib.d.ts"), "utf8");
++  expect(declarations).toContain("Intl.LocalesArgument");
++  expect(declarations).toContain("readonly string[]");
++  expect(declarations).toContain("value?: (Date | number) | null | undefined): string");
++  expect(declarations).toContain("): Intl.DateTimeFormatPart[]");
++  expect(declarations).toContain("end: bigint | Date | number): string");
++  expect(declarations).toContain("end: bigint | Date | number): Intl.DateTimeRangeFormatPart[]");
++  // The Result return of locales is the separately tracked declaration gap;
++  // this regression checks all changed arguments and native formatter records.
++  const consumer = join(dir, "consumer.ts");
++  writeFileSync(consumer, `import {formatted, parts, range, rangeParts, locales} from './lib.js';
++const locale = new Intl.Locale('en-US');
++formatted(locale, new Date(0));
++formatted(['de-DE', locale], 0);
++parts('en-US', 0)[0].type;
++range(0n, new Date(0));
++rangeParts(0, 0)[0].source;
++locales(['en-US']);
++// @ts-expect-error a locale is not a boolean
++formatted(true, 0);
++// @ts-expect-error a timestamp is not a string
++formatted('en-US', 'today');
++// @ts-expect-error required range inputs cannot be missing
++range(undefined, 0);
++// @ts-expect-error canonical names exclude Intl.Locale
++locales(locale);
++// @ts-expect-error parts retain native field types
++parts('en-US', 0)[0].missing;
++`);
++  const config = join(dir, "tsconfig.json");
++  writeFileSync(config, JSON.stringify({compilerOptions: {strict: true, noEmit: true, skipLibCheck: false, target: "esnext", module: "esnext", moduleResolution: "bundler", typeRoots: [join(root, "node_modules/@types")]}, files: [consumer]}));
++  const checked = runSync([process.execPath, join(root, "node_modules/typescript/bin/tsc"), "-p", config], dir, 20000);
++  expect(checked.code, checked.stdout + checked.stderr).toBe(0);
++  const made = await import(output);
++  function compare(made: any) {
++    const results: unknown[] = [];
++    const outcome = (run: () => unknown) => {try {return {value: run()};} catch (error) {return {error: error instanceof Error ? [error.name, error.message] : error};}};
++    for (const locales of [undefined, "en-US", "de-DE", ["fr-FR", "en-US"], new Intl.Locale("ja-JP"), ["en-US", new Intl.Locale("de-DE")], "not a tag!"]) {
++      results.push([outcome(() => {const result = made.locales(locales); if (result.TAG === "Err") throw result._0; return result._0;}), outcome(() => Intl.getCanonicalLocales(locales as any))]);
++      for (const value of [new Date(0), 0, -86400000, 1.5, NaN, Infinity]) {
++        const expected = () => new Intl.DateTimeFormat(locales as any, {timeZone: "UTC"});
++        results.push([outcome(() => made.formatted(locales, value)), outcome(() => expected().format(value))]);
++        results.push([outcome(() => made.parts(locales, value)), outcome(() => expected().formatToParts(value))]);
++      }
++    }
++    const formatter = new Intl.DateTimeFormat("en-US", {timeZone: "UTC"});
++    for (const start of [new Date(0), 0, -86400000, 0n, NaN, Infinity]) for (const end of [new Date(86400000), 86400000, 86400000n, NaN]) {
++      results.push([outcome(() => made.range(start, end)), outcome(() => formatter.formatRange(start as any, end as any))]);
++      results.push([outcome(() => made.rangeParts(start, end)), outcome(() => formatter.formatRangeToParts(start as any, end as any))]);
++    }
++    results.push([made.rustForms(new Date(0)), ["en-US", "de-DE"]]);
++    return results;
++  }
++  for (const [madeValue, native] of compare(made) as any[]) expect(madeValue).toEqual(native);
++  const browser = await chromium.launch({headless: true});
++  try {
++    const page = await browser.newPage();
++    const bundled = await Bun.build({entrypoints: [output], target: "browser", format: "esm"});
++    expect(bundled.success).toBe(true);
++    const module = "data:text/javascript;base64," + Buffer.from(await bundled.outputs[0].text()).toString("base64");
++    const results = await page.evaluate(async ({module, compare}) => {
++      const made = await import(module);
++      return (0, eval)("(" + compare + ")")(made);
++    }, {module, compare: compare.toString()});
++    for (const [madeValue, native] of results) expect(madeValue).toEqual(native);
++  } finally {await browser.close();}
++}, underLoad(60_000));
++
++// Member-count coverage alone would miss the original narrowing bugs.
++test("pinned TypeScript argument unions are admitted by the Rust bindings", async () => {
++  const generated = await intlArgumentCases();
++  expect(generated.cases).toBeGreaterThan(20);
++  const dir = fixture("intl-argument-coverage");
++  const input = join(dir, "lib.rs");
++  writeFileSync(input, generated.source);
++  run([compiler, input, "-o", join(dir, "lib.js"), "--", "--extern", `js=${join(target, "libjs.rmeta")}`, "-L", target]);
++});
++
++test("the Rust input unions reject nonmembers", () => {
++  const dir = fixture("intl-argument-nonmembers");
++  for (const [name, statement] of [
++    ["bool-locale", 'let _ = js::intl::date_time_format::new(Some(&true), None);'],
++    ["number-locale", 'let _ = js::intl::date_time_format::new(Some(&1.0), None);'],
++    ["bool-list", 'let _ = js::intl::date_time_format::new(Some(&[true]), None);'],
++    ["string-date", 'let _ = formatter.format(Some(&"today"));'],
++    ["bool-range", 'let _ = formatter.format_range(true, 0.0);'],
++  ]) {
++    const input = join(dir, name + ".rs");
++    writeFileSync(input, 'pub fn invalid(formatter: &js::intl::DateTimeFormat) {' + statement + '}');
++    const result = runSync([compiler, input, "-o", join(dir, name + ".js"), "--", "--extern", `js=${join(target, "libjs.rmeta")}`, "-L", target], root, 20000);
++    expect(result.code, name).not.toBe(0);
++    expect(result.stderr, name).toContain("error[E0277]");
++  }
++});
+diff --git a/test/js-builtins.test.ts b/test/js-builtins.test.ts
+index b08278c..a7752f8 100644
+--- a/test/js-builtins.test.ts
++++ b/test/js-builtins.test.ts
+@@ -372,8 +372,8 @@ test("Intl's formatters are JS's, their options typed", async () => {
+   writeFileSync(join(dir, "lib.rs"), `use js::date;
+ use js::intl::{self, *};
+ pub fn numbers() -> (String, String, bool, Vec<String>, String) {
+-    let price = number_format::new(&["en-US"], &NumberFormatOptions { style: Some(NumberStyle::Currency), currency: Some("USD"), ..Default::default() });
+-    let plain = number_format::new(&["en-US"], &NumberFormatOptions { use_grouping: Some(UseGrouping::Bool(false)), ..Default::default() });
++    let price = number_format::new(Some(&["en-US"]), Some(&NumberFormatOptions { style: Some(NumberStyle::Currency), currency: Some("USD"), ..Default::default() }));
++    let plain = number_format::new(Some(&["en-US"]), Some(&NumberFormatOptions { use_grouping: Some(UseGrouping::Bool(false)), ..Default::default() }));
+     let options = plain.resolved_options();
+     let parts = price.format_to_parts(-1.5).into_iter().filter(|p| p.r#type != NumberFormatPartType::Literal).map(|p| p.value).collect();
+     (price.format(1234.5), plain.format(1234.0), options.use_grouping == UseGrouping::Bool(false), parts, price.format_range(3.0, 5.0))
+@@ -381,25 +381,25 @@ pub fn numbers() -> (String, String, bool, Vec<String>, String) {
+ pub fn dates() -> (String, String, Vec<String>) {
+     let d = date::new(Some(&0.0));
+     let utc = DateTimeFormatOptions { time_zone: Some("UTC"), year: Some(NumericStyle::Numeric), month: Some(MonthStyle::Long), day: Some(NumericStyle::Numeric), ..Default::default() };
+-    let format = date_time_format::new(&["en-US"], &utc);
+-    let kinds = format.format_to_parts(d).into_iter().filter(|p| p.r#type != DateTimeFormatPartType::Literal).map(|p| p.value).collect();
+-    (format.format(d), d.to_locale_date_string(Some(&["en-GB"]), Some(&utc)), kinds)
++    let format = date_time_format::new(Some(&["en-US"]), Some(&utc));
++    let kinds = format.format_to_parts(Some(&d)).into_iter().filter(|p| p.r#type != DateTimeFormatPartType::Literal).map(|p| p.value).collect();
++    (format.format(Some(&d)), d.to_locale_date_string(Some(&["en-GB"]), Some(&utc)), kinds)
+ }
+ pub fn words() -> (Vec<String>, PluralCategory, String, String, Option<String>, usize) {
+-    let collator = collator::new(&["en"], &CollatorOptions { numeric: Some(true), ..Default::default() });
++    let collator = collator::new(Some(&["en"]), Some(&CollatorOptions { numeric: Some(true), ..Default::default() }));
+     let mut files = vec!["file10", "file2", "File1"];
+     files.sort_by(|a, b| collator.compare(a, b));
+-    let ordinal = plural_rules::new(&["en-US"], &PluralRulesOptions { r#type: Some(PluralRuleType::Ordinal), ..Default::default() });
+-    let ago = relative_time_format::new(&["en"], &RelativeTimeFormatOptions { numeric: Some(RelativeTimeNumeric::Auto), ..Default::default() });
+-    let list = list_format::new(&["en"], &ListFormatOptions { r#type: Some(ListFormatType::Disjunction), ..Default::default() });
+-    let names = display_names::new(&["en"], &DisplayNamesOptions { r#type: DisplayNamesType::Region, locale_matcher: None, style: None, language_display: None, fallback: None });
+-    let words = segmenter::new(&["en"], &SegmenterOptions { granularity: Some(Granularity::Word), ..Default::default() });
++    let ordinal = plural_rules::new(Some(&["en-US"]), Some(&PluralRulesOptions { r#type: Some(PluralRuleType::Ordinal), ..Default::default() }));
++    let ago = relative_time_format::new(Some(&["en"]), Some(&RelativeTimeFormatOptions { numeric: Some(RelativeTimeNumeric::Auto), ..Default::default() }));
++    let list = list_format::new(Some(&["en"]), Some(&ListFormatOptions { r#type: Some(ListFormatType::Disjunction), ..Default::default() }));
++    let names = display_names::new(Some(&["en"]), &DisplayNamesOptions { r#type: DisplayNamesType::Region, locale_matcher: None, style: None, language_display: None, fallback: None });
++    let words = segmenter::new(Some(&["en"]), Some(&SegmenterOptions { granularity: Some(Granularity::Word), ..Default::default() }));
+     let count = segments::iter(words.segment("Hello, big world")).filter(|s| s.is_word_like == Some(true)).count();
+     (files.iter().map(|f| f.to_string()).collect(), ordinal.select(2.0), ago.format(-1.0, RelativeTimeUnit::Day), list.format(&["a", "b"]), names.of("US"), count)
+ }
+ pub fn locales() -> (String, bool, Vec<String>, bool) {
+     let maximal = locale::new("en", &LocaleOptions::default()).map(|l| l.maximize().to_string()).unwrap_or_default();
+-    let canonical = intl::get_canonical_locales(&["EN-us"]).unwrap_or_default();
++    let canonical = intl::get_canonical_locales(Some(&["EN-us"])).unwrap_or_default();
+     (maximal, locale::new("not a tag!", &LocaleOptions::default()).is_err(), canonical, intl::supported_values_of(SupportedValuesKey::Currency).len() > 10)
+ }
+ `);

@@ -2,7 +2,7 @@
 
 A Rust/rust-js port of [UI SDK](https://github.com/vercel-labs/ui), a library of composable interface behaviors. Apache-2.0 licensed, with upstream attribution retained.
 
-**Status: development snapshot. Full JavaScript compilation is currently blocked by rust-js #1820. Core, Web Components and the documentation deployment are not complete.**
+**Status: development snapshot. Full JavaScript compilation is currently blocked by rust-js #1820. The Intl compiler patch is held for confirmed P0 #1840. Core, Web Components and the documentation deployment are not complete.**
 
 The first milestone ports `@ui-sdk/core` and `@ui-sdk/web`, including their accessibility, lifecycle and agent-facing contracts. The documentation application and executable examples will be written in Rust/rust-js and deployed to GitHub Pages. The SDK React adapter follows after this milestone. Vue, Svelte, Solid and other framework adapters are future work.
 
