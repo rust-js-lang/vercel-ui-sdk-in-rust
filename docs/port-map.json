@@ -211,14 +211,17 @@
         "monthGrid"
       ],
       "issues": [
-        "https://github.com/rust-js-lang/rust-js/issues/1828",
-        "https://github.com/rust-js-lang/rust-js/issues/1853"
+        "https://github.com/rust-js-lang/rust-js/issues/1845"
       ],
       "evidence": [
         "tests/calendar.test.ts",
         "tests/types/calendar.ts",
         "scripts/build-core-probe.ts",
         "docs/validation.md"
+      ],
+      "resolvedIssues": [
+        "https://github.com/rust-js-lang/rust-js/issues/1828",
+        "https://github.com/rust-js-lang/rust-js/issues/1829"
       ]
     },
     {
@@ -238,6 +241,44 @@
       ],
       "evidence": [
         "tests/change-source.test.ts",
+        "docs/validation.md"
+      ]
+    },
+    {
+      "source": "packages/core/src/foundation/platform/layout.ts",
+      "rust": "crates/core/src/foundation/platform/layout.rs",
+      "status": "implemented",
+      "exports": [
+        "layoutBox",
+        "layoutOrigin",
+        "layoutSize"
+      ],
+      "evidence": [
+        "tests/layout.test.ts",
+        "tests/browser/layout.spec.ts",
+        "tests/types/layout.ts",
+        "tests/declarations.test.ts",
+        "docs/validation.md"
+      ]
+    },
+    {
+      "source": "packages/core/src/foundation/platform/env.ts",
+      "rust": "crates/core/src/foundation/platform/env.rs",
+      "status": "pending-compiler",
+      "exports": [
+        "isBrowser",
+        "isIOS",
+        "isRTL"
+      ],
+      "remaining": "Required nullable/undefined input to isRTL is declared optional; shared plain Option arity policy is #1845.",
+      "issues": [
+        "https://github.com/rust-js-lang/rust-js/issues/1845"
+      ],
+      "evidence": [
+        "tests/environment.test.ts",
+        "tests/browser/environment.spec.ts",
+        "tests/types/environment.ts",
+        "tests/declarations.test.ts",
         "docs/validation.md"
       ]
     }

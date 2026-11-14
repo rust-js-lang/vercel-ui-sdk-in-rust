@@ -43,4 +43,8 @@ export {
   wrap,
 } from "./foundation/number/steps.js";
 export { physicalSide } from "./foundation/platform/sides.js";
+
+export { layoutBox, layoutOrigin, layoutSize } from "./foundation/platform/layout.js";
+
+export { isBrowser, isIOS, isRTL } from "./foundation/platform/env.js";
 //# sourceMappingURL=lib.js.map

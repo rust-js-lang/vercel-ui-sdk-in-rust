@@ -24,7 +24,11 @@ export { clamp, decimalsOf, maxOnGrid, onGrid, roundTo, scrubTo, snapToStep, ste
 
 export { physicalSide } from "./foundation/platform/sides.js";
 
-export type { DateInput, DateParts, IsoDate, MonthGridOptions } from "./foundation/date/plain_date.js";
+export { layoutBox, layoutOrigin, layoutSize } from "./foundation/platform/layout.js";
+
+export { isBrowser, isIOS, isRTL } from "./foundation/platform/env.js";
+
+export type { DateInput, DateParts, ISODate, MonthGridOptions } from "./foundation/date/plain_date.js";
 
 export type { ChangeSource } from "./foundation/kernel/details.js";
 
@@ -45,3 +49,5 @@ export type { CustomScale, NumberBounds, NumberScale, ScaleKind } from "./founda
 export type { BoundMove, DirectionalMove, NumberBound, NumberMove, NumberRange, NumberScrub, NumberSnap, ScrubOptions, SnapEase, StepByOptions, StepDirection, StepRange, StepSize } from "./foundation/number/steps.js";
 
 export type { PhysicalSide, Side } from "./foundation/platform/sides.js";
+
+export type { LayoutBox, LayoutPoint, LayoutSize } from "./foundation/platform/layout.js";

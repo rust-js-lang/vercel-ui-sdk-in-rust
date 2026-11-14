@@ -30,8 +30,8 @@ thread_local! {
 
 /// Whether a value is a real ISO calendar date.
 #[cfg_attr(rust_js, rust_js::name = "isISODate")]
-pub fn is_iso_date(value: Option<&js::Unknown>) -> bool {
-    matches!(js::classify(value), js::Kind::String(text) if date_parts(Some(text)).is_some())
+pub fn is_iso_date(value: Option<&js::Unknown>) -> js::Is<IsoDate> {
+    js::Is::when(value, |text| date_parts(Some(text)).is_some())
 }
 
 /// Reads calendar fields, or None for an invalid date.
@@ -60,7 +60,7 @@ pub fn iso_date(year: f64, month: f64, day: f64) -> Option<IsoDate> {
 pub fn to_iso_date(value: Option<&DateInput>) -> Option<IsoDate> {
     let value = js::unknown(value?);
     if let js::Kind::String(text) = js::classify(Some(value)) {
-        return is_iso_date(Some(value)).then(|| text.to_owned());
+        return is_iso_date(Some(value)).holds().then(|| text.to_owned());
     }
     // Preserve the original same-realm instanceof check rather than treating
     // every object with Date's shape as a Date.

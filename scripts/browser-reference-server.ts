@@ -9,6 +9,10 @@ if (revision.exitCode !== 0 || revision.stdout.toString().trim() !== provenance.
 }
 
 const entries = [
+  ["/reference/env.js", resolve(upstream, "packages/core/src/foundation/platform/env.ts")],
+  ["/ported/env.js", resolve(root, "crates/core/src/foundation/platform/env.js")],
+  ["/reference/layout.js", resolve(upstream, "packages/core/src/foundation/platform/layout.ts")],
+  ["/ported/layout.js", resolve(root, "crates/core/src/foundation/platform/layout.js")],
   ["/reference/events.js", resolve(upstream, "packages/core/src/foundation/kernel/events.ts")],
   ["/ported/events.js", resolve(root, "crates/core/src/foundation/kernel/events.js")],
 ] as const;

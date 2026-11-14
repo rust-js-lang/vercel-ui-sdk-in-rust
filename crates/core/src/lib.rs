@@ -34,3 +34,9 @@ pub use foundation::number::steps::{
     wrap,
 };
 pub use foundation::platform::sides::{PhysicalSide, Side, physical_side};
+
+pub use foundation::platform::layout::{
+    LayoutBox, LayoutPoint, LayoutSize, layout_box, layout_origin, layout_size,
+};
+
+pub use foundation::platform::env::{IS_BROWSER, is_ios, is_rtl};

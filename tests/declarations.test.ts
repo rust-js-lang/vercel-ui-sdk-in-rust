@@ -95,3 +95,29 @@ for (const kind of ["upstream", "compiled"] as const) test("calendar declaration
 test("root calendar reexports preserve the annotated ISODate name", () => {
   expect(check(resolve(import.meta.dir, "types/root-calendar.ts"))).toEqual({exitCode: 0, diagnostics: ""});
 });
+
+for (const kind of ["upstream", "compiled"] as const) test("layout declarations preserve HTML inputs and geometry results: " + kind, async () => {
+  const directory = mkdtempSync(join(tmpdir(), "ui-sdk-layout-types-"));
+  try {
+    const fixture = await Bun.file(resolve(import.meta.dir, "types/layout.ts")).text();
+    const target = kind === "upstream"
+      ? resolve(upstream, "packages/core/src/foundation/platform/layout.ts")
+      : resolve(root, "crates/core/src/foundation/platform/layout.js");
+    const file = join(directory, "consumer.ts");
+    await Bun.write(file, fixture.replace("../../crates/core/src/foundation/platform/layout.js", target));
+    expect(check(file)).toEqual({exitCode: 0, diagnostics: ""});
+  } finally {rmSync(directory, {recursive: true, force: true});}
+});
+
+for (const kind of ["upstream", "compiled"] as const) test("environment declarations preserve platform and Element inputs: " + kind, async () => {
+  const directory = mkdtempSync(join(tmpdir(), "ui-sdk-environment-types-"));
+  try {
+    const fixture = await Bun.file(resolve(import.meta.dir, "types/environment.ts")).text();
+    const target = kind === "upstream"
+      ? resolve(upstream, "packages/core/src/foundation/platform/env.ts")
+      : resolve(root, "crates/core/src/foundation/platform/env.js");
+    const file = join(directory, "consumer.ts");
+    await Bun.write(file, fixture.replace("../../crates/core/src/foundation/platform/env.js", target));
+    expect(check(file)).toEqual({exitCode: 0, diagnostics: ""});
+  } finally {rmSync(directory, {recursive: true, force: true});}
+});
