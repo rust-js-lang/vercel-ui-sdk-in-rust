@@ -1,4 +1,19 @@
 {
   "schemaVersion": 1,
-  "mappings": []
+  "mappings": [
+    {
+      "source": "packages/core/src/foundation/number/steps.ts",
+      "rust": "crates/core/src/foundation/number/steps.rs",
+      "status": "partial",
+      "exports": [
+        "clamp",
+        "wrap"
+      ],
+      "evidence": [
+        "tests/number-steps.test.ts",
+        "crates/core/src/foundation/number/steps.rs",
+        "docs/validation.md"
+      ]
+    }
+  ]
 }

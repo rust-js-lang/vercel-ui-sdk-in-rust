@@ -25,7 +25,7 @@ const scope=(path:string)=>{
 const paths=git('ls-files','-z').split('\0').filter(Boolean).filter(path=>scope(path));
 const files=await Promise.all(paths.map(async path=>{
  const bytes=await Bun.file(resolve(source,path)).bytes();
- return {path,area:scope(path),bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};
+ return {path,area:scope(path)!,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};
 }));
 const packages:Record<string,unknown>={};
 for(const name of ['core','web']){

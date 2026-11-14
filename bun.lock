@@ -1,0 +1,15 @@
+{
+  "lockfileVersion": 2,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "vercel-ui-sdk-in-rust",
+      "dependencies": {
+        "@rust-js/std": "file:rust-js/std",
+      },
+    },
+  },
+  "packages": {
+    "@rust-js/std": ["@rust-js/std@file:rust-js/std", {}],
+  }
+}

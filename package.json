@@ -1,0 +1,20 @@
+{
+  "name": "vercel-ui-sdk-in-rust",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "packageManager": "bun@1.4.4",
+  "scripts": {
+    "setup": "bun install --frozen-lockfile --force && bun install --cwd rust-js --frozen-lockfile --ignore-scripts",
+    "compile": "bun rust-js/tooling/cli.js build --package ui-sdk-core-in-rust",
+    "test:native": "cargo test --locked --package ui-sdk-core-in-rust",
+    "test:compiled": "bun rust-js/tooling/cli.js test --package ui-sdk-core-in-rust",
+    "test": "bun test ./tests/*.test.ts",
+    "check:upstream": "bun scripts/upstream-inventory.ts --check",
+    "clippy": "bun rust-js/tooling/cli.js clippy --package ui-sdk-core-in-rust -- -D warnings"
+  },
+  "dependencies": {
+    "@rust-js/std": "file:rust-js/std"
+  }
+}

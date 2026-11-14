@@ -2,7 +2,7 @@
 
 A Rust/rust-js port of [UI SDK](https://github.com/vercel-labs/ui), a library of composable interface behaviors. Apache-2.0 licensed, with upstream attribution retained.
 
-**Status: initial port baseline. Core, Web Components and the documentation deployment are not complete.**
+**Status: foundation port in progress. Core, Web Components and the documentation deployment are not complete.**
 
 The first milestone ports `@ui-sdk/core` and `@ui-sdk/web`, including their accessibility, lifecycle and agent-facing contracts. The documentation application and executable examples will be written in Rust/rust-js and deployed to GitHub Pages. The SDK React adapter follows after this milestone. Vue, Svelte, Solid and other framework adapters are future work.
 
@@ -15,7 +15,13 @@ See [architecture](docs/architecture.md), [implementation plan](docs/implementat
 Use Bun, Rust and Git submodules. Clone with `--recurse-submodules`. Reference comparisons use a separate, read-only upstream checkout at `../vercel-ui`, or `UI_SDK_UPSTREAM_DIR`, at the exact revision in `upstream.json`.
 
 ```sh
-bun scripts/upstream-inventory.ts --check
+bun run setup
+bun run compile
+bun run test:native
+bun run test:compiled
+bun run test
+bun run clippy
+bun run check:upstream
 ```
 
-The initial repository records scope and source provenance. Build, test and deployment commands will be documented as their implementations land; no placeholder command is presented as working.
+The first implemented exports are clamp and wrap. Their native/compiled invariants and 6,750 exact comparisons against upstream pass. This is the start of the foundation port, not a completed core package. See [validation evidence](docs/validation.md) for the current proof and remaining gates.
