@@ -6,14 +6,15 @@
   "license": "Apache-2.0",
   "packageManager": "bun@1.4.4",
   "scripts": {
-    "setup": "bun install --frozen-lockfile --force && bun install --cwd rust-js --frozen-lockfile --ignore-scripts",
+    "setup": "bun install --frozen-lockfile --force && bun install --cwd rust-js --frozen-lockfile --ignore-scripts && bun scripts/apply-compiler-patches.ts",
     "compile": "bun rust-js/tooling/cli.js build --package ui-sdk-core-in-rust",
     "test:native": "cargo test --locked --package ui-sdk-core-in-rust",
     "test:compiled": "bun rust-js/tooling/cli.js test --package ui-sdk-core-in-rust",
     "test": "bun run compile && bun test ./tests/*.test.ts",
     "check:upstream": "bun scripts/upstream-inventory.ts --check",
     "clippy": "bun rust-js/tooling/cli.js clippy --package ui-sdk-core-in-rust -- -D warnings",
-    "test:browser": "bun run compile && bunx --bun playwright test"
+    "test:browser": "bun run compile && bunx --bun playwright test",
+    "test:calendar": "bun scripts/build-calendar-probe.ts && UI_SDK_CALENDAR_PROBE=1 bun test tests/calendar.test.ts"
   },
   "dependencies": {
     "@rust-js/std": "file:rust-js/std"

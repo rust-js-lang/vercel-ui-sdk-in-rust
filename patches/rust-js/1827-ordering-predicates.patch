@@ -1,0 +1,262 @@
+diff --git a/TESTS.md b/TESTS.md
+index 0976104..9253884 100644
+--- a/TESTS.md
++++ b/TESTS.md
+@@ -3,6 +3,11 @@
+ How these suites find wrong answers, and what each has found, is in
+ [docs/finding-wrong-answers.md](docs/finding-wrong-answers.md).
+ 
++Corpus recount on 2026-11-15: 2,544 Rust programs. The new
++`ordering_predicates.rs` covers all six predicates, function values, receiver
++evaluation and UTF-16 ordering against native Rust in both builds (#1827).
++The historical suite totals and CI timings below have not been remeasured.
++
+ As of 2026-10-30, `main` at `120772e2`; times are CI's, check run 41022723550.
+ 
+ | Suite | Size | What it proves | Time |
+diff --git a/docs/decisions/0036-iterators-and-sorting.md b/docs/decisions/0036-iterators-and-sorting.md
+index 17edb6e..8489618 100644
+--- a/docs/decisions/0036-iterators-and-sorting.md
++++ b/docs/decisions/0036-iterators-and-sorting.md
+@@ -61,6 +61,22 @@ numbers, strings, `char`s and `bool`s is `$cmp(a, b)`. `then(o)` and
+ `reverse()` is `-o`. `a.max(b)` and `a.min(b)` of numbers are `Math.max` and
+ `Math.min`.
+ 
++### Amendment: Ordering predicates (#1827)
++
++The six predicates compare the representation with zero: `is_eq`,
++`is_ne`, `is_lt`, `is_gt`, `is_le` and `is_ge` use the corresponding
++comparison operator. The receiver is evaluated once. Methods taken as
++function values use the same numeric lowering, through an arrow parameter.
++Recognition owns the method-to-operator mapping; numeric lowering owns the
++zero representation and delegates to the existing binary operator owner.
++This preserves Rust's result for every Ordering, with no observable Rust/JS
++difference (ADR 0262's first case), and requires no runtime helper.
++
++The `ordering_predicates.rs` corpus case compares native Rust with the
++program, production and library builds, including effectful receivers,
++function values and UTF-16 iterator comparisons. Mutations change the zero
++threshold, predicate recognition and function-value lowering.
++
+ Two things came with it:
+ - **An operator on references to numbers** (`x % 10` with `x: &i32`, which
+   rustc writes as a call of `Rem::rem`) is the operator.
+diff --git a/docs/guide/for-js-developers/collections.md b/docs/guide/for-js-developers/collections.md
+index da392f3..f15711b 100644
+--- a/docs/guide/for-js-developers/collections.md
++++ b/docs/guide/for-js-developers/collections.md
+@@ -503,6 +503,10 @@ export function sortTail(v) {
+ 
+ ## Sorting
+ 
++An `Ordering` also supports `is_eq`, `is_ne`, `is_lt`, `is_gt`, `is_le` and
++`is_ge`. Each compares its numeric representation with zero, evaluating
++the receiver once. These methods can be passed as function values too.
++
+ `sort()` sorts in place, as JS's does, but numbers sort as numbers and
+ strings by code point. To sort by something else, `sort_by_key` or
+ `sort_by`, whose closure returns an `Ordering`.
+diff --git a/scripts/mutations/lower/std_types/number.ts b/scripts/mutations/lower/std_types/number.ts
+index 9c076e8..c7538f7 100644
+--- a/scripts/mutations/lower/std_types/number.ts
++++ b/scripts/mutations/lower/std_types/number.ts
+@@ -2,6 +2,30 @@
+ import type { Mutation } from "../../../mutations";
+ 
+ export const mutations: Mutation[] = [
++  {
++    name: "ordering-predicate-wrong-zero",
++    breaks: "Ordering predicates compare against one instead of zero",
++    file: "src/lower/std_types/number/generic.rs",
++    find: "        self.binary(op, value, Expr::int(0), None, ty, span)\n",
++    replace: "        self.binary(op, value, Expr::int(1), None, ty, span)\n",
++    tests: ["test/corpus.test.ts","-t","^ordering_predicates.rs$"],
++  },
++  {
++    name: "ordering-less-includes-equal",
++    breaks: "Ordering::is_lt includes Equal",
++    file: "src/lower/recognition/inherent.rs",
++    find: "            \"is_lt\" if ordering => Std::OrderingTest(BinOp::Lt),\n",
++    replace: "            \"is_lt\" if ordering => Std::OrderingTest(BinOp::Le),\n",
++    tests: ["test/corpus.test.ts","-t","^ordering_predicates.rs$"],
++  },
++  {
++    name: "ordering-function-value-wrong-zero",
++    breaks: "Ordering predicates used as function values ignore their actual comparison",
++    file: "src/lower/items.rs",
++    find: "            Std::OrderingTest(op) => self.ordering_test(op, x, input, span)?,\n",
++    replace: "            Std::OrderingTest(_) => Expr::bool(false),\n",
++    tests: ["test/corpus.test.ts","-t","^ordering_predicates.rs$"],
++  },
+   {
+     name: "square-of-a-getter-read-twice",
+     breaks:
+diff --git a/src/lower/items.rs b/src/lower/items.rs
+index 1d8fd81..93083cb 100644
+--- a/src/lower/items.rs
++++ b/src/lower/items.rs
+@@ -651,6 +651,7 @@ impl<'a, 'tcx> FnCx<'a, 'tcx> {
+             Std::Leak => self.leaked(x, sig.output()),
+             Std::IsSome => Expr::bin(Op::LooseNe, x, Expr::null()),
+             Std::IsNone => Expr::bin(Op::LooseEq, x, Expr::null()),
++            Std::OrderingTest(op) => self.ordering_test(op, x, input, span)?,
+             Std::ToBig => Expr::call(Expr::js_global("BigInt"), vec![x]).built_in(),
+             // A `Vec` of a slice's or an array's items, and of text's
+             // bytes, as their calls make them, `Into<Vec<u8>>`'s (#1284).
+diff --git a/src/lower/recognition.rs b/src/lower/recognition.rs
+index 52960b4..e01b7d9 100644
+--- a/src/lower/recognition.rs
++++ b/src/lower/recognition.rs
+@@ -593,6 +593,8 @@ pub(super) enum Std {
+     Then,
+     ThenWith,
+     Reverse,
++    /// An Ordering predicate, a comparison of its numeric representation with zero.
++    OrderingTest(BinOp),
+ }
+ 
+ /// What a call does with a standard stream (ADR 0132).
+diff --git a/src/lower/recognition/inherent.rs b/src/lower/recognition/inherent.rs
+index 943b027..67d4745 100644
+--- a/src/lower/recognition/inherent.rs
++++ b/src/lower/recognition/inherent.rs
+@@ -575,6 +575,12 @@ impl<'a, 'tcx> Recognition<'a, 'tcx> {
+             "then" if ordering => Std::Then,
+             "then_with" if ordering => Std::ThenWith,
+             "reverse" if ordering => Std::Reverse,
++            "is_eq" if ordering => Std::OrderingTest(BinOp::Eq),
++            "is_ne" if ordering => Std::OrderingTest(BinOp::Ne),
++            "is_lt" if ordering => Std::OrderingTest(BinOp::Lt),
++            "is_gt" if ordering => Std::OrderingTest(BinOp::Gt),
++            "is_le" if ordering => Std::OrderingTest(BinOp::Le),
++            "is_ge" if ordering => Std::OrderingTest(BinOp::Ge),
+             "chars" if owner.is_str() => Std::Chars,
+             "to_vec" if owner.is_slice() => Std::ToVec,
+             "fill" if owner.is_slice() => Std::Slice(SliceOp::Fill),
+diff --git a/src/lower/std_types/number/generic.rs b/src/lower/std_types/number/generic.rs
+index bc2abdc..b8db790 100644
+--- a/src/lower/std_types/number/generic.rs
++++ b/src/lower/std_types/number/generic.rs
+@@ -6,6 +6,12 @@ use crate::lower::temporary_names::Role;
+ use rustc_middle::ty::consts::ConstExt as _;
+ 
+ impl<'a, 'tcx> FnCx<'a, 'tcx> {
++    /// Ordering's representation is negative, zero or positive (ADR 0036).
++    /// Calls and function values share this comparison, evaluating the value once.
++    pub(in crate::lower) fn ordering_test(&mut self, op: BinOp, value: Expr, ty: Ty<'tcx>, span: Span) -> R<Expr> {
++        self.binary(op, value, Expr::int(0), None, ty, span)
++    }
++
+     /// A number's conversion, comparison, operator or size (ADRs 0011, 0057): `None` if `known` is another.
+     pub(in crate::lower) fn numeric_call(
+         &mut self,
+@@ -181,6 +187,7 @@ impl<'a, 'tcx> FnCx<'a, 'tcx> {
+                 self.unary(op, a, ty, span)?
+             }
+             Std::Reverse => Expr::unary(UnaryOp::Neg, arg()),
++            Std::OrderingTest(op) => self.ordering_test(op, arg(), tys[0].peel_refs(), span)?,
+             // The size rustc works out for the wasm32 target, which rust-js
+             // checks programs for, as a `const` of it has (ADR 0090). A
+             // generic function is one JS function for every type, so a type
+diff --git a/src/lower/std_types/values.rs b/src/lower/std_types/values.rs
+index afb58e8..0ccab58 100644
+--- a/src/lower/std_types/values.rs
++++ b/src/lower/std_types/values.rs
+@@ -807,6 +807,7 @@ impl<'a, 'tcx> FnCx<'a, 'tcx> {
+             | Std::Operator(_)
+             | Std::UnaryOperator(_)
+             | Std::Reverse
++            | Std::OrderingTest(_)
+             | Std::Layout { .. }
+             | Std::NeedsDrop => unreachable!("lowered by numeric_call"),
+             Std::IterSource(_) => unreachable!("lowered by iter_source_call"),
+diff --git a/test/corpus/ordering_predicates.js b/test/corpus/ordering_predicates.js
+new file mode 100644
+index 0000000..0271a13
+--- /dev/null
++++ b/test/corpus/ordering_predicates.js
+@@ -0,0 +1,46 @@
++// Generated by rust-js from test/corpus/ordering_predicates.rs. Do not edit.
++
++import { $cmp, $encodeUtf16, $iterCmp } from "@rust-js/std";
++
++export function entry() {
++  main();
++}
++
++function predicates(order) {
++  return [order === 0, order !== 0, order < 0, order > 0, order <= 0, order >= 0];
++}
++
++function observed(count, order) {
++  count.value = (count.value + 1) >>> 0;
++  return order;
++}
++
++function main() {
++  const tests = [
++    (x) => x === 0,
++    (x) => x !== 0,
++    (x) => x < 0,
++    (x) => x > 0,
++    (x) => x <= 0,
++    (x) => x >= 0,
++  ];
++  const count = { value: 0 };
++  for (const order of [-1, 0, 1]) {
++    console.log(`[${predicates(order).join(", ")}]`);
++    for (let i = 0; i < tests.length; i++) {
++      const test = tests[i];
++      console.log(`${test(observed(count, order))}`);
++    }
++    console.log(`${observed(count, order) < 0}`);
++  }
++  console.log(`${count.value}`);
++  for (const text of ["a", "z", "é", "😀", "\ue000"]) {
++    const order = $iterCmp(
++      Iterator.from($encodeUtf16(text)),
++      Iterator.from($encodeUtf16("😀")),
++      $cmp,
++    );
++    console.log(`${order < 0} ${order > 0}`);
++  }
++}
++//# sourceMappingURL=case.js.map
+diff --git a/test/corpus/ordering_predicates.rs b/test/corpus/ordering_predicates.rs
+new file mode 100644
+index 0000000..0663b03
+--- /dev/null
++++ b/test/corpus/ordering_predicates.rs
+@@ -0,0 +1,32 @@
++//@ run-pass
++use std::cell::Cell;
++use std::cmp::Ordering;
++
++fn predicates(order: Ordering) -> [bool; 6] {
++    [order.is_eq(), order.is_ne(), order.is_lt(), order.is_gt(), order.is_le(), order.is_ge()]
++}
++
++fn observed(count: &Cell<u32>, order: Ordering) -> Ordering {
++    count.set(count.get() + 1);
++    order
++}
++
++fn main() {
++    let tests: [fn(Ordering) -> bool; 6] = [
++        Ordering::is_eq, Ordering::is_ne, Ordering::is_lt,
++        Ordering::is_gt, Ordering::is_le, Ordering::is_ge,
++    ];
++    let count = Cell::new(0);
++    for order in [Ordering::Less, Ordering::Equal, Ordering::Greater] {
++        println!("{:?}", predicates(order));
++        for test in tests {
++            println!("{}", test(observed(&count, order)));
++        }
++        println!("{}", observed(&count, order).is_lt());
++    }
++    println!("{}", count.get());
++    for text in ["a", "z", "é", "😀", "\u{e000}"] {
++        let order = text.encode_utf16().cmp("😀".encode_utf16());
++        println!("{} {}", order.is_lt(), order.is_gt());
++    }
++}

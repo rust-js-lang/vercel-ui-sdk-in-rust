@@ -1,5 +1,10 @@
 //! Rust adaptation of UI SDK core. See UPSTREAM.md for provenance and current coverage.
 pub mod foundation;
+pub use foundation::date::plain_date::{
+    DateInput, DateParts, IsoDate, MonthGridOptions, add_days, add_months, add_years, clamp_date,
+    date_parts, days_between, days_in_month, end_of_month, end_of_week, is_iso_date, is_same_month,
+    iso_date, month_grid, start_of_month, start_of_week, to_iso_date, weekday,
+};
 pub use foundation::kernel::events::{
     CompositionFields, CompositionInput, NativeCompositionEvent, WrappedCompositionEvent,
     is_composing, on, select_event,

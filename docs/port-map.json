@@ -186,6 +186,43 @@
       "evidence": [
         "docs/validation.md"
       ]
+    },
+    {
+      "source": "packages/core/src/foundation/date/plain-date.ts",
+      "rust": "crates/core/src/foundation/date/plain_date.rs",
+      "status": "pending-compiler",
+      "exports": [
+        "ISODate",
+        "DateParts",
+        "isISODate",
+        "dateParts",
+        "isoDate",
+        "toISODate",
+        "daysInMonth",
+        "addDays",
+        "addMonths",
+        "addYears",
+        "daysBetween",
+        "weekday",
+        "startOfWeek",
+        "endOfWeek",
+        "startOfMonth",
+        "endOfMonth",
+        "isSameMonth",
+        "clampDate",
+        "monthGrid"
+      ],
+      "issues": [
+        "https://github.com/rust-js-lang/rust-js/issues/1827",
+        "https://github.com/rust-js-lang/rust-js/issues/1828",
+        "https://github.com/rust-js-lang/rust-js/issues/1829"
+      ],
+      "evidence": [
+        "tests/calendar.test.ts",
+        "tests/types/calendar.ts",
+        "scripts/build-calendar-probe.ts",
+        "docs/validation.md"
+      ]
     }
   ]
 }

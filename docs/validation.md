@@ -2,14 +2,14 @@
 
 2026-11-15. Milestone one is incomplete. The current development snapshot is blocked from a full JavaScript build by compiler issue #1820. It is not a release. Core/Web Components and the docs application/deployment are still in progress.
 
-Upstream is pinned at 220c1a0d7278872286a620a8e4ee4210ca46f9bd. Its Apache-2.0 license and notices are retained. The private compiler submodule is published bf58789fab32a204d6f9483ed5478f9c238344f8, with no local patch; the toolchain symlink follows it.
+Upstream is pinned at 220c1a0d7278872286a620a8e4ee4210ca46f9bd. Its Apache-2.0 license and notices are retained. The private compiler submodule is published c3c62cccd7562126e7b27e40f8b0c6fbc37aba14, plus the reproducible #1827 Ordering patch in patches/rust-js; the toolchain symlink follows it.
 
 ## Current verification
 
 | Gate | Evidence |
 | --- | --- |
 | Native Rust check | passes with the complete grid/snap source |
-| Native Rust invariants | 14 pass |
+| Native Rust invariants | 17 pass, including every day of a Gregorian 400-year cycle |
 | Strict rust-js-aware Clippy | passes with -D warnings |
 | Rust formatting | passes |
 | Pinned source/export inventory | 2,611 tracked files; passes |
@@ -27,6 +27,14 @@ The compiler feedback loop resolved two actual regressions without changing the 
 - #1812, published as 059547d93 and included in this pin: borrowed logarithmic functions capture Math.log/Math.exp at module initialization. All four unchanged scaling tests passed (27,444 assertions). The generated table was inspected and now holds the functions directly.
 - #1816, published as bfaa34073 and included here: undo tests no longer cause unrelated settings Rc values to become counted. All 12 original native invariants ran as JavaScript in Bun. After adding sheet physics, all 13 passed too. The subsequent full grid source exposed the independent #1820 refusal.
 - #1813, published as bf58789fa: the canonical to_fixed/to_precision bindings accept Option<f64>. The full stepping source now type-checks in native Rust using them. JavaScript integration still awaits #1820; do not equate binding availability with a verified complete grid port.
+
+## Calendar checkpoint
+
+The canonical plain_date.rs source is freshly compiled in an isolated test package by `bun run test:calendar`. Its four differential runtime tests pass 2,588 assertions against actual pinned upstream, covering parsing, Date conversion, fractional/NaN/infinite inputs, all arithmetic, grids/getter order, exact RangeErrors, UTF-16 slicing and lexical comparisons. The test package copies canonical Rust afresh, records source hash/compiler/toolchain provenance, and checks the source is unchanged; it is not a second implementation or a replacement full-SDK build. Probe artifacts are ignored.
+
+Calendar declarations remain pending: #1828 loses the isISODate type predicate; #1829 ignores the explicit ISODate alias name. The same strict TypeScript consumer passes upstream and fails generated declarations. Runtime success does not complete this module.
+
+The #1827 compiler patch shares predicate recognition and numeric zero comparison between calls and function values. Its new corpus case failed before the change and passes against native Rust after it, including production and library builds; all three mutations were caught. Compiler TypeScript typecheck passes. Compiler all-target clippy is blocked by pre-existing items-after-test-module in comments.rs and lower/mir/tidy/stages.rs; the patch adds no suppressions. App strict Clippy passes. The upstream lead owns full checks and publication.
 
 ## Work added
 
@@ -51,6 +59,8 @@ Undo history passed 10,000 seeded reference traces for live settings, edit group
 - #1817: browser option dictionaries and event associations lose declaration types; the unchanged TypeScript fixture passes upstream and fails against generated any types.
 - #1818: flatten the untagged composition-event union as an event intersection.
 - #1819: the compiler team found a P0 flattened-reference aliasing bug while investigating #1818; it is ahead of the two flatten extensions.
+- #1827: downstream Ordering predicate patch proven locally; awaiting upstream landing.
+- #1828/#1829: calendar type-predicate and alias-name declarations.
 - #1820: readonly lending of flattened Copy/Clone range records, preserving the correct projection for any actual clone/compare/hash.
 
 The team owns these through agent-hub. Each has a concrete source reproduction. No tests or types are weakened, no helper bindings replace missing platform APIs, and no compiler workaround is presented as port completion. After the fixes land, rebuild, run the full numeric/reference/browser suites, inspect every generated diff and update the port map from actual evidence.
