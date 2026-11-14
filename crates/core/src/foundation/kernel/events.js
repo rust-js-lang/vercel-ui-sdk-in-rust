@@ -4,9 +4,9 @@
 
 /** Adds a listener and returns what removes it. The same listener and options are retained. */
 export function on(target, name, listener, options) {
-  target.addEventListener(name, listener, options);
+  target.addEventListener(name, listener, options ?? undefined);
   return () => {
-    target.removeEventListener(name, listener, options);
+    target.removeEventListener(name, listener, options ?? undefined);
   };
 }
 

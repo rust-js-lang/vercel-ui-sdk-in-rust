@@ -909,10 +909,10 @@ index 5370468..4103f8a 100644
      }
  }
 diff --git a/builtins/src/lib.rs b/builtins/src/lib.rs
-index 96f1e66..0e99cec 100644
+index b6652a2..6c76125 100644
 --- a/builtins/src/lib.rs
 +++ b/builtins/src/lib.rs
-@@ -2579,7 +2579,7 @@ pub mod string {
+@@ -2617,7 +2617,7 @@ pub mod string {
      /// host's of `None`, left out: Turkish's `I` is a dotless `ı`, where
      /// `str::to_lowercase`, which is no locale's, gives `i`.
      #[cfg_attr(rust_js, rust_js::link_name = "toLocaleLowerCase")]
@@ -921,7 +921,7 @@ index 96f1e66..0e99cec 100644
          unreachable!()
      }
  
-@@ -2588,7 +2588,7 @@ pub mod string {
+@@ -2626,7 +2626,7 @@ pub mod string {
      /// host's of `None`, left out: Turkish's `i` is a dotted `İ`, where
      /// `str::to_uppercase` gives `I`.
      #[cfg_attr(rust_js, rust_js::link_name = "toLocaleUpperCase")]
@@ -1035,7 +1035,7 @@ index c03f09e..a8b9cf6 100644
 +
 +| Source preparation timeout in concurrent owner batch, 2026-11-15 (#1861) | After adopting e9f75c3 (published #1848 core), ten Intl/model owner mutants finish in about39s:7caught,3INCONCLUSIVE at1s preparation deadline. Template1.5s/91,258,880bytes, workspace91,262,976bytes. The three are intl-locales-without-locale, intl-format-without-date and intl-supported-options-narrowed; ranges is caught (copy/prep build6.2s,test17s). SDK validation ran concurrently. A quiet actual-workspace diagnostic separately measures copy1907ms, prepare18ms at the unchanged1000ms limit. A fast-child plus1.3s parent-blocking probe exits0 without a timeout; a simple false-timer explanation is not reproduced. No retry with more time. Slow spot: diagnose scheduling/IO/run-accounting in the real concurrent path; isolated warm/cold generation is insufficient evidence for this context. All workspaces cleaned. | /tmp/ui-sdk-owner-mutants-current.log; issue1861 |
 diff --git a/docs/guide/libraries/README.md b/docs/guide/libraries/README.md
-index f08c52a..37e963b 100644
+index 85a7706..e6c1d62 100644
 --- a/docs/guide/libraries/README.md
 +++ b/docs/guide/libraries/README.md
 @@ -191,6 +191,22 @@ What it has:
@@ -1440,7 +1440,7 @@ index 0000000..bafd24b
 +  }
 +});
 diff --git a/test/js-builtins.test.ts b/test/js-builtins.test.ts
-index 30cbf3a..97175f7 100644
+index dcc1a64..553bd49 100644
 --- a/test/js-builtins.test.ts
 +++ b/test/js-builtins.test.ts
 @@ -372,8 +372,8 @@ test("Intl's formatters are JS's, their options typed", async () => {

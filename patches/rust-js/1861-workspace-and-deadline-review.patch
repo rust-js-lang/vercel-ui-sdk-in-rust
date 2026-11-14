@@ -12,7 +12,7 @@ index 472405f..cead931 100644
  
  Added on 2026-11-15: `test/intl-arguments.test.ts` checks native Intl calls
 diff --git a/docs/architecture.md b/docs/architecture.md
-index c6a5cef..ad5de7f 100644
+index 9294f75..f90263d 100644
 --- a/docs/architecture.md
 +++ b/docs/architecture.md
 @@ -53,6 +53,8 @@ compiled for WASI; it is a separate build package, not a second compiler.

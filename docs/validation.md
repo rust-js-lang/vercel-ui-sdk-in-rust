@@ -4,7 +4,7 @@
 
 ## Last fully checked integrated SDK snapshot
 
-Upstream:220c1a0d7278872286a620a8e4ee4210ca46f9bd (Apache-2.0). The current SDK source is rebuilt and rechecked on private compiler pin:ef8807570597a4132d4442dd78315a7b39eaba06 plus the ordered feature and #1861 review patches. Its published source-owner harness #1848 is adopted; the private implementation patch is removed. Published calendar reexport/predicate, flattened-copy, Result declaration and union-simplification fixes are included.
+Upstream:220c1a0d7278872286a620a8e4ee4210ca46f9bd (Apache-2.0). The last complete integrated SDK snapshot is rebuilt and rechecked on private compiler pin:ef8807570597a4132d4442dd78315a7b39eaba06 plus the ordered feature and #1861 review patches. Its published source-owner harness #1848 is adopted; the private implementation patch is removed. Published calendar reexport/predicate, flattened-copy, Result declaration and union-simplification fixes are included.
 
 | Gate | Evidence at this source |
 | --- | --- |
@@ -28,10 +28,10 @@ The review pin is ef8807570597a4132d4442dd78315a7b39eaba06 with a separate #1861
 
 - #1845: the scrub result must own point even when undefined; Rust's plain Option field currently omits it. The original calendar/environment APIs also require an input argument even when its value is undefined, while generated declarations allow omission. Both strict missing-input assertions remain failing; no assertion was weakened. This is the compiler team's shared plain Option/optional boundary design.
 - #1846: original stepBy uses property membership; current untagged object classification reads the bound getter instead, changing observable order. The numeric regression stays failing.
-- #1859: composedClosest needs a single-read optional native method call retaining this. The documented is_function-then-call form reads twice, while a captured function's .call lookup is also observable. The function remains absent in this SDK snapshot. A general optional_call API has now landed upstream through 2be8f424a; its adoption and complete runtime/type proof are next after the dev-loop fix. Complete-export parity and a real Text-node getter/own-call browser test both fail. No approximation or placeholder implementation is shipped.
+- #1859 optional_call is adopted in the compiler, but composedClosest remains unimplemented pending #1866: exported IsA<Element> loses its TypeScript generic constraint, and generic native DOM overloads need an approved binding form. The unsafe app assertion was removed before publishing. Complete-export parity, the original optional-method browser case and a new separate strict generic consumer remain failing.
 - #1862 is adopted: possibly absent globals use canonical getter calls. The lazy document fallback passes native, compiled, strict Clippy and explicit-document/no-global differential tests. Its generated expression remains doc ??= document.
 - #1863 is adopted: the private two-item shortcut cache indexed by usize::from(bool) now emits plain array indexing. The nonempty-split last().expect() helper and full generated-source fidelity remain open.
-- #1840 (P0): the retained native optional-argument null-forwarding repro remains separately recorded. The Intl feature is held for the upstream fix; no current combined full-check success is claimed.
+- #1840/#1843 are now fixed upstream by d6e9a72dc and adopted through84740d5. The unchanged null-forwarding repro passes alongside Intl/model checks:12 tests,331 assertions. The combined Intl feature awaits upstream review/full validation; it is no longer held for an unfixed P0.
 
 Calendar narrowing and root ISODate reexports now pass; #1828 and canonical #1829 are adopted. #1853 was a duplicate. Flattened-copy #1847 is fixed and its throwing-getter regression passes unchanged.
 
@@ -49,11 +49,17 @@ Generated JS was compared with the full original platform module. Remaining boun
 
 builtins/intl.ts owns the spec and generated Rust argument/record declarations. TypeScript construct signatures use the shared Member parser/model/factory, and checkedMembers rejects unknown discriminants. Eight actual Member-reading modules are migrated; model-review.md records the consumer audit. Native Bun/Chromium calls, strict declaration consumers, rejected Rust nonmembers and more than 200 source-derived accepted calls cover 26 changed native sites.
 
-After adopting the published harness, the current focused compiler review suites pass 35 tests / 42,896 assertions. The combined feature's revised full check remains pending. The independent harness core passed its own full check before landing and upstream again checked its landing; that does not prove this feature or #1840 fixed.
+After adopting the published harness, the current focused compiler review suites pass 35 tests / 42,896 assertions. That earlier focused result is historical. On84740d5, the Intl/model and unchanged P0 reproduction suites pass12 tests/331 assertions; the combined feature full gate and landing await upstream review.
 
 Current ordinary ten-owner mutation run on the fixed harness: 10/10 caught in about 34 s at underLoad(1_000), no inconclusive verdicts or observed-overrun warnings; template 1.7 s/91,377,664 bytes and peak workspace 91,381,760 bytes. The old 7/10 ordinary run and 6/10 confirming trace are historical false-timeout evidence, not accepted results. Temporary observers are removed, workspaces are cleaned, and the diagnostic 20 s allowance is removed. Full comparison, mutant proof and cache limitations are recorded in [the investigation](mutation-preparation-1861.md).
 
 An older Intl version passed its planned full gate in 4 m 49 s, before later model changes and #1840. The isolated harness core passed in 7 m 57 s. Those scoped measurements and the earlier deadline failures remain in the compiler ledger; they are not current combined green results or isolated speed-up claims.
+
+## Latest upstream adoption (84740d5)
+
+Current private compiler pin: 84740d5ec364f51ac5dda2fc92cf57e8d5ea10b5. The held feature, ten owner registrations and independent #1861 core are rebased separately. The ordered installer is verified idempotent. The SDK normal build passes; generated events.js adds only the required options ?? undefined at native add/removeEventListener boundaries. These changes were inspected; complete SDK runtime/browser gates on this pin are pending while the upstream reviewer uses the shared machine for #1861 landing. The complete SDK table above records ef8807570 and is not relabelled as a new-pin result.
+
+The separate closest strict consumer passes against the original. Its compiled counterpart remains failing because the function is intentionally absent pending the binding design. A diagnostic generic implementation demonstrated the dropped constraint; it was removed and never pushed. The isolated compiler regression is retained in patches/rust-js/1866-webapi-inheritance-regression.patch, excluded from setup, and fails because invalid string/Text consumers are accepted.
 
 ## Remaining work
 

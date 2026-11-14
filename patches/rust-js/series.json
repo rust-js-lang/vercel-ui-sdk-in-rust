@@ -6,7 +6,7 @@
       1834,
       1836
     ],
-    "status": "Pending upstream landing; held for P0 #1840"
+    "status": "Rebased on84740d5 with P0 #1840 fixed; focused Intl/model+unchanged P0 regression12pass331asserts; pending upstream review/landing"
   },
   {
     "file": "1830-1834-owner-mutations.patch",

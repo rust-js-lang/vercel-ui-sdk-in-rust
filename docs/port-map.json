@@ -302,11 +302,9 @@
         "setPlatform",
         "supportsTopLayer"
       ],
-      "remaining": "composedClosest awaits1859 optional-method design; interim lazy global read1862; bounds1863 and nonempty-split output audit remain.",
+      "remaining": "composedClosest awaits generic native DOM overload design and IsA constraint declaration fix1866; nonempty-split and full generated-source audits remain.",
       "issues": [
-        "https://github.com/rust-js-lang/rust-js/issues/1859",
-        "https://github.com/rust-js-lang/rust-js/issues/1862",
-        "https://github.com/rust-js-lang/rust-js/issues/1863"
+        "https://github.com/rust-js-lang/rust-js/issues/1866"
       ],
       "evidence": [
         "tests/platform.test.ts",
@@ -314,7 +312,13 @@
         "tests/types/platform.ts",
         "tests/declarations.test.ts",
         "tests/server-import.test.ts",
-        "docs/validation.md"
+        "docs/validation.md",
+        "tests/types/composed-closest.ts"
+      ],
+      "resolvedIssues": [
+        "https://github.com/rust-js-lang/rust-js/issues/1859",
+        "https://github.com/rust-js-lang/rust-js/issues/1862",
+        "https://github.com/rust-js-lang/rust-js/issues/1863"
       ]
     }
   ]
