@@ -1,0 +1,6 @@
+{
+  "repository": "https://github.com/vercel-labs/ui",
+  "revision": "220c1a0d7278872286a620a8e4ee4210ca46f9bd",
+  "license": "Apache-2.0",
+  "defaultCheckout": "../vercel-ui"
+}

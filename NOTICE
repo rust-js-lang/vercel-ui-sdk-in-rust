@@ -1,0 +1,8 @@
+vercel-ui-sdk-in-rust
+
+This project is a Rust/rust-js adaptation of UI SDK by its upstream contributors.
+Original project: https://github.com/vercel-labs/ui
+Original source is licensed under the Apache License, Version 2.0.
+Upstream license and notices are retained. Modified and translated files are
+identified through file notices and the provenance/port records in this project.
+Compiler and build dependencies retain their respective licenses.
