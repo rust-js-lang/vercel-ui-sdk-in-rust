@@ -1,9 +1,9 @@
 diff --git a/TESTS.md b/TESTS.md
-index b9e6a2f..a268134 100644
+index f9facee..186d339 100644
 --- a/TESTS.md
 +++ b/TESTS.md
-@@ -8,6 +8,10 @@ Corpus recount on 2026-11-15: 2,545 Rust programs. The new
- evaluation and UTF-16 ordering against native Rust in both builds (#1827).
+@@ -12,6 +12,10 @@ The new `map_key_changed_between_test_and_index.rs` covers keys whose lookup a
+ call may change, each `m[k]` checked as Rust panics (#1844).
  The historical suite totals and CI timings below have not been remeasured.
  
 +Added on 2026-11-15: `test/intl-arguments.test.ts` checks native Intl calls
@@ -14,7 +14,7 @@ index b9e6a2f..a268134 100644
  
  | Suite | Size | What it proves | Time |
 diff --git a/builtins/coverage.ts b/builtins/coverage.ts
-index 9099e7f..c7c22ff 100644
+index 9099e7f..43cb8ad 100644
 --- a/builtins/coverage.ts
 +++ b/builtins/coverage.ts
 @@ -11,7 +11,8 @@
@@ -27,7 +27,7 @@ index 9099e7f..c7c22ff 100644
  
  /** The built-ins measured: classes, namespaces and objects of functions. */
  export const SCOPE = [
-@@ -45,12 +46,104 @@ export type Coverage = { all: string[]; covered: string[] };
+@@ -45,15 +46,108 @@ export type Coverage = { all: string[]; covered: string[] };
  const libs = new URL("../node_modules/typescript-es/lib/", import.meta.url).pathname;
  const src = new URL("./src/", import.meta.url).pathname;
  
@@ -135,16 +135,21 @@ index 9099e7f..c7c22ff 100644
    const session = await open(files);
    const interfaces = new Map<string, Set<string>>();
    const heritage = new Map<string, string[]>();
-@@ -62,7 +155,7 @@ async function typescript(): Promise<Map<string, Set<string>>> {
++  const constructSignatures = new Set<string>();
+   const constructors = new Map<string, { statics: Set<string>; ctor: boolean } | string>();
+   const functions = new Set<string>();
+   const named = (m: any) => (m.kind === "method" || m.kind === "property") && /^[A-Za-z_$][\w$]*$/.test(m.name);
+@@ -62,16 +156,17 @@ async function typescript(): Promise<Map<string, Set<string>>> {
        const name = prefix + d.name;
        if (d.kind === "interface") {
          const set = interfaces.get(name) ?? new Set<string>();
 -        for (const m of d.members) if (named(m)) set.add(m.name);
 +        for (const m of checkedMembers(d.members)) if (named(m)) set.add(m.name);
          interfaces.set(name, set);
++        if (checkedMembers(d.members).some((m: any) => m.kind === "construct")) constructSignatures.add(name);
          // What it extends, by its name in the namespace it's in.
          const parents = d.extends.filter((e: any) => e.kind === "reference").map((e: any) => prefix + e.name);
-@@ -70,8 +163,8 @@ async function typescript(): Promise<Map<string, Set<string>>> {
+         heritage.set(name, [...(heritage.get(name) ?? []), ...parents]);
        } else if (d.kind === "const") {
          if (d.type.kind === "reference") constructors.set(name, prefix + d.type.name);
          else if (d.type.kind === "object") {
@@ -155,6 +160,39 @@ index 9099e7f..c7c22ff 100644
            constructors.set(name, { statics, ctor });
          }
        } else if (d.kind === "function") {
+@@ -82,11 +177,8 @@ async function typescript(): Promise<Map<string, Set<string>>> {
+     }
+   };
+   for (const f of files) walk((await session.read(f)).declarations, "");
+-  // A constructor interface's construct signatures aren't members the model
+-  // names: read them from its text. And what TypeScript marks
+-  // `@deprecated`, "a legacy feature for browser compatibility", `RegExp.$1`,
++  // What TypeScript marks `@deprecated`, "a legacy feature for browser compatibility", `RegExp.$1`,
+   // by the interface it's in: not counted.
+-  const ctorText = new Map<string, boolean>();
+   const deprecated = new Set<string>();
+   for (const f of files) {
+     const text = readFileSync(f, "utf8");
+@@ -95,10 +187,6 @@ async function typescript(): Promise<Map<string, Set<string>>> {
+       const owner = [...text.slice(0, m.index).matchAll(/interface (\w+)/g)].at(-1)?.[1];
+       if (owner) deprecated.add(`${owner}.${m[1] ?? m[2]}`);
+     }
+-    // An interface ends at the brace indented as it is: one in `namespace Intl` too.
+-    for (const m of text.matchAll(/^( *)interface (\w+Constructor)\s*(?:<[^>]*>)?\s*\{([\s\S]*?)\n\1\}/gm)) {
+-      if (/^\s*new\s*[(<]/m.test(m[3])) ctorText.set(m[2], true);
+-    }
+   }
+   await session.close();
+   // An interface's members are its own and those of what it extends:
+@@ -116,7 +204,7 @@ async function typescript(): Promise<Map<string, Set<string>>> {
+     if (typeof ctor === "string") {
+       const of = ctor.split(".").pop()!;
+       for (const m of interfaces.get(ctor) ?? []) if (m !== "prototype" && !deprecated.has(`${of}.${m}`)) members.add(`static:${m}`);
+-      if (!own && ctorText.get(ctor.split(".").pop()!)) members.add("constructor");
++      if (!own && constructSignatures.has(ctor)) members.add("constructor");
+     } else if (ctor) {
+       for (const m of ctor.statics) if (m !== "prototype") members.add(`static:${m}`);
+       if (ctor.ctor) members.add("constructor");
 diff --git a/builtins/intl.ts b/builtins/intl.ts
 index 224a4a1..544917c 100644
 --- a/builtins/intl.ts
@@ -985,10 +1023,10 @@ index 4b812a8..74725a7 100644
 +catch narrowing a full formatter options type to matcher-only. Unknown
 +argument members fail coverage rather than silently disappear.
 diff --git a/docs/dev-loop.md b/docs/dev-loop.md
-index 0c18d64..1476739 100644
+index f3a4fd0..64427a5 100644
 --- a/docs/dev-loop.md
 +++ b/docs/dev-loop.md
-@@ -179,3 +179,5 @@ Also in use, with no single before and after:
+@@ -180,3 +180,5 @@ Also in use, with no single before and after:
  | Experiment | Status | Where |
  |---|---|---|
  | The metamorphic net's 16 rewrites of #1203 and #1204, timed on their first run (ldAC, 2026-11-10) | Measured, not yet sped up. On the 12-core M6, every case in both builds: the five loud rewrites 6.5 min in 12 parts (one part 15 min with #1214's hang, since fixed); the eleven contexts 47 min in 11 parts, most of it `test/reduced.ts` reducing each of their 68 failures, up to 300 s each, one after another in its part, the same program's plain and std failures reduced apart. A listed failure isn't reduced, so once the 68 are in `test/metamorphic-known.txt` the nightly pays their runs, not their reductions. Its reductions now run at once within each case's test, within its timeout (#1365, Active); one program's reduction shared by its builds, and across a part's cases, is still to do | `test/reduced.ts`, `test/metamorphic.test.ts` |

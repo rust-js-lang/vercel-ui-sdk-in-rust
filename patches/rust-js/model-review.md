@@ -1,6 +1,6 @@
 # Shared TypeScript Member review
 
-Private patch base:710e93c549f224bd1e47db1d99e5dae8be7a5dc5. This review is not yet cleared for upstream landing. The revised full check remains pending; P0#1840 holds Intl landing. Durable non-crate owner mutations are separately tracked in #1848, as approved by the lead.
+Private patch base:0ab884b086e1e03f582fb13152824f63d7705e88. This review is not yet cleared for upstream landing. The revised full check remains pending; P0#1840 holds Intl landing. Durable non-crate owner mutations are separately tracked in #1848, as approved by the lead.
 
 ## Model and all consumers
 
@@ -31,3 +31,7 @@ The lead split isolated non-crate owner mutation execution into dev-loop issue #
 - builtins/intl.ts: remove Locale from locale input membership; remove Date/number or bigint range membership; narrow a full supportedLocalesOf options type to matcher-only. Regenerate in the isolated workspace and compile the source-derived argument callers; each must fail.
 
 No fake registry or README-only mutation proof is claimed. The unchanged controls, mutated generator preparation, package aliases, printer-module selection, leases and per-test target isolation must be validated by the existing runner under #1848.
+
+## Implemented owner proof
+
+The existing runner now catches all 15 registered owner mutants: the 10 feature owners above and five source-runner safety rules. Each unchanged control executed the isolated owner and passed; the changed owner executed and its named test failed. Rebased focused model/Intl/source/inventory checks pass 13 tests / 330 assertions. The harness-core full check remains pending; its core plus five self-mutants is packaged independently from the ten feature-dependent registrations, as approved by the lead. No full-compiler green claim is made.

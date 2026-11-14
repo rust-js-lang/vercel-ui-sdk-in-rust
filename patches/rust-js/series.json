@@ -7,5 +7,22 @@
       1836
     ],
     "status": "Pending upstream landing; held for P0 #1840"
+  },
+  {
+    "file": "1848-source-owner-mutations.patch",
+    "issues": [
+      1848
+    ],
+    "status": "15 combined owner mutants caught; independent core full check pending"
+  },
+  {
+    "file": "1830-1834-owner-mutations.patch",
+    "issues": [
+      1830,
+      1834,
+      1836,
+      1848
+    ],
+    "status": "Owner registrations require both earlier patches"
   }
 ]

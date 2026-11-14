@@ -2,7 +2,7 @@
 
 A Rust/rust-js port of [UI SDK](https://github.com/vercel-labs/ui), a library of composable interface behaviors. Apache-2.0 licensed, with upstream attribution retained.
 
-**Status: development snapshot. The full SDK builds, but reference tests expose unresolved compiler boundary gaps and the flattened-copy P0 #1847. The Intl compiler patch remains held for P0 #1840. Core, Web Components and the documentation deployment are not complete.**
+**Status: development snapshot. The full SDK builds; the flattened-copy regression is fixed. Three reference tests still expose unresolved compiler boundary/type gaps. The Intl compiler patch remains held for P0 #1840. Core, Web Components and the documentation deployment are not complete.**
 
 The first milestone ports `@ui-sdk/core` and `@ui-sdk/web`, including their accessibility, lifecycle and agent-facing contracts. The documentation application and executable examples will be written in Rust/rust-js and deployed to GitHub Pages. The SDK React adapter follows after this milestone. Vue, Svelte, Solid and other framework adapters are future work.
 
@@ -25,4 +25,4 @@ bun run clippy
 bun run check:upstream
 ```
 
-Numeric grids, keyboard mapping, calendar arithmetic, change-source propagation and the earlier motion/history foundations now build together. The keyboard matrix and getter-order checks pass; 20 native Rust tests and 10 Playwright Chromium tests pass. The unchanged event declaration consumer now passes with its declared @rust-js/webapi dependency. Full reference validation still fails for required undefined-valued properties (#1845), membership-based union checks (#1846), calendar declarations (#1828/#1829), and the newly captured flattened-copy getter regression (#1847). See [validation evidence](docs/validation.md). This is not a release.
+Numeric grids, keyboard mapping, calendar arithmetic, change-source propagation and the earlier motion/history foundations now build together. The keyboard matrix and getter-order checks pass; 20 native Rust tests, 19 compiled invariants and 10 Playwright Chromium tests pass. The unchanged event declaration consumer now passes with its declared @rust-js/webapi dependency. Full reference validation still fails for required undefined-valued properties (#1845), membership-based union checks (#1846), calendar type narrowing (#1828). The independent compiler mutation harness now catches 15 model/generator/runner regressions; its full-check review remains pending. See [validation evidence](docs/validation.md). This is not a release.

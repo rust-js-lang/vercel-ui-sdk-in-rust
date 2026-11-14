@@ -111,7 +111,7 @@ export function stepOnGrid(value, movement, range) {
   }
   if (movement.size === "small" && range.smallStep) {
     const direction = movement.direction;
-    const next = { ...range, range: { ...range.range } };
+    const next = { ...range };
     next.step = range.smallStep ?? NaN;
     return stepValue(value, direction, next);
   }
