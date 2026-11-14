@@ -59,6 +59,81 @@
         "crates/core/src/foundation/platform/sides.rs",
         "docs/validation.md"
       ]
+    },
+    {
+      "source": "packages/core/src/foundation/number/scale.ts",
+      "rust": "crates/core/src/foundation/number/scale.rs",
+      "status": "pending-compiler",
+      "exports": [
+        "fractionOf",
+        "valueAt",
+        "NumberScale"
+      ],
+      "evidence": [
+        "tests/number-scale.test.ts",
+        "crates/core/src/foundation/number/scale.rs",
+        "docs/validation.md"
+      ],
+      "issues": [
+        "https://github.com/rust-js-lang/rust-js/issues/1812"
+      ]
+    },
+    {
+      "source": "packages/core/src/foundation/motion/projection.ts",
+      "rust": "crates/core/src/foundation/motion/projection.rs",
+      "status": "pending-compiler",
+      "exports": [
+        "projectDistance",
+        "chooseSnapTarget",
+        "nearestIndex"
+      ],
+      "evidence": [
+        "tests/projection.test.ts",
+        "crates/core/src/foundation/motion/projection.rs",
+        "docs/validation.md"
+      ],
+      "issues": [
+        "https://github.com/rust-js-lang/rust-js/issues/1814"
+      ]
+    },
+    {
+      "source": "packages/core/src/foundation/kernel/undo-stack.ts",
+      "rust": "crates/core/src/foundation/kernel/undo_stack.rs",
+      "status": "pending-compiler",
+      "exports": [
+        "createUndoStack",
+        "UndoStackOptions"
+      ],
+      "evidence": [
+        "tests/undo-stack.test.ts",
+        "crates/core/src/foundation/kernel/undo_stack.rs",
+        "docs/validation.md"
+      ],
+      "issues": [
+        "https://github.com/rust-js-lang/rust-js/issues/1815",
+        "https://github.com/rust-js-lang/rust-js/issues/1816"
+      ]
+    },
+    {
+      "source": "packages/core/src/foundation/kernel/events.ts",
+      "rust": "crates/core/src/foundation/kernel/events.rs",
+      "status": "pending-compiler",
+      "exports": [
+        "on",
+        "selectEvent",
+        "isComposing"
+      ],
+      "evidence": [
+        "tests/browser/kernel-events.spec.ts",
+        "tests/declarations.test.ts",
+        "tests/types/kernel-events.ts",
+        "tests/server-import.test.ts",
+        "crates/core/src/foundation/kernel/events.rs",
+        "docs/validation.md"
+      ],
+      "issues": [
+        "https://github.com/rust-js-lang/rust-js/issues/1817"
+      ]
     }
   ]
 }

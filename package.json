@@ -12,9 +12,14 @@
     "test:compiled": "bun rust-js/tooling/cli.js test --package ui-sdk-core-in-rust",
     "test": "bun test ./tests/*.test.ts",
     "check:upstream": "bun scripts/upstream-inventory.ts --check",
-    "clippy": "bun rust-js/tooling/cli.js clippy --package ui-sdk-core-in-rust -- -D warnings"
+    "clippy": "bun rust-js/tooling/cli.js clippy --package ui-sdk-core-in-rust -- -D warnings",
+    "test:browser": "bun run compile && bunx --bun playwright test"
   },
   "dependencies": {
     "@rust-js/std": "file:rust-js/std"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0",
+    "typescript": "7.1.0-beta"
   }
 }

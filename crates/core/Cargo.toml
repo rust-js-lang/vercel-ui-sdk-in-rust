@@ -8,6 +8,8 @@ publish.workspace = true
 [dependencies]
 js = { package = "rust-js-builtins", path = "../../rust-js/builtins" }
 
+webapi = { package = "rust-js-webapi", path = "../../rust-js/webapi" }
+
 [lints]
 workspace = true
 
