@@ -1,6 +1,6 @@
 # Shared TypeScript Member review
 
-Private patch base:e9f75c3f39375c703f533fade10dcc7bd0bf4253. This review is not yet cleared for upstream landing. The revised full check remains pending; P0#1840 holds Intl landing. The durable non-crate owner harness #1848 is now published and adopted; its private implementation copy is removed.
+Private review base:5685772b30db24db7bad00bc58ed37dd33106091. Recorded focused compiler proof below belongs to the earlier e9f75c3 checkpoint; the separate1861 core review has its own focused checks and pending whole-suite comparison. This review is not yet cleared for upstream landing. The revised full check remains pending; P0#1840 holds Intl landing. The durable non-crate owner harness #1848 is now published and adopted; its private implementation copy is removed.
 
 ## Model and all consumers
 

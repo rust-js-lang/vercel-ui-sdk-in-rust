@@ -26,3 +26,5 @@ bun run check:upstream
 ```
 
 Numeric grids, keyboard mapping, calendar arithmetic, layout/environment helpers, shared platform support and the earlier motion/history foundations build together. Local validation passes 20 native tests, 19 compiled invariants and strict Clippy. The full reference suite reports61 pass / 5 fail; Chromium reports20 pass / 1 fail. Complete platform export parity and optional-method browser behavior remain red under #1859; required boundary semantics and union membership remain under #1845/#1846. The published compiler mutation harness is adopted; three of its ten feature-owner preparations are currently inconclusive under #1861. See [validation evidence](docs/validation.md). This is not a release.
+
+The current compiler review checkpoint retains the diagnosed #1861 fix separately, with focused tests passing and whole-suite comparison still pending. See [the investigation](docs/mutation-preparation-1861.md); full-suite and performance results are pending.

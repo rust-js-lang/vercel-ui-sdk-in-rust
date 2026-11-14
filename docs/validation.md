@@ -2,9 +2,9 @@
 
 2026-11-15. Milestone one remains incomplete: the complete core and Web Components SDK, Rust docs/live examples and actual GitHub Pages publication are all still required.
 
-## Current integrated SDK
+## Last fully checked integrated SDK snapshot
 
-Upstream:220c1a0d7278872286a620a8e4ee4210ca46f9bd (Apache-2.0). Private compiler pin:e9f75c3f39375c703f533fade10dcc7bd0bf4253 plus the ordered Intl/model review patches. Its published source-owner harness #1848 is adopted; the private implementation patch is removed. Published calendar reexport/predicate, flattened-copy, Result declaration and union-simplification fixes are included.
+Upstream:220c1a0d7278872286a620a8e4ee4210ca46f9bd (Apache-2.0). At SDK checkpoint 719d1b8, private compiler pin:e9f75c3f39375c703f533fade10dcc7bd0bf4253 plus the ordered Intl/model review patches. Its published source-owner harness #1848 is adopted; the private implementation patch is removed. Published calendar reexport/predicate, flattened-copy, Result declaration and union-simplification fixes are included.
 
 | Gate | Evidence at this source |
 | --- | --- |
@@ -20,11 +20,15 @@ Upstream:220c1a0d7278872286a620a8e4ee4210ca46f9bd (Apache-2.0). Private compiler
 
 These reference and browser runs follow the final platform logic changes. A later source comment names the approved interim binding issue; regenerated output differs only by that comment. No later behavior change was made.
 
+## Current compiler review
+
+The review pin is now 5685772b30db24db7bad00bc58ed37dd33106091 with a separate #1861 patch. Actual traces identify delayed parent exit observation, and the focused copy-worker/deadline/job-warning checks pass. Whole-suite before/after and final ordinary owner proof remain pending; the interim 20 s bound remains. See [investigation and exact evidence](mutation-preparation-1861.md). The SDK table above is its recorded prior snapshot, not a fresh integrated run on this review bundle.
+
 ## Retained failures and compiler gaps
 
 - #1845: the scrub result must own point even when undefined; Rust's plain Option field currently omits it. The original calendar/environment APIs also require an input argument even when its value is undefined, while generated declarations allow omission. Both strict missing-input assertions remain failing; no assertion was weakened. This is the compiler team's shared plain Option/optional boundary design.
 - #1846: original stepBy uses property membership; current untagged object classification reads the bound getter instead, changing observable order. The numeric regression stays failing.
-- #1859: composedClosest needs a single-read optional native method call retaining this. The documented is_function-then-call form reads twice, while a captured function's .call lookup is also observable. The function is deliberately absent pending a general binding design. Complete-export parity and a real Text-node getter/own-call browser test both fail. No approximation or placeholder implementation is shipped.
+- #1859: composedClosest needs a single-read optional native method call retaining this. The documented is_function-then-call form reads twice, while a captured function's .call lookup is also observable. The function remains absent in this SDK snapshot. A general optional_call API has now landed upstream through 2be8f424a; its adoption and complete runtime/type proof are next after the dev-loop fix. Complete-export parity and a real Text-node getter/own-call browser test both fail. No approximation or placeholder implementation is shipped.
 - #1862: document is a supposedly always-present Rust static even though reading its absent JS global throws. Clippy rejects the lazy unwrap_or_else form as unnecessary. The lead approved a temporary ordinary match, with an issue comment, to retain lazy SSR behavior without an allow. The explicit-document/no-global regression passes. The binding owner still needs an honest general representation.
 - #1863: generated shortcut caching retains $index for a private length-two array indexed by usize::from(bool). The source is left natural; the bounds owner is assigned the proof gap. The separate nonempty-split last().expect() helper is being routed by the lead. Full generated-source fidelity remains open.
 - #1840 (P0): the retained native optional-argument null-forwarding repro remains separately recorded. The Intl feature is held for the upstream fix; no current combined full-check success is claimed.
