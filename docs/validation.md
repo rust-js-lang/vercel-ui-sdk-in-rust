@@ -4,7 +4,7 @@
 
 ## Last fully checked integrated SDK snapshot
 
-Upstream:220c1a0d7278872286a620a8e4ee4210ca46f9bd (Apache-2.0). At SDK checkpoint 719d1b8, private compiler pin:e9f75c3f39375c703f533fade10dcc7bd0bf4253 plus the ordered Intl/model review patches. Its published source-owner harness #1848 is adopted; the private implementation patch is removed. Published calendar reexport/predicate, flattened-copy, Result declaration and union-simplification fixes are included.
+Upstream:220c1a0d7278872286a620a8e4ee4210ca46f9bd (Apache-2.0). The current SDK source is rebuilt and rechecked on private compiler pin:ef8807570597a4132d4442dd78315a7b39eaba06 plus the ordered feature and #1861 review patches. Its published source-owner harness #1848 is adopted; the private implementation patch is removed. Published calendar reexport/predicate, flattened-copy, Result declaration and union-simplification fixes are included.
 
 | Gate | Evidence at this source |
 | --- | --- |
@@ -18,19 +18,19 @@ Upstream:220c1a0d7278872286a620a8e4ee4210ca46f9bd (Apache-2.0). At SDK checkpoin
 | Upstream inventory | exact source/hash pin; 2611 files; no original SDK source edits |
 | Complete core/Web/docs/deployment audit | unfinished |
 
-These reference and browser runs follow the final platform logic changes. A later source comment names the approved interim binding issue; regenerated output differs only by that comment. No later behavior change was made.
+These runs include the canonical browser-global getter migration (#1862). activeElement uses a lazy closure fallback so native Rust coerces the global reference to the input lifetime. Generated JS keeps doc ??= document. The bool-index proof (#1863) removes two $index calls. Remaining failures below are retained unchanged.
 
 ## Current compiler review
 
-The review pin is now 5685772b30db24db7bad00bc58ed37dd33106091 with a separate #1861 patch. Actual traces identify delayed parent exit observation, and the focused copy-worker/deadline/job-warning checks pass. Whole-suite before/after and final ordinary owner proof remain pending; the interim 20 s bound remains. See [investigation and exact evidence](mutation-preparation-1861.md). The SDK table above is its recorded prior snapshot, not a fresh integrated run on this review bundle.
+The review pin is ef8807570597a4132d4442dd78315a7b39eaba06 with a separate #1861 patch. Both independent core whole gates pass on this exact base: 7:29 before and 6:33 after, with cache differences disclosed. All 6,915 existing test-name/status multisets are unchanged; five new tests pass and none disappear. Nine harness mutants are caught. The same ordinary ten-owner Intl batch catches 10/10 in about 34 s at the restored original one-second preparation bound. The full core gate used the interim 20 s bound; the final bound was verified by the ordinary workload. Upstream review/landing and the held Intl feature full gate remain separate. See [exact evidence](mutation-preparation-1861.md).
 
 ## Retained failures and compiler gaps
 
 - #1845: the scrub result must own point even when undefined; Rust's plain Option field currently omits it. The original calendar/environment APIs also require an input argument even when its value is undefined, while generated declarations allow omission. Both strict missing-input assertions remain failing; no assertion was weakened. This is the compiler team's shared plain Option/optional boundary design.
 - #1846: original stepBy uses property membership; current untagged object classification reads the bound getter instead, changing observable order. The numeric regression stays failing.
 - #1859: composedClosest needs a single-read optional native method call retaining this. The documented is_function-then-call form reads twice, while a captured function's .call lookup is also observable. The function remains absent in this SDK snapshot. A general optional_call API has now landed upstream through 2be8f424a; its adoption and complete runtime/type proof are next after the dev-loop fix. Complete-export parity and a real Text-node getter/own-call browser test both fail. No approximation or placeholder implementation is shipped.
-- #1862: document is a supposedly always-present Rust static even though reading its absent JS global throws. Clippy rejects the lazy unwrap_or_else form as unnecessary. The lead approved a temporary ordinary match, with an issue comment, to retain lazy SSR behavior without an allow. The explicit-document/no-global regression passes. The binding owner still needs an honest general representation.
-- #1863: generated shortcut caching retains $index for a private length-two array indexed by usize::from(bool). The source is left natural; the bounds owner is assigned the proof gap. The separate nonempty-split last().expect() helper is being routed by the lead. Full generated-source fidelity remains open.
+- #1862 is adopted: possibly absent globals use canonical getter calls. The lazy document fallback passes native, compiled, strict Clippy and explicit-document/no-global differential tests. Its generated expression remains doc ??= document.
+- #1863 is adopted: the private two-item shortcut cache indexed by usize::from(bool) now emits plain array indexing. The nonempty-split last().expect() helper and full generated-source fidelity remain open.
 - #1840 (P0): the retained native optional-argument null-forwarding repro remains separately recorded. The Intl feature is held for the upstream fix; no current combined full-check success is claimed.
 
 Calendar narrowing and root ISODate reexports now pass; #1828 and canonical #1829 are adopted. #1853 was a duplicate. Flattened-copy #1847 is fixed and its throwing-getter regression passes unchanged.
@@ -51,7 +51,7 @@ builtins/intl.ts owns the spec and generated Rust argument/record declarations. 
 
 After adopting the published harness, the current focused compiler review suites pass 35 tests / 42,896 assertions. The combined feature's revised full check remains pending. The independent harness core passed its own full check before landing and upstream again checked its landing; that does not prove this feature or #1840 fixed.
 
-Current ten-owner mutation run: 7 caught, 3 INCONCLUSIVE at the new 1 s preparation deadline (#1861). Template 1.5 s / 91,258,880 bytes, each workspace 91,262,976 bytes; batch about 39 s. The quiet actual-workspace diagnostic measures copy 1907 ms and preparation 18 ms separately at the same deadline. A fast-child / 1.3 s parent-block probe completes normally, so that simple false-timeout hypothesis is not reproduced. No retry with a larger timeout was made. All workspaces were removed. The previous 15 of 15 proof predates this deadline and remains historical evidence only. The lead is investigating; the compiler dev-loop ledger records the measured cost and proposed diagnosis.
+Current ordinary ten-owner mutation run on the fixed harness: 10/10 caught in about 34 s at underLoad(1_000), no inconclusive verdicts or observed-overrun warnings; template 1.7 s/91,377,664 bytes and peak workspace 91,381,760 bytes. The old 7/10 ordinary run and 6/10 confirming trace are historical false-timeout evidence, not accepted results. Temporary observers are removed, workspaces are cleaned, and the diagnostic 20 s allowance is removed. Full comparison, mutant proof and cache limitations are recorded in [the investigation](mutation-preparation-1861.md).
 
 An older Intl version passed its planned full gate in 4 m 49 s, before later model changes and #1840. The isolated harness core passed in 7 m 57 s. Those scoped measurements and the earlier deadline failures remain in the compiler ledger; they are not current combined green results or isolated speed-up claims.
 

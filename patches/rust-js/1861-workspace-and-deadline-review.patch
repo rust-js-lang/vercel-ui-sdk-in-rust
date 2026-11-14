@@ -1,12 +1,12 @@
 diff --git a/TESTS.md b/TESTS.md
-index 472405f..d025c83 100644
+index 472405f..cead931 100644
 --- a/TESTS.md
 +++ b/TESTS.md
 @@ -17,6 +17,8 @@ The historical suite totals and CI timings below have not been remeasured.
  Added source-owner mutation coverage on 2026-11-15 (#1848): six real
  workspace/load/control/cleanup tests and five self-mutants through the
  existing runner. Feature-owner registrations are reviewed separately.
-+Added focused #1861 coverage on 2026-11-15: a seventh source-workspace case checks a partial worker-copy failure; three child cases retain in-budget exits under a blocked loop, observed-overrun warnings and external-signal provenance; a timing case checks that a passing check job still shows the warning with its name. The whole-suite before/after recount remains pending.
++Added focused #1861 coverage on 2026-11-15: a seventh source-workspace case checks a partial worker-copy failure; three child cases retain in-budget exits under a blocked loop, observed-overrun warnings and external-signal provenance; a timing case checks that a passing check job still shows the warning with its name. Local whole-gate comparison on ef8807570: 6,915 existing test-name/status multisets unchanged, five new passing names, none removed; nine of nine harness mutants caught. Recorded lines: 6,469 pass/616 skip before, 6,474 pass/616 skip after (repeated names included). Local --all samples, not a nightly/CI recount.
 +
  Historical suite totals below are not a recount.
  
@@ -25,10 +25,10 @@ index c6a5cef..ad5de7f 100644
  | Native app build and editor check; the command each JS test runner runs a crate's tests by (ADR 1076) | `tooling/cli.js`, `tooling/build.js`, `tooling/cargo.js`, `tooling/check.js`, `tooling/runners.js` |
  | Host manifest validation and file publication | `tooling/manifest.js`, `tooling/publish.js` |
 diff --git a/docs/decisions/1154-source-mutations-run-in-isolated-workspaces.md b/docs/decisions/1154-source-mutations-run-in-isolated-workspaces.md
-index 50e6bd8..35127c9 100644
+index 50e6bd8..d1f3e6b 100644
 --- a/docs/decisions/1154-source-mutations-run-in-isolated-workspaces.md
 +++ b/docs/decisions/1154-source-mutations-run-in-isolated-workspaces.md
-@@ -52,3 +52,15 @@ README-only kill recipes are not durable CI proof. Registering JS/TS files witho
+@@ -52,3 +52,19 @@ README-only kill recipes are not durable CI proof. Registering JS/TS files witho
    15-mutant batch beside another checkout's check. Past it is a hang,
    reported as `INCONCLUSIVE: source preparation timed out after N s`,
    apart from a preparation that failed.
@@ -43,7 +43,24 @@ index 50e6bd8..35127c9 100644
 +
 +If the completion is observed past the deadline without an owned timeout kill, the result carries observedOverdueMs and the owner prints a diagnostic: a blocked parent or a slow child. The check runner labels that same diagnostic with the job, even for a passing job whose ordinary output is hidden. The observation does not prove the child itself ran late. Strict enforcement while the entire parent is blocked is not claimed; the enclosing command timeout still bounds that parent. The lead approved this single verdict path, with exact child lifetime reporting reserved for a concrete future need.
 +
-+Focused proof currently passes seven workspace cases, including partial-copy worker failure cleanup; four child cases, including the three new blocked-loop/warning/external-signal rows; and the real passing-job warning case. Typecheck passes. Whole-suite before/after outcome capture, source mutants, actual batch timing and the final preparation bound remain pending; this amendment is not a claim of completed #1861 validation.
++The independent core was checked on ef8807570597a4132d4442dd78315a7b39eaba06, with Intl/model changes and their P0 reproduction excluded. Both complete check:fast --all runs pass: before 7 min 29 s, after 6 min 33 s. Per-job test-name/status multisets preserve all 6,915 existing names, add five passing names and remove none; 344 baseline jobs and 345 after jobs all exit 0. The observed test lines are 6,469 pass/616 skip before and 6,474 pass/616 skip after, including repeated names; these local --all samples are not a nightly or CI recount. Six new/moved owner mutants are caught in the after gate (40 s); the three existing source-harness mutants are caught separately (about 10 s), nine of nine overall.
++
++The timing difference is not an isolated speed-up: before starts with a 43 s build and 0 MB kept compiles, after with a 0.529 s build and 49 MB kept. Startup pruning changes from 43 s to 4.2 s. Recorded job CPU is 3,191 versus 3,127 core-seconds; cores average 84% versus 86% busy, under half busy 17% in both. The after crate sample takes 2 min 2 s versus 1 min 52 s before; its final typenum compile was active on one core. These are whole-gate/cache/contention costs, not generator execution times.
++
++After the core check, the same ten Intl/model owner mutants run through the ordinary runner without tracing at the original underLoad(1_000) preparation bound: ten of ten caught in about 34 s, no inconclusive verdicts or observed-overrun warnings, template 1.7 s/91,377,664 bytes and peak workspace 91,381,760 bytes. The bound keeps a 1 s scheduling floor over the measured 21–25 ms launch-to-exit trace, scaled by load; the 20 s diagnostic allowance is removed. Workspace copying is outside preparation. Existing control/load/cleanup rules and all nine self-mutants remain in force. The full core gate used the interim 20 s bound; the final bound is proved by this ordinary ten-owner workload, not represented as another whole-gate run. No automatic preload, second deadline parameter or guessed child lifetime is introduced.
+diff --git a/docs/dev-loop.md b/docs/dev-loop.md
+index a8b9cf6..316e2cb 100644
+--- a/docs/dev-loop.md
++++ b/docs/dev-loop.md
+@@ -185,7 +185,7 @@ Also in use, with no single before and after:
+ 
+ | Independent source-mutation core full gate, 2026-11-15 (#1848) | check:fast --all passes on 4652f87731e98db8f21b493f74c5a2917d128fc6 in 7 min 57 s; Intl/model changes and their reproduction-only P0 test were not in this core patch. Startup: compiler build 30 s, pruning kept tests 30 s, pruning compile cache 7 s, node bindings 3 s. Fourteen corpus parts 2 min 10 s–2 min 36 s; eight browser files 4 min 47 s; 296 other files 7 min 16 s. Five source self-mutants pass in 1 min 6 s within the full run. Cores 83% busy, under half busy 18%. No test map was available, so the std-iterator corpus ran whole. These are whole-gate contention costs, not isolated per-job benchmarks. Pruning startup remains a measured slow spot; avoid rescanning unchanged stores if the disk ledger can safely prove them unchanged. | /tmp/ui-sdk-core-full-check.log; scripts/checkFast.ts |
+ 
+-| A source mutant's generator preparation, 2026-11-15 (#1848, #1861, ADR 1154) | Slow spot, open: alone in a quiet workspace the Intl generator takes 18 ms after a 1.9 s copy, and main's template 0.01 s, but three of ten Intl mutants run at once took more than 1 s, which a 1 s timeout set from the quiet figure made INCONCLUSIVE. #1861 is finding why. Until then the timeout is 20 s as the load makes it, twice the 9.5 s the measured step took at most, copy included, in the 15-mutant batch. A generator-chain mutant also spends its 91 MB workspace's copy, 1.6 s for the template, and its test run's rebuild of the js crate. | scripts/source-mutations.ts |
++| Source preparation and queued-exit diagnosis, 2026-11-15 (#1861, ADR 1154) | The independent core was checked on ef8807570597a4132d4442dd78315a7b39eaba06, with Intl/model changes and their P0 reproduction excluded. Both complete check:fast --all runs pass: before 7 min 29 s, after 6 min 33 s. Per-job test-name/status multisets preserve all 6,915 existing names, add five passing names and remove none; 344 baseline jobs and 345 after jobs all exit 0. The observed test lines are 6,469 pass/616 skip before and 6,474 pass/616 skip after, including repeated names; these local --all samples are not a nightly or CI recount. Six new/moved owner mutants are caught in the after gate (40 s); the three existing source-harness mutants are caught separately (about 10 s), nine of nine overall. The timing difference is not an isolated speed-up: before starts with a 43 s build and 0 MB kept compiles, after with a 0.529 s build and 49 MB kept. Startup pruning changes from 43 s to 4.2 s. Recorded job CPU is 3,191 versus 3,127 core-seconds; cores average 84% versus 86% busy, under half busy 17% in both. The after crate sample takes 2 min 2 s versus 1 min 52 s before; its final typenum compile was active on one core. These are whole-gate/cache/contention costs, not generator execution times. After the core check, the same ten Intl/model owner mutants run through the ordinary runner without tracing at the original underLoad(1_000) preparation bound: ten of ten caught in about 34 s, no inconclusive verdicts or observed-overrun warnings, template 1.7 s/91,377,664 bytes and peak workspace 91,381,760 bytes. The bound keeps a 1 s scheduling floor over the measured 21–25 ms launch-to-exit trace, scaled by load; the 20 s diagnostic allowance is removed. Workspace copying is outside preparation. Existing control/load/cleanup rules and all nine self-mutants remain in force. The full core gate used the interim 20 s bound; the final bound is proved by this ordinary ten-owner workload, not represented as another whole-gate run. No automatic preload, second deadline parameter or guessed child lifetime is introduced. The old 1 s trace caught 6/10 with four false timeouts even though each child exited 0 within 21–25 ms, observed 3388–7150 ms later; the interim 20 s trace caught 10/10 in 53 s. A single setImmediate drain failed the fresh-loop regression; the retained zero-delay timer drain passes. Startup pruning and the serial tail remain measured slow spots: a trustworthy disk ledger could avoid rescans; splitting eligible crate work could reduce the tail. | scripts/source-mutations.ts; scripts/source-workspace.ts; test/child.ts; scripts/checkFast.ts |
+ 
+ | Intl private-clone validation, 2026-11-15 (#1830/#1834) | First check:fast --all hit its 480 s overall deadline: all 14 corpus parts passed in 191–207 s each, the browser group in 4 min, with remaining suites still active. Both private and main-clone map stores were empty; restoring 64 ancestors did not recover a map. TypeScript annotation and load-aware timeout failures were separately fixed and rechecked. Clean-base map recording then hit its 270 s deadline: counting compiler build 72 s, corpus parts 64–74 s, std-iterator parts 85–92 s, with further mapped files still running. No map was published; complete feature work was restored from its durable patch, and recorder PIDs were verified absent. Recording costs exceed the documented ~130 s on this machine. A coordinated warm rerun at the same 480 s deadline passed all planned gates in 289 s: corpus parts 34–45 s, browsers 212 s, other 291 files 244 s; cores 86% busy, under half busy 12% of the run. Cache warmth and the quiet heavy-work window both changed, so their effects are not isolated. The P0 #1840 regression was created after that run began and fails separately; this is not a claim that current HEAD plus that new regression is green. | test/intl-arguments.test.ts; scripts/testMap.ts; check logs 2026-11-14T18-58-02-436Z-64140 |
+ 
 diff --git a/scripts/checkFast.ts b/scripts/checkFast.ts
 index dd19f2b..1d84b8b 100644
 --- a/scripts/checkFast.ts
@@ -155,10 +172,10 @@ index 0000000..680252b
 +  {name: "source-workspace-uses-original-alias", breaks: "workspace package aliases import original sources instead of the mutated copy", file: "scripts/source-workspace.ts", find: 'symlinkSync(join(workspace, path), to);', replace: 'symlinkSync(join(root, path), to);', tests: ["test/source-mutations.test.ts", "-t", "source mutation workspaces isolate"]},
 +];
 diff --git a/scripts/source-mutations.ts b/scripts/source-mutations.ts
-index 6f8c707..85644eb 100644
+index 6f8c707..52e1c70 100644
 --- a/scripts/source-mutations.ts
 +++ b/scripts/source-mutations.ts
-@@ -1,22 +1,10 @@
+@@ -1,98 +1,34 @@
  // Tracked non-crate inputs of the existing mutation runner (#1848). A
  // workspace owns every source it may write; installed third-party packages
  // are read-only inputs, while workspace package links point inside the copy.
@@ -185,9 +202,19 @@ index 6f8c707..85644eb 100644
  import { run, type Exit } from "../test/child";
  import type { Mutation } from "./mutations";
  import { underLoad } from "./timing";
-@@ -29,70 +17,20 @@ import { underLoad } from "./timing";
-  * docs/dev-loop.md, not a bound the generator needs. */
- const prepareTimeout = underLoad(20_000);
+ 
+-/** A generator's preparation: 18 ms alone in a quiet workspace, but past a
+- * second for three of ten mutants run at once, which #1861 is finding the
+- * cause of. Until it's found, twice the most the measured step took, 9.5 s
+- * with the workspace's copy in a batch beside another checkout's check (ADR
+- * 1154), as the load makes it (`underLoad`): a slow spot listed in
+- * docs/dev-loop.md, not a bound the generator needs. */
+-const prepareTimeout = underLoad(20_000);
++/** Preparation excludes workspace copying. The real Intl trace takes 21–25 ms
++ * from launch to exit; retain the existing 1 s scheduling floor, scaled by
++ * load. Worker copying and the shared child verdict remove the false timeout
++ * rather than retaining the diagnostic interim 20 s allowance (#1861). */
++const prepareTimeout = underLoad(1_000);
  
 -/** An independently writable source tree, without generated stores. The
 - * caller supplies Git's tracked files, including current working-tree edits. */
@@ -270,7 +297,7 @@ index 6f8c707..85644eb 100644
  }
  
  /** Record execution, not merely resolution or a successful test process.
-@@ -156,7 +94,7 @@ export async function sourceMutation(
+@@ -156,7 +92,7 @@ export async function sourceMutation(
      rmSync(workspace, { recursive: true, force: true });
      const began = performance.now();
      try {

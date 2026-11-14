@@ -1,9 +1,9 @@
 //! Rust adaptation of UI SDK foundation/platform/env.ts; see UPSTREAM.md.
-use webapi::{Element, document, navigator, window, window_global};
+use webapi::{Element, window_global};
 
 thread_local! {
     #[cfg_attr(rust_js, rust_js::name = "isBrowser")]
-    pub static IS_BROWSER: bool = js::is_defined(window) && js::is_defined(document);
+    pub static IS_BROWSER: bool = js::is_defined(window_global::window) && js::is_defined(window_global::document);
 }
 
 // iPhone and iPad, including iPads that report a Mac.
@@ -11,8 +11,10 @@ thread_local! {
 pub fn is_ios() -> bool {
     IS_BROWSER.with(|browser| {
         *browser
-            && (js::reg_exp::new(r"iP(hone|ad|od)", "").test(&navigator.platform())
-                || (navigator.platform() == "MacIntel" && navigator.max_touch_points() > 1.0))
+            && (js::reg_exp::new(r"iP(hone|ad|od)", "")
+                .test(&window_global::navigator().platform())
+                || (window_global::navigator().platform() == "MacIntel"
+                    && window_global::navigator().max_touch_points() > 1.0))
     })
 }
 

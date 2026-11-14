@@ -2,7 +2,7 @@
 
 /** Rust adaptation of UI SDK foundation/platform/platform.ts; see UPSTREAM.md. */
 import { isBrowser } from "./env.js";
-import { $index, $unwrap } from "@rust-js/std";
+import { $unwrap } from "@rust-js/std";
 
 let platformOverride;
 let apple;
@@ -93,8 +93,6 @@ export function portalTarget(container) {
 
 // The focused element, inside shadow roots too.
 export function activeElement(doc) {
-  // Interim for rust-js #1862: a maybe-absent global is still a static.
-  // Keep this read lazy on SSR without suppressing Clippy.
   doc ??= document;
   let active = doc.activeElement;
   while (active?.shadowRoot?.activeElement != null) {
@@ -234,10 +232,10 @@ function matchesKey(event, key) {
  */
 export function matchesShortcut(event, shortcut, apple) {
   apple ??= isApple();
-  let keys = $index(parsed, apple ? 1 : 0).get(shortcut);
+  let keys = parsed[apple ? 1 : 0].get(shortcut);
   function fallback() {
     const keys = ariaKeyshortcuts(shortcut, apple).split("+");
-    $index(parsed, apple ? 1 : 0).set(shortcut, keys);
+    parsed[apple ? 1 : 0].set(shortcut, keys);
     return keys;
   }
   keys ??= fallback();

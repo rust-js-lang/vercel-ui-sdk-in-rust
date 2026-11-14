@@ -5,8 +5,8 @@ use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::rc::Rc;
 use webapi::{
-    Document, DocumentFragment, Element, HTMLElement, KeyboardEvent, Node, ShadowRoot, document,
-    navigator, window_global,
+    Document, DocumentFragment, Element, HTMLElement, KeyboardEvent, Node, ShadowRoot,
+    window_global,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -109,7 +109,9 @@ pub fn portal_target(container: Option<PortalTarget<'_>>) -> Option<PortalTarget
         return container;
     }
     if IS_BROWSER.with(|browser| *browser) && !supports_top_layer() {
-        return document.body().map(|body| PortalTarget::Element(body));
+        return window_global::document()
+            .body()
+            .map(|body| PortalTarget::Element(body));
     }
     None
 }
@@ -117,12 +119,7 @@ pub fn portal_target(container: Option<PortalTarget<'_>>) -> Option<PortalTarget
 // The focused element, inside shadow roots too.
 #[cfg_attr(rust_js, rust_js::nullable)]
 pub fn active_element(doc: Option<&Document>) -> Option<&'static HTMLElement> {
-    // Interim for rust-js #1862: a maybe-absent global is still a static.
-    // Keep this read lazy on SSR without suppressing Clippy.
-    let doc = match doc {
-        Some(doc) => doc,
-        None => document,
-    };
+    let doc = doc.unwrap_or_else(|| window_global::document());
     let mut active = doc.active_element();
     while active
         .and_then(Element::shadow_root)
@@ -193,9 +190,9 @@ pub fn is_apple() -> bool {
         return apple;
     }
     let apple = IS_BROWSER.with(|browser| *browser) && {
-        let platform = navigator.platform();
+        let platform = window_global::navigator().platform();
         let platform = if platform.is_empty() {
-            navigator.user_agent()
+            window_global::navigator().user_agent()
         } else {
             platform
         };

@@ -1,0 +1,74 @@
+{
+  "base": "ef8807570597a4132d4442dd78315a7b39eaba06",
+  "before": {
+    "wallSeconds": 449,
+    "jobs": 344,
+    "passLines": 6469,
+    "skipLines": 616,
+    "jobCpuSeconds": 3191,
+    "buildSeconds": 43,
+    "keptCompileMB": 0
+  },
+  "after": {
+    "wallSeconds": 393,
+    "jobs": 345,
+    "passLines": 6474,
+    "skipLines": 616,
+    "jobCpuSeconds": 3127,
+    "buildSeconds": 0.529,
+    "keptCompileMB": 49
+  },
+  "comparison": {
+    "before": {
+      "jobs": 344,
+      "testNames": 6915,
+      "failed": []
+    },
+    "after": {
+      "jobs": 345,
+      "testNames": 6920,
+      "failed": []
+    },
+    "changed": [],
+    "added": [
+      {
+        "name": "test/child.test.ts\u0000a completed child is never timed out by a blocked parent loop",
+        "counts": {
+          "pass": 1
+        }
+      },
+      {
+        "name": "test/child.test.ts\u0000a late child observation warns without guessing its lifetime",
+        "counts": {
+          "pass": 1
+        }
+      },
+      {
+        "name": "test/child.test.ts\u0000an external SIGKILL is not reported as a timeout",
+        "counts": {
+          "pass": 1
+        }
+      },
+      {
+        "name": "test/timing.test.ts\u0000check:fast preserves a passing job's child observation warning",
+        "counts": {
+          "pass": 1
+        }
+      },
+      {
+        "name": "test/source-mutations.test.ts\u0000a workspace worker failure rejects and removes its partial source tree",
+        "counts": {
+          "pass": 1
+        }
+      }
+    ],
+    "removed": []
+  },
+  "notes": [
+    "Repeated test names are counted by status multiset per job.",
+    "Local --all samples, not a nightly or CI recount.",
+    "Full after gate includes six new/moved source mutants; three existing harness mutants pass separately.",
+    "Cache differences prevent an isolated speedup claim.",
+    "Full gate used interim 20s preparation limit; ordinary ten-owner workload separately proves final original1s limit."
+  ]
+}

@@ -23,6 +23,6 @@
     "issues": [
       1861
     ],
-    "status": "Review checkpoint: copy worker, queued-exit drain and job warnings; focused checks/typecheck pass; whole-suite before/after and owner mutation proof pending; interim 20s preparation bound unchanged"
+    "status": "Independent core whole before/after passes on ef8807570; nine harness mutants caught; original 1s preparation bound restored and same ordinary ten-owner batch catches 10/10; pending upstream review/landing"
   }
 ]
