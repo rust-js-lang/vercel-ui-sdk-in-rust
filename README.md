@@ -24,4 +24,4 @@ bun run clippy
 bun run check:upstream
 ```
 
-The first implemented exports are clamp and wrap. Their native/compiled invariants and 6,750 exact comparisons against upstream pass. This is the start of the foundation port, not a completed core package. See [validation evidence](docs/validation.md) for the current proof and remaining gates.
+Implemented foundations include clamping/wrapping, rubber-band resistance, analytic spring motion and RTL side mapping. Eight native/compiled invariants and ten upstream differential tests (86,241 assertions) pass. Core and Web Components remain in progress. See [validation evidence](docs/validation.md) for the current proof and remaining gates.

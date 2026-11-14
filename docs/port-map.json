@@ -14,6 +14,51 @@
         "crates/core/src/foundation/number/steps.rs",
         "docs/validation.md"
       ]
+    },
+    {
+      "source": "packages/core/src/foundation/motion/rubber-band.ts",
+      "rust": "crates/core/src/foundation/motion/rubber_band.rs",
+      "status": "implemented",
+      "exports": [
+        "rubberBand",
+        "rubberBandInverse",
+        "rubberBandSlope"
+      ],
+      "evidence": [
+        "tests/motion-and-sides.test.ts",
+        "crates/core/src/foundation/motion/rubber_band.rs",
+        "docs/validation.md"
+      ]
+    },
+    {
+      "source": "packages/core/src/foundation/motion/spring.ts",
+      "rust": "crates/core/src/foundation/motion/spring.rs",
+      "status": "implemented",
+      "exports": [
+        "solveSpring",
+        "settleTime",
+        "springLinearEasing"
+      ],
+      "evidence": [
+        "tests/spring.test.ts",
+        "crates/core/src/foundation/motion/spring.rs",
+        "docs/validation.md"
+      ]
+    },
+    {
+      "source": "packages/core/src/foundation/platform/sides.ts",
+      "rust": "crates/core/src/foundation/platform/sides.rs",
+      "status": "implemented",
+      "exports": [
+        "physicalSide",
+        "Side",
+        "PhysicalSide"
+      ],
+      "evidence": [
+        "tests/motion-and-sides.test.ts",
+        "crates/core/src/foundation/platform/sides.rs",
+        "docs/validation.md"
+      ]
     }
   ]
 }
