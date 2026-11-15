@@ -59,6 +59,8 @@ After milestone one: port the React SDK adapter with its concurrent rendering, S
 
 For each encountered rust-js gap: add a failing regression, file a generic issue with gh, communicate through agent-hub, apply a reviewed local fix in this project's submodule where possible, and retain a reproducible issue-linked patch. Adopt published upstream commits and remove obsolete patches. Never modify another session's shared compiler checkout. Check hub messages regularly during active work and before upgrades/checkpoints.
 
+The proposed single-authority TypeScript library/builtin migration is recorded in [the compiler generation design](compiler-builtins-generation-proposal.md). It is under compiler-lead review and is not an implemented SDK feature.
+
 ## Completion gates
 
 | Requirement | Evidence required |

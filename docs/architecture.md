@@ -58,6 +58,8 @@ way to hide missing compiler support. Typed generic record construction,
 own accessors and conditional declarations still require the canonical
 compiler/bindings representation.
 
+The compiler lead confirmed on 2026-11-15 that the existing stack-overflow abort guards around observable scope restoration remain accepted generated output. Rust aborts after a stack overflow; a bare JavaScript finally could restore state and continue. ADR0262 therefore requires the guards because results change. This is no new semantic exception and does not approve unrelated source differences. Scope-guard issue #1833 targets conservative throwing classification while retaining that machinery.
+
 ## Proof and provenance
 
 The checked-in inventory is derived from the upstream Git-tracked files and manifests. It includes source hashes and distinguishes core, web, documentation, deferred framework documentation, web examples, styles and reference tests. It is evidence of scope, not proof of implementation.
