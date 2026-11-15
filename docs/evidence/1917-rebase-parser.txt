@@ -1,0 +1,31 @@
+bun test v1.4.4 (38afee6c8)
+
+test/check-startup.test.ts:
+(pass) startup observes a fast prune while the compiler is still building [432.66ms]
+(pass) startup retains the build failure and waits for both children [48.60ms]
+(pass) startup retains the prune failure and waits for both children [39.97ms]
+
+test/typescript-symbols.test.ts:
+(pass) computed symbol members keep their declaration keys through the model [102.36ms]
+(pass) computed symbol declarations remain usable by strict TypeScript consumers [138.06ms]
+(pass) computed member expressions outside symbol paths are refused explicitly [23.23ms]
+
+test/typescript-defaults.test.ts:
+(pass) reading generic defaults preserves them in every parameter-bearing declaration [25.11ms]
+(pass) original and printed defaults accept strict callers that omit type arguments [101.48ms]
+
+test/typescript.test.ts:
+(pass) read gives a file's declarations, by TypeScript's own parser [50.71ms]
+(pass) print writes a model as TypeScript prints it, a header first [12.08ms]
+(pass) print writes a name that's an identifier as it is, and quotes any other [11.61ms]
+(pass) print writes a conditional type, and an object alias's members' docs [10.18ms]
+(pass) print writes a union with unknown or any as that keyword [10.80ms]
+(pass) read takes @types/react's element attributes apart [23.86ms]
+(pass) read keeps an export list that names a type as text [12.53ms]
+(pass) print writes erasable syntax only [163.58ms]
+(pass) construct signatures retain generics and optional/rest arguments in every member position [23.38ms]
+
+ 17 pass
+ 0 fail
+ 64 expect() calls
+Ran 17 tests across 4 files. [1401.00ms]

@@ -1,7 +1,7 @@
 {
   "date": "2026-11-15",
   "issue": 1912,
-  "shipped": false,
+  "shipped": true,
   "activeSeries": [],
   "standaloneBase": "9b14a0670e5e96672b834d798f558ebae0718855",
   "originalReproductionBase": "363522bc0d35cc3089640895e39fe4a38937cf14",
@@ -158,5 +158,8 @@
   "dependency": "No dependency on the separate library-selection review. The eight-file patch applies directly to published main. Broader generation and SDK milestone remain incomplete.",
   "firstStaticFailure": "Duplicate source-owner mutation list corrected by merging entries into the existing TypeScript catalog; no test weakened.",
   "firstConsumerFailure": "WebAPI reader still assumed string keys; migrated to model-owned memberKey, restoring unchanged existing coverage. No baseline members removed.",
-  "latestCombinedReview": "docs/evidence/1912-1916-validation.json"
+  "latestCombinedReview": "docs/evidence/1912-1916-validation.json",
+  "upstreamFix": "e0f07bcf58165b127b7399d6486eca98eb4e90dc",
+  "patchRetired": true,
+  "retirement": "Published upstream and adopted by SDK; duplicate inactive review removed."
 }

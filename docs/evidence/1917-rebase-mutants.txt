@@ -1,0 +1,15 @@
+source template: 92528640 bytes in 1.9 s
+source check-startup-build-not-awaited: caught; peak workspace 92532736 bytes
+source check-startup-prune-timed-as-build: caught; peak workspace 92532736 bytes
+source check-startup-prune-failure-hidden: caught; peak workspace 92532736 bytes
+source check-startup-build-blocks-parent: caught; peak workspace 92532736 bytes
+check-startup-build-blocks-parent	caught
+check-startup-prune-timed-as-build	caught
+check-startup-build-not-awaited	caught
+check-startup-prune-failure-hidden	caught
+slow	check-startup-build-blocks-parent	build 5.0 s, tests 3.9 s
+slow	check-startup-prune-failure-hidden	build 4.9 s, tests 3.4 s
+slow	check-startup-prune-timed-as-build	build 5.4 s, tests 2.3 s
+slow	check-startup-build-not-awaited	build 5.2 s, tests 1.2 s
+4 of 4 mutations caught
+mutation, each 3.1 s (usual 5.2 s)

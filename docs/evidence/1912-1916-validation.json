@@ -4,7 +4,7 @@
     1912,
     1916
   ],
-  "shipped": false,
+  "shipped": true,
   "activeSeries": [],
   "sourceBase": "d2e47ad9f055ca3b6e80240ad3ea6a7810dc90ad",
   "reviewCommit": "6963014b8ca16997ff174e42a676e7065cdddf7e",
@@ -102,5 +102,8 @@
         "(fail) reading generic defaults preserves them in every parameter-bearing declaration [94.45ms]"
       ]
     }
-  ]
+  ],
+  "upstreamFix": "e0f07bcf58165b127b7399d6486eca98eb4e90dc",
+  "patchRetired": true,
+  "retirement": "Published upstream and adopted by SDK; duplicate inactive review removed."
 }

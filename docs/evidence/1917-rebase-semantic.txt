@@ -1,0 +1,15 @@
+bun test v1.4.4 (38afee6c8)
+
+test/forwarding-each-count.test.ts:
+(pass) a thread-local's field of the crate's own functions is that field, its call of each count the call of all [231.83ms]
+(pass) a thread-local's field taken apart, and one of a JS function kept, run as Rust does in Chromium [414.31ms]
+
+test/declarations-type-maps.test.ts:
+(pass) a type map's impls are one object type, its keys and its lookup [487.71ms]
+(pass) a type map written otherwise, or of an impl that names no key, is refused [46.86ms]
+(pass) a const type parameter, a default by its bound, and literal booleans [344.81ms]
+
+ 5 pass
+ 0 fail
+ 25 expect() calls
+Ran 5 tests across 2 files. [5.59s]

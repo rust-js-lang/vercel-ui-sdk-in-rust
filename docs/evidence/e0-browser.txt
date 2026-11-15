@@ -1,0 +1,77 @@
+
+Running 24 tests using 14 workers
+
+  ✓   4 [chromium] › tests/browser/kernel-events.spec.ts:71:6 › ported kernel events › cleanup reads the original options object at removal time (717ms)
+  ✓   7 [chromium] › tests/browser/kernel-events.spec.ts:56:6 › reference kernel events › once and abort signals retain native lifecycle behavior (728ms)
+  ✓  14 [chromium] › tests/browser/kernel-events.spec.ts:16:6 › reference kernel events › native listener identity, receiver, capture, cancellation and idempotent cleanup (705ms)
+  ✓   1 [chromium] › tests/browser/kernel-events.spec.ts:71:6 › reference kernel events › cleanup reads the original options object at removal time (728ms)
+  ✓   5 [chromium] › tests/browser/kernel-events.spec.ts:90:6 › ported kernel events › selection events are fresh, native and cancellable (728ms)
+  ✓  10 [chromium] › tests/browser/kernel-events.spec.ts:16:6 › ported kernel events › native listener identity, receiver, capture, cancellation and idempotent cleanup (733ms)
+  ✓   8 [chromium] › tests/browser/kernel-events.spec.ts:90:6 › reference kernel events › selection events are fresh, native and cancellable (740ms)
+  ✓  13 [chromium] › tests/browser/layout.spec.ts:33:2 › layout measurement preserves detached, inline and body-offset behavior (726ms)
+  ✓   3 [chromium] › tests/browser/layout.spec.ts:3:2 › layout geometry matches upstream across fractional boxes, transforms and scrolling (738ms)
+  ✓  12 [chromium] › tests/browser/kernel-events.spec.ts:56:6 › ported kernel events › once and abort signals retain native lifecycle behavior (757ms)
+  ✓   2 [chromium] › tests/browser/environment.spec.ts:26:2 › iOS detection preserves native platform short circuiting and touch thresholds (753ms)
+  ✓   9 [chromium] › tests/browser/kernel-events.spec.ts:141:2 › composition detection retains getter order, short circuiting and thrown errors (768ms)
+  ✓  11 [chromium] › tests/browser/environment.spec.ts:3:2 › environment helpers read real computed directions across elements and documents (766ms)
+  ✓   6 [chromium] › tests/browser/kernel-events.spec.ts:112:2 › composition detection matches upstream for native, wrapped and strict-valued fields (828ms)
+  ✓  17 [chromium] › tests/browser/layout.spec.ts:50:2 › layout traversal retains repeated offset-parent reads and native getter order (124ms)
+  ✓  24 [chromium] › tests/browser/platform.spec.ts:82:2 › reduced-motion follows actual browser media preferences (120ms)
+  ✓  23 [chromium] › tests/browser/scrollbar.spec.ts:29:2 › scrollbar DOM reads preserve root and zero-size early exits, getter order and thrown identity (146ms)
+  ✓  16 [chromium] › tests/browser/platform.spec.ts:56:2 › portal targets preserve explicit node identity, top-layer fallback and null (212ms)
+  ✓  22 [chromium] › tests/browser/scrollbar.spec.ts:3:2 › scrollbar presses match on real LTR/RTL, detached, text, root and iframe nodes (217ms)
+  ✓  19 [chromium] › tests/browser/platform.spec.ts:3:2 › active element descends nested shadow roots and preserves repeated native getter reads (225ms)
+  ✓  18 [chromium] › tests/browser/layout.spec.ts:97:2 › layout accepts elements from another document without adding realm checks (230ms)
+  ✘  21 [chromium] › tests/browser/platform.spec.ts:95:2 › composed closest reads optional method once and retains receiver without reading own call (199ms)
+  ✓  15 [chromium] › tests/browser/platform.spec.ts:26:2 › composed traversal crosses slots, text nodes, shadow roots and iframe realms (251ms)
+  ✘  20 [chromium] › tests/browser/platform.spec.ts:115:2 › composed closest preserves real selectors, null results and cross-realm identity (265ms)
+
+
+  1) [chromium] › tests/browser/platform.spec.ts:95:2 › composed closest reads optional method once and retains receiver without reading own call
+
+    Error: evaluate: TypeError: module.composedClosest is not a function
+        at eval (eval at evaluate (:370:30), <anonymous>:17:28)
+        at Array.map (<anonymous>)
+        at eval (eval at evaluate (:370:30), <anonymous>:2:90)
+        at async <anonymous>:381:23
+        at eval (eval at evaluate (:370:30), <anonymous>:17:28)
+        at eval (eval at evaluate (:370:30), <anonymous>:2:90)
+        at async <anonymous>:381:23
+        at <anonymous> (<sdk-checkout>/tests/browser/platform.spec.ts:97:30)
+
+    Error Context: test-results/platform-composed-closest--4b2e6-er-without-reading-own-call-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/platform-composed-closest--4b2e6-er-without-reading-own-call-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/platform-composed-closest--4b2e6-er-without-reading-own-call-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › tests/browser/platform.spec.ts:115:2 › composed closest preserves real selectors, null results and cross-realm identity
+
+    Error: evaluate: TypeError: module.composedClosest is not a function
+        at eval (eval at evaluate (:370:30), <anonymous>:17:24)
+        at Array.map (<anonymous>)
+        at eval (eval at evaluate (:370:30), <anonymous>:16:25)
+        at async <anonymous>:381:23
+        at eval (eval at evaluate (:370:30), <anonymous>:17:24)
+        at eval (eval at evaluate (:370:30), <anonymous>:16:25)
+        at async <anonymous>:381:23
+        at <anonymous> (<sdk-checkout>/tests/browser/platform.spec.ts:117:27)
+
+    Error Context: test-results/platform-composed-closest--897e2-ts-and-cross-realm-identity-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/platform-composed-closest--897e2-ts-and-cross-realm-identity-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/platform-composed-closest--897e2-ts-and-cross-realm-identity-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium] › tests/browser/platform.spec.ts:95:2 › composed closest reads optional method once and retains receiver without reading own call
+    [chromium] › tests/browser/platform.spec.ts:115:2 › composed closest preserves real selectors, null results and cross-realm identity
+  22 passed (2.5s)

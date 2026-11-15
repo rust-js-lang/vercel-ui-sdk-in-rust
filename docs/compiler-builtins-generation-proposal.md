@@ -91,7 +91,7 @@ The lead approved this public boundary before implementation:
 - Generate `get_time_zones() -> Option<Vec<String>>` with `none_undefined`.
 - Generate WeekInfo from the actual declared `firstDay` and `weekend` fields. Do not invent `minimalDays` from a documentation comment or add the absent legacy `weekInfo` property.
 
-The computed-symbol and generic-default reader fixes (#1912/#1916) pass the complete compiler gate together on d2e47ad in 8m27s, including all ten new owner mutants. They are queued for upstream landing; no generator or SDK API is claimed complete. Exact evidence is in [the validation record](evidence/1912-1916-validation.json).
+The computed-symbol and generic-default reader fixes (#1912/#1916) pass the complete compiler gate together on d2e47ad in 8m27s, including all ten new owner mutants. They are published and adopted in e0f07bc; duplicate inactive reviews are retired. No generator or SDK API is claimed complete. Exact evidence is in [the validation record](evidence/1912-1916-validation.json).
 
 [Temporal bindings, #1918](https://github.com/rust-js-lang/rust-js/issues/1918) track all currently unbound Temporal alternatives, including all six inputs in Intl.FormattableTemporalObject. The engine/library migration must report every missing alternative with its linked open issue and fail on an unbound alternative without one. An explicit gap is not covered conformance. Bind Temporal as a full vertical after Intl under #1904; do not narrow the input union or silently skip cases.
 

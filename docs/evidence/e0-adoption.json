@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-15",
+  "upstream": "e0f07bcf58165b127b7399d6486eca98eb4e90dc",
+  "activeSeries": [],
+  "compilerBuildIdentity": "99f613233edef5e7",
+  "identityProof": "Actual build.rs run independently against clean shared source and private source; both match published binary. Private differences are checked loop/docs files only, outside compiler identity inputs.",
+  "binarySha256": "e948a886dd0ca6895abbda3c0657a89cf13c5185e562ad30cd54903a73d273ba",
+  "generatedSdkDiff": "No generated SDK file changes from published 9b14a06 checkpoint.",
+  "native": {
+    "passed": 21,
+    "failed": 0
+  },
+  "compiled": {
+    "passed": 20,
+    "failed": 0,
+    "files": 10
+  },
+  "clippy": {
+    "exitCode": 0,
+    "warningsDenied": true
+  },
+  "reference": {
+    "passed": 72,
+    "failed": 9,
+    "tests": 81,
+    "files": 19,
+    "assertions": 317313,
+    "seconds": 3.79
+  },
+  "chromium": {
+    "passed": 22,
+    "failed": 2,
+    "tests": 24,
+    "seconds": 2.5
+  },
+  "knownFailures": "Existing incomplete createDetails/closest contracts, source fidelity and numeric getter/native case gaps remain visible. No milestone or deployment completion claim."
+}

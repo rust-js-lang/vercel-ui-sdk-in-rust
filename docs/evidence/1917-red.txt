@@ -1,0 +1,24 @@
+bun test v1.4.4 (38afee6c8)
+
+test/check-startup.test.ts:
+14 |   const commands = {
+15 |     prune: [process.execPath, "-e", 'await Bun.write("pruned", "done");'],
+16 |     build: [process.execPath, "-e", 'while (!(await Bun.file("pruned").exists())) await Bun.sleep(5); await Bun.sleep('+tail+'); await Bun.write("built", "done");'],
+17 |   };
+18 |   const pending = startup(dir, commands);
+19 |   expect(existsSync(join(dir, "built"))).toBe(false);
+                                              ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at <anonymous> (<sdk-checkout>/rust-js/test/check-startup.test.ts:19:42)
+(fail) startup observes a fast prune while the compiler is still building [465.28ms]
+(pass) startup retains the build failure and waits for both children [41.12ms]
+(pass) startup retains the prune failure and waits for both children [39.64ms]
+
+ 2 pass
+ 1 fail
+ 9 expect() calls
+Ran 3 tests across 1 file. [1091.00ms]

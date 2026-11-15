@@ -1,0 +1,76 @@
+{
+  "date": "2026-11-15",
+  "issue": 1917,
+  "shipped": false,
+  "activeSeries": [],
+  "base": "e0f07bcf58165b127b7399d6486eca98eb4e90dc",
+  "reviewCommit": "157661a07d631b6df86e2267125270b1d0f85b61",
+  "patch": "patches/rust-js/1917-startup-observation.review.patch",
+  "patchSha256": "21f4553850051d49715b9e707266922cf096963bb23cedc6c5d8fd5eed3c22ff",
+  "fullCompilerGate": {
+    "exitCode": 0,
+    "seconds": 323,
+    "sourceBase": "6963014b8ca16997ff174e42a676e7065cdddf7e",
+    "otherFiles": 322,
+    "browserFiles": 9,
+    "newOwnerMutantsCaught": 4,
+    "log": "docs/evidence/1917-full-check.txt",
+    "warmBuildMilliseconds": 439,
+    "keptCompileMB": 58,
+    "pruningSeconds": 7.6,
+    "notIsolatedSpeedup": true
+  },
+  "rebase": {
+    "target": "e0f07bcf58165b127b7399d6486eca98eb4e90dc",
+    "sourceTestsCatalogUnchanged": true,
+    "onlyConflict": "Both documentation ledger rows retained.",
+    "parserStartup": {
+      "passed": 17,
+      "assertions": 64,
+      "files": 4
+    },
+    "semantic": {
+      "passed": 5,
+      "assertions": 25,
+      "files": 2
+    },
+    "ciArchitectureCatalog": {
+      "passed": 142,
+      "assertions": 47409,
+      "files": 3
+    },
+    "typecheckExitCode": 0,
+    "newOwnerMutantsRecaught": 4,
+    "wholeGateRepeated": false
+  },
+  "mutants": [
+    {
+      "name": "check-startup-build-blocks-parent",
+      "sha256": "15eed8f37a602a252b88d5f40408a67124778689ed04f843608998bf31c34166",
+      "failures": [
+        "(fail) startup observes a fast prune while the compiler is still building [412.78ms]"
+      ]
+    },
+    {
+      "name": "check-startup-prune-timed-as-build",
+      "sha256": "bb4977e43bd6d6fa523e4a3aba272678ce870edb6d6817faed9fc2d1b5af8ff0",
+      "failures": [
+        "(fail) startup observes a fast prune while the compiler is still building [412.22ms]"
+      ]
+    },
+    {
+      "name": "check-startup-build-not-awaited",
+      "sha256": "47c3a6b5c7549ec2107cb3e28f11f24e1b34f05d7121892ea8fac762d0a5df74",
+      "failures": [
+        "(fail) startup observes a fast prune while the compiler is still building [12.64ms]"
+      ]
+    },
+    {
+      "name": "check-startup-prune-failure-hidden",
+      "sha256": "1ad8fbc09b6ee407e98078dee90243044e76cb802e1e1be3a43853550a12ba47",
+      "failures": [
+        "(fail) startup retains the prune failure and waits for both children [36.95ms]"
+      ]
+    }
+  ]
+}

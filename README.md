@@ -26,7 +26,7 @@ cargo fmt --package ui-sdk-core-in-rust -- --check
 bun run check:upstream
 ```
 
-The compiler is pinned to published 9b14a06, including #1833, #1909, #1845, #1846 and #1899. The active compiler patch series is empty; the duplicate #1899 patch is retired. The SDK now preserves required ISO-date/RTL inputs, the required scrub point key even when undefined, and union membership without reading the bound getter.
+The compiler is pinned to published e0f07bc, including #1912, #1916, #1833, #1909, #1845, #1846 and #1899. The active compiler patch series is empty; the duplicate #1899 patch is retired. The SDK now preserves required ISO-date/RTL inputs, the required scrub point key even when undefined, and union membership without reading the bound getter.
 
 Native Rust tests pass. The reference/type/source suite keeps the remaining failures visible, including missing createDetails/closest APIs and the newly isolated getter wrong answer #1908. The current reference suite reports 72 passes and nine failures. The complete current Chromium rerun reports22 passes and two known closest failures. Exact counts and scopes are in [the validation record](docs/validation.md).
 

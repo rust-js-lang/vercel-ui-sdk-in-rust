@@ -2,6 +2,16 @@
 
 2026-11-15. Milestone one remains open: complete core, Web Components, Rust docs/live examples, and an actual verified GitHub Pages deployment are required.
 
+## Current published compiler adoption (e0f07bc)
+
+The SDK now pins published e0f07bc, including the computed-symbol and generic-default readers (#1912/#1916); their duplicate inactive review patches are retired. The active patch series remains empty. The compiler build identity owner reports 99f613233edef5e7 in both source checkouts, matching the copied published binary. Regeneration changes no SDK generated file.
+
+Actual checks: native21 pass, compiled20 pass in10 files, strict Clippy passes, complete reference/type/source72 pass/9 fail (81 tests,317,313 assertions), Chromium22 pass/2 known closest failures. No remaining regression is waived. See [current adoption evidence](evidence/e0-adoption.json).
+
+The independent startup timing fix #1917 passes the complete compiler gate in323seconds before rebase (322 other files,9 browser files). On e0f07bc, its implementation/tests/catalog are unchanged; incoming-scope checks and four owner mutants pass. The inactive review awaits upstream landing. Warm build/cache differs from earlier cold runs; no isolated speed-up is claimed. See [exact startup proof](evidence/1917-validation.json).
+
+The newly verified const-parameter reader gap #1919 is assigned for the next reader fix. The original strict tuple consumer passes and its round trip fails. No app workaround is added.
+
 ## Published scope-guard adoption (9b14a06)
 
 The SDK now pins published 9b14a06, including #1833 and #1909, with an empty active patch series. The duplicate scope review and output preview are retired. The actual compiler build-identity owner computes 563a29b90e11bca6 in both clean checkouts, matching the copied published binary; no compiler build or shared writes were needed. The three changed generated files were inspected in full diff: scope restoration now uses a finally with required abort guards, and Rust case conversion now uses Rust’s Unicode helpers.
@@ -10,9 +20,9 @@ Native SDK tests pass21, compiled Rust passes20 across10 files, and strict Clipp
 
 The initial run hit stale copied local runtime exports. The documented root bun install --frozen-lockfile --force refresh resolves that setup mismatch; the counts above are from the refreshed run. The complete Chromium rerun now reports22 passes and the two known closest failures across24 cases (2.1seconds); see the current browser log. The lower fixed-base counts retain their historical scope. See [adoption evidence](evidence/9b-adoption.json) and [full comparison log](evidence/9b-reference.txt).
 
-## Independent computed-symbol review (#1912)
+## Historical computed-symbol review (#1912)
 
-The declaration reader incorrectly quoted symbol keys; the fix uses the existing computed-name model and one model-owned inventory key formatter. Affected browser coverage now consumes that formatter, retaining its unchanged baseline and distinguishing literal bracketed string keys. The independent eight-file review applies directly to published9b14a06 without #1903. It passes three tests/14 assertions with both original beta and stable engines,19 tests/94 assertions in the combined review,89 static tests/46,614 assertions, typechecking and all14 affected owner mutants. The complete compiler gate now passes on d2e47ad plus the computed-symbol and generic-default reader fixes in 8m27s. All ten newly added mutants are caught. The combined review remains inactive pending upstream landing; see [whole-gate evidence](evidence/1912-1916-validation.json). See [exact evidence](evidence/1912-validation.json).
+The declaration reader incorrectly quoted symbol keys; the fix uses the existing computed-name model and one model-owned inventory key formatter. Affected browser coverage now consumes that formatter, retaining its unchanged baseline and distinguishing literal bracketed string keys. The independent eight-file review applies directly to published9b14a06 without #1903. It passes three tests/14 assertions with both original beta and stable engines,19 tests/94 assertions in the combined review,89 static tests/46,614 assertions, typechecking and all14 affected owner mutants. The complete compiler gate now passes on d2e47ad plus the computed-symbol and generic-default reader fixes in 8m27s. All ten newly added mutants are caught. The combined review was subsequently published and adopted in e0f07bc; duplicate patches are retired. See [whole-gate evidence](evidence/1912-1916-validation.json). See [exact evidence](evidence/1912-validation.json).
 
 ## Historical published-contract checkpoint (4c07105)
 

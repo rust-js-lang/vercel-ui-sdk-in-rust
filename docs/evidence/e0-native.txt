@@ -1,0 +1,37 @@
+$ cargo test --locked --package ui-sdk-core-in-rust
+   Compiling rust-js-builtins v0.0.2 (<sdk-checkout>/rust-js/builtins)
+   Compiling rust-js-webapi v0.0.3 (<sdk-checkout>/rust-js/webapi)
+   Compiling ui-sdk-core-in-rust v0.1.0-alpha.1 (<sdk-checkout>/crates/core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.44s
+     Running unittests src/lib.rs (target/debug/build/ui-sdk-core-in-rust/25c6ccddcb52cae3/out/ui_sdk_core_in_rust-25c6ccddcb52cae3)
+
+running 21 tests
+test foundation::date::plain_date::tests::gregorian_centuries_and_leap_days ... ok
+test foundation::date::plain_date::tests::day_number_origin_and_supported_endpoints ... ok
+test foundation::motion::physics::tests::default_sheet_spring_settles_without_overshoot ... ok
+test foundation::kernel::details::tests::cascades_inherit_and_restore_nested_sources ... ok
+test foundation::kernel::undo_stack::tests::mapping_callbacks_may_reenter_without_borrowing_conflicts ... ok
+test foundation::kernel::details::tests::input_tracking_is_lazy_and_programmatic_events_inherit_the_cause ... ok
+test foundation::kernel::undo_stack::tests::grouping_seal_and_branching_preserve_history ... ok
+test foundation::motion::projection::tests::projection_matches_geometric_deceleration ... ok
+test foundation::motion::projection::tests::nearest_ties_favor_the_first_candidate ... ok
+test foundation::motion::rubber_band::tests::release_slope_matches_the_derivative ... ok
+test foundation::motion::rubber_band::tests::travel_resists_and_approaches_the_dimension ... ok
+test foundation::motion::spring::tests::all_damping_regimes_preserve_initial_conditions_and_approach_rest ... ok
+test foundation::motion::spring::tests::settling_requires_both_position_and_velocity ... ok
+test foundation::number::steps::tests::invalid_spans_return_the_lower_bound_including_its_zero_sign ... ok
+test foundation::number::steps::tests::non_finite_values_follow_remainder_semantics ... ok
+test foundation::number::steps::tests::nonpositive_or_nan_steps_leave_the_grid_maximum_unchanged ... ok
+test foundation::number::steps::tests::wraps_in_both_directions_and_excludes_the_upper_bound ... ok
+test foundation::platform::scrollbar::tests::rtl_gutter_and_bottom_rail_exclude_content_and_borders ... ok
+test foundation::platform::sides::tests::only_logical_sides_follow_direction ... ok
+test foundation::kernel::details::tests::unwinding_restores_the_outer_source ... ok
+test foundation::date::plain_date::tests::complete_gregorian_cycle_round_trips_every_day ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests ui_sdk_core_in_rust
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
