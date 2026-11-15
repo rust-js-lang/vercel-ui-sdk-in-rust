@@ -28,7 +28,7 @@ bun run check:upstream
 
 The compiler is pinned to published 9b14a06, including #1833, #1909, #1845, #1846 and #1899. The active compiler patch series is empty; the duplicate #1899 patch is retired. The SDK now preserves required ISO-date/RTL inputs, the required scrub point key even when undefined, and union membership without reading the bound getter.
 
-Native Rust tests pass. The reference/type/source suite keeps the remaining failures visible, including missing createDetails/closest APIs and the newly isolated getter wrong answer #1908. The current reference suite reports 72 passes and nine failures. A complete Chromium rerun awaits the shared-machine test window; the earlier 22/2 result is historical. Exact counts and scopes are in [the validation record](docs/validation.md).
+Native Rust tests pass. The reference/type/source suite keeps the remaining failures visible, including missing createDetails/closest APIs and the newly isolated getter wrong answer #1908. The current reference suite reports 72 passes and nine failures. The complete current Chromium rerun reports22 passes and two known closest failures. Exact counts and scopes are in [the validation record](docs/validation.md).
 
 The scope-guard fix and its callback prerequisite are now upstream and adopted; duplicate review/preview patches are retired. Required stack-overflow guards remain in the generated finally. The upgrade also exposes the native string-case boundary #1914; its Unicode regression remains red until genuine host-native bindings exist. The [builtin-generation proposal](docs/compiler-builtins-generation-proposal.md) is approved; implementation follows the correctness fixes and the stable-parser compatibility check.
 

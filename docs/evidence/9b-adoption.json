@@ -29,8 +29,12 @@
     "seconds": 2.66
   },
   "chromium": {
-    "rerun": false,
-    "reason": "Complete run awaits a short window in the compiler coordinator’s active heavy-machine reservation. Historical22/2 result is not relabelled as this pin’s run."
+    "rerun": true,
+    "passed": 22,
+    "failed": 2,
+    "tests": 24,
+    "seconds": 2.1,
+    "failures": "Both known unfinished composedClosest cases"
   },
   "generatedFilesReviewed": [
     "foundation/kernel/details.js",

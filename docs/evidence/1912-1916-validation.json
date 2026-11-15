@@ -1,0 +1,106 @@
+{
+  "date": "2026-11-15",
+  "issues": [
+    1912,
+    1916
+  ],
+  "shipped": false,
+  "activeSeries": [],
+  "sourceBase": "d2e47ad9f055ca3b6e80240ad3ea6a7810dc90ad",
+  "reviewCommit": "6963014b8ca16997ff174e42a676e7065cdddf7e",
+  "patch": "patches/rust-js/1912-1916-declaration-readers.review.patch",
+  "patchSha256": "9221e028f20e6953c3395915ca6118df56a67494c4ce9e6c7eda934811c7603c",
+  "preflight": {
+    "passed": 33,
+    "failed": 0,
+    "assertions": 43210,
+    "files": 4,
+    "log": "docs/evidence/1912-1916-preflight.txt"
+  },
+  "fullCompilerGate": {
+    "executed": true,
+    "command": "bun run check:fast --all",
+    "exitCode": 0,
+    "seconds": 507,
+    "sourceBase": "d2e47ad9f055ca3b6e80240ad3ea6a7810dc90ad",
+    "reviewCommit": "6963014b8ca16997ff174e42a676e7065cdddf7e",
+    "engine": "7.1.0-beta",
+    "otherTestFiles": 321,
+    "browserTestFiles": 9,
+    "newOwnerMutantsCaught": 10,
+    "log": "docs/evidence/1912-1916-full-check.txt",
+    "limitations": "Cold build 34 s; compile cache from another build discarded; no ancestor test map, so std-iterator corpus ran whole. Not an isolated performance comparison. Pruning timing is overstated by #1917, now filed. This gate does not include the separate #1903 engine/library migration."
+  },
+  "mutants": [
+    {
+      "name": "typescript-computed-key-read-as-string",
+      "sha256": "5479642c7dc1ad8a12b784d6f8f625c7010a9da1943cc1fc6f325b69df1a7b0f",
+      "failures": [
+        "(fail) computed symbol members keep their declaration keys through the model [119.24ms]"
+      ]
+    },
+    {
+      "name": "typescript-computed-key-printed-as-string",
+      "sha256": "b6a312a4df08cce3b467b58d121b306fd46042ef4ce5ed8d21a2173e89e4556c",
+      "failures": [
+        "(fail) computed symbol members keep their declaration keys through the model [30.37ms]"
+      ]
+    },
+    {
+      "name": "typescript-computed-key-loses-owner",
+      "sha256": "b423f5c737bf64f4608ee8f9e616eacbe5aa8ba35674df0c11ae91be65858eda",
+      "failures": [
+        "(fail) computed symbol members keep their declaration keys through the model [155.24ms]"
+      ]
+    },
+    {
+      "name": "typescript-computed-key-unchecked-expression",
+      "sha256": "642f47eaa02069525c00e55a21a12fd11aa40077f265964a0622efe33580b355",
+      "failures": [
+        "(fail) computed member expressions outside symbol paths are refused explicitly [271.18ms]"
+      ]
+    },
+    {
+      "name": "typescript-computed-key-optional-path-narrowed",
+      "sha256": "793afa33e4a65cf709b5d31df115503b6786eb3b404d60db47e0fff53ffc9d44",
+      "failures": [
+        "(fail) computed member expressions outside symbol paths are refused explicitly [600.91ms]"
+      ]
+    },
+    {
+      "name": "typescript-inventory-literal-collides-with-symbol",
+      "sha256": "74662c333548e7263fde8a620a4fd7f4014aa719e101f51f0fa9da26dc5dbaea",
+      "failures": [
+        "(fail) computed symbol declarations remain usable by strict TypeScript consumers [38.75ms]"
+      ]
+    },
+    {
+      "name": "webapi-symbol-key-unformatted",
+      "sha256": "35cc4f08ebe66b5748dff5cb3715745d06a86421a7157feb161d163e29507778",
+      "failures": [
+        "(fail) the webapi crate binds what it bound of TypeScript's DOM [1234.34ms]"
+      ]
+    },
+    {
+      "name": "typescript-parameter-default-unread",
+      "sha256": "60e1250f6d52b4de3ab81efad3ed6d85a12249afc0447460130b3b2b7690b49e",
+      "failures": [
+        "(fail) reading generic defaults preserves them in every parameter-bearing declaration [172.61ms]"
+      ]
+    },
+    {
+      "name": "typescript-parameter-default-is-constraint",
+      "sha256": "9d402f958f19b0fd3d45fb56504568cce62b5494c4294e1ddfa5ead8ba4c3793",
+      "failures": [
+        "(fail) reading generic defaults preserves them in every parameter-bearing declaration [95.67ms]"
+      ]
+    },
+    {
+      "name": "typescript-parameter-constraint-unread",
+      "sha256": "934985667e8ccbab8d18644fa5742aea626201c3a5434c73092cc8aa3fbb7a61",
+      "failures": [
+        "(fail) reading generic defaults preserves them in every parameter-bearing declaration [94.45ms]"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+bun test v1.4.4 (38afee6c8)
+
+test/typescript-defaults.test.ts:
+13 |   writeFileSync(input, declarations);
+14 |   const session = await open([input]);
+15 |   try {
+16 |     const model = await session.read(input);
+17 |     const [box, list, pick, factory] = model.declarations;
+18 |     expect(box).toMatchObject({typeParameters:[{name:"T",default:{kind:"keyword",keyword:"string"}}]});
+                     ^
+error: expect(received).toMatchObject(expected)
+
+  {
++   "declare": false,
++   "exported": true,
++   "extends": [],
++   "kind": "interface",
++   "members": [
++     {
++       "kind": "property",
++       "name": "value",
++       "optional": false,
++       "readonly": false,
++       "type": {
++         "args": [],
++         "kind": "reference",
++         "name": "T",
++       },
++     },
++     {
++       "kind": "method",
++       "name": "map",
++       "optional": false,
++       "params": [
++         {
++           "name": "value",
++           "optional": false,
++           "rest": false,
++           "type": {
++             "args": [],
++             "kind": "reference",
++             "name": "U",
++           },
++         },
++       ],
++       "returns": {
++         "args": [],
++         "kind": "reference",
++         "name": "U",
++       },
++       "typeParameters": [
++         {
++           "constraint": {
++             "args": [],
++             "kind": "reference",
++             "name": "T",
++           },
++           "name": "U",
++         },
++       ],
++     },
++   ],
++   "name": "Box",
+    "typeParameters": [
+      {
+-       "default": {
+-         "keyword": "string",
+-         "kind": "keyword",
+-       },
+        "name": "T",
+      },
+    ],
+  }
+
+- Expected  - 4
++ Received  + 50
+
+      at <anonymous> (<sdk-checkout>/rust-js/test/typescript-defaults.test.ts:18:17)
+(fail) reading generic defaults preserves them in every parameter-bearing declaration [161.36ms]
+40 |       const consumer=module+"-consumer.ts";
+41 |       writeFileSync(join(dir,consumer),'import {pick,type Box,type List,type Factory} from "./'+module+'.js";\ndeclare const box: Box;\nconst value: string = box.value;\nconst selected: string = box.map("x");\nconst list: List = [1,2];\nconst text: string = pick();\ndeclare const factory: Factory;\nconst made: Box<object> = new factory();\n');
+42 |       const config=join(dir,module+".json");
+43 |       writeFileSync(config,JSON.stringify({compilerOptions:{strict:true,noEmit:true,types:[],lib:["es2022"],module:"esnext",moduleResolution:"bundler"},files:[consumer]}));
+44 |       const result=runSync([process.execPath,join(root,"node_modules/typescript/bin/tsc"),"-p",config],dir,10_000);
+45 |       expect(result.code,result.stdout+result.stderr).toBe(0);
+                                                           ^
+error: output-consumer.ts(2,20): error TS2314: Generic type 'Box<T>' requires 1 type argument(s).
+output-consumer.ts(5,13): error TS2314: Generic type 'List' requires 1 type argument(s).
+
+
+Expected: 0
+Received: 2
+
+      at <anonymous> (<sdk-checkout>/rust-js/test/typescript-defaults.test.ts:45:55)
+(fail) original and printed defaults accept strict callers that omit type arguments [145.03ms]
+
+ 0 pass
+ 2 fail
+ 3 expect() calls
+Ran 2 tests across 1 file. [378.00ms]

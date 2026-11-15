@@ -142,10 +142,21 @@
     }
   ],
   "fullCompilerGate": {
-    "executed": false,
-    "reason": "Compiler-machine heavy build reservation; review has not been activated or landed."
+    "executed": true,
+    "command": "bun run check:fast --all",
+    "exitCode": 0,
+    "seconds": 507,
+    "sourceBase": "d2e47ad9f055ca3b6e80240ad3ea6a7810dc90ad",
+    "reviewCommit": "6963014b8ca16997ff174e42a676e7065cdddf7e",
+    "engine": "7.1.0-beta",
+    "otherTestFiles": 321,
+    "browserTestFiles": 9,
+    "newOwnerMutantsCaught": 10,
+    "log": "docs/evidence/1912-1916-full-check.txt",
+    "limitations": "Cold build 34 s; compile cache from another build discarded; no ancestor test map, so std-iterator corpus ran whole. Not an isolated performance comparison. Pruning timing is overstated by #1917, now filed. This gate does not include the separate #1903 engine/library migration."
   },
   "dependency": "No dependency on the separate library-selection review. The eight-file patch applies directly to published main. Broader generation and SDK milestone remain incomplete.",
   "firstStaticFailure": "Duplicate source-owner mutation list corrected by merging entries into the existing TypeScript catalog; no test weakened.",
-  "firstConsumerFailure": "WebAPI reader still assumed string keys; migrated to model-owned memberKey, restoring unchanged existing coverage. No baseline members removed."
+  "firstConsumerFailure": "WebAPI reader still assumed string keys; migrated to model-owned memberKey, restoring unchanged existing coverage. No baseline members removed.",
+  "latestCombinedReview": "docs/evidence/1912-1916-validation.json"
 }

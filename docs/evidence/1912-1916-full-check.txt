@@ -1,0 +1,65 @@
+$ bun scripts/taskTime.ts run full-gate -- bun run check:fast --all
+$ bun scripts/checkFast.ts --all
+cargo build 34 s (usual 500 ms)  ⚠ slower than usual: why?
+pruning what tests keep 34 s (usual 5.7 s)  ⚠ slower than usual: why?
+pruning kept compiles 4.9 s (usual 3.4 s): 0 MB kept, another build's dropped
+node bindings build 3.4 s (usual 3.1 s)
+no test map of HEAD or an ancestor of it on this machine: `bun run test-map` records one: the corpus with std's iterator structs runs whole
+test/child.test.ts: warning: child observed 412 ms past its 1000 ms deadline (/Users/tunguyen/.bun/bin/bun -e): a blocked parent or a slow child
+ok   check:fast cargo test 36 s (usual 25 s)  ⚠ slower than usual: why?
+ok   check:fast mutations the change adds 1 min 1 s (usual 1 min 52 s)
+ok   check:fast corpus 3/14 2 min 10 s (usual 54 s)  ⚠ slower than usual: why?
+ok   check:fast corpus 5/14 2 min 14 s (usual 56 s)  ⚠ slower than usual: why?
+ok   check:fast corpus 13/14 2 min 14 s (usual 59 s)  ⚠ slower than usual: why?
+ok   check:fast corpus 12/14 2 min 10 s (usual 56 s)  ⚠ slower than usual: why?
+ok   check:fast corpus 9/14 2 min 8 s (usual 1 min 17 s)  ⚠ slower than usual: why?
+ok   check:fast corpus 2/14 2 min 13 s (usual 59 s)  ⚠ slower than usual: why?
+ok   check:fast clippy 15 s (usual 27 s)
+ok   check:fast the bounds matrix 5/14 15 s
+ok   check:fast the bounds matrix 9/14 16 s
+ok   check:fast the bounds matrix 1/14 16 s
+ok   check:fast corpus 7/14 1 min 54 s (usual 56 s)  ⚠ slower than usual: why?
+ok   check:fast corpus 6/14 1 min 56 s (usual 50 s)  ⚠ slower than usual: why?
+ok   check:fast corpus 10/14 1 min 58 s (usual 1 min 1 s)  ⚠ slower than usual: why?
+ok   check:fast the bounds matrix 6/14 17 s
+ok   check:fast the bounds matrix 11/14 15 s
+ok   check:fast the `&mut` matrix's sample 10 s (usual 8.3 s)
+ok   check:fast the metamorphic sample 11/14 17 s (usual 13 s)
+ok   check:fast the bounds matrix 3/14 14 s
+ok   check:fast the bounds matrix 7/14 16 s
+ok   check:fast the bounds matrix 10/14 15 s
+ok   check:fast the bounds matrix 2/14 15 s
+ok   check:fast the bounds matrix 4/14 15 s
+ok   check:fast the bounds matrix 12/14 13 s
+ok   check:fast the bounds matrix 8/14 18 s
+ok   check:fast the bounds matrix 13/14 13 s
+ok   check:fast corpus 8/14 1 min 56 s (usual 57 s)  ⚠ slower than usual: why?
+ok   check:fast corpus 1/14 1 min 58 s (usual 57 s)  ⚠ slower than usual: why?
+ok   check:fast corpus 14/14 1 min 49 s (usual 50 s)  ⚠ slower than usual: why?
+ok   check:fast the metamorphic sample 13/14 30 s (usual 30 s)
+ok   check:fast corpus 4/14 1 min 48 s (usual 57 s)  ⚠ slower than usual: why?
+ok   check:fast corpus 11/14 1 min 49 s (usual 54 s)  ⚠ slower than usual: why?
+ok   check:fast the metamorphic sample 6/14 15 s (usual 16 s)
+ok   check:fast the metamorphic sample 9/14 46 s (usual 46 s)
+ok   check:fast the bounds matrix 14/14 12 s
+ok   check:fast the object model's sample 1 min 2 s (usual 1 min 3 s)
+ok   check:fast the Vite example's build 7.6 s (usual 9.6 s)
+ok   check:fast the metamorphic sample 10/14 14 s (usual 13 s)
+ok   check:fast the metamorphic sample 1/14 33 s (usual 36 s)
+ok   check:fast fmt 8.8 s (usual 9.6 s)
+ok   check:fast the metamorphic sample 12/14 17 s (usual 18 s)
+ok   check:fast the metamorphic sample 14/14 13 s (usual 14 s)
+ok   check:fast the metamorphic sample 2/14 26 s (usual 26 s)
+ok   check:fast the metamorphic sample 4/14 12 s (usual 12 s)
+ok   check:fast the metamorphic sample 3/14 29 s (usual 30 s)
+ok   check:fast the metamorphic sample 7/14 12 s (usual 13 s)
+ok   check:fast the `None` matrix's sample 3.9 s (usual 4.1 s)
+ok   check:fast the metamorphic sample 8/14 16 s (usual 16 s)
+ok   check:fast the metamorphic sample 5/14 16 s (usual 16 s)
+ok   check:fast the browsers' test files 5 min 56 s (usual 4 min 47 s) (9 files)
+ok   check:fast typecheck 818 ms (usual 600 ms)
+ok   check:fast the crate corpus 1 min 47 s (usual 1 min 43 s)
+ok   check:fast every other test file 7 min 43 s (usual 5 min 41 s)  ⚠ slower than usual: why? (321 files)
+the cores 85% busy on average, under half busy 17% of the time
+
+all passed: check:fast --all 8 min 27 s (usual 6 min 38 s)  ⚠ slower than usual: why?
