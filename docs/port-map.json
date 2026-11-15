@@ -302,10 +302,8 @@
         "setPlatform",
         "supportsTopLayer"
       ],
-      "remaining": "composedClosest awaits generic native DOM overload design and IsA constraint declaration fix1866; nonempty-split and full generated-source audits remain.",
-      "issues": [
-        "https://github.com/rust-js-lang/rust-js/issues/1866"
-      ],
+      "remaining": "composedClosest awaits a faithful generic native DOM result binding; published IsA constraint fix1866 is adopted. Concrete checked downcast adds instanceof and rejects cross-realm elements, so it does not preserve this generic contract. Nonempty-split and full generated-source audits remain.",
+      "issues": [],
       "evidence": [
         "tests/platform.test.ts",
         "tests/browser/platform.spec.ts",
@@ -318,7 +316,8 @@
       "resolvedIssues": [
         "https://github.com/rust-js-lang/rust-js/issues/1859",
         "https://github.com/rust-js-lang/rust-js/issues/1862",
-        "https://github.com/rust-js-lang/rust-js/issues/1863"
+        "https://github.com/rust-js-lang/rust-js/issues/1863",
+        "https://github.com/rust-js-lang/rust-js/issues/1866"
       ]
     }
   ]

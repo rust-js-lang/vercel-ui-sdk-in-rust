@@ -1,8 +1,8 @@
 diff --git a/TESTS.md b/TESTS.md
-index df2a3f8..d8cd323 100644
+index 66168cc..106e529 100644
 --- a/TESTS.md
 +++ b/TESTS.md
-@@ -31,6 +31,8 @@ workspace/load/control/cleanup tests and five self-mutants through the
+@@ -37,6 +37,8 @@ workspace/load/control/cleanup tests and five self-mutants through the
  existing runner. Feature-owner registrations are reviewed separately.
  Added focused #1861 coverage on 2026-11-15: a seventh source-workspace case checks a partial worker-copy failure; three child cases retain in-budget exits under a blocked loop, observed-overrun warnings and external-signal provenance; a timing case checks that a passing check job still shows the warning with its name. Local whole-gate comparison on ef8807570: 6,915 existing test-name/status multisets unchanged, five new passing names, none removed; nine of nine harness mutants caught. Recorded lines: 6,469 pass/616 skip before, 6,474 pass/616 skip after (repeated names included). Local --all samples, not a nightly/CI recount.
  
@@ -11,14 +11,38 @@ index df2a3f8..d8cd323 100644
  Historical suite totals below are not a recount.
  
  Added on 2026-11-15: `test/intl-arguments.test.ts` checks native Intl calls
+diff --git a/docs/architecture.md b/docs/architecture.md
+index 22cf736..b6a91a7 100644
+--- a/docs/architecture.md
++++ b/docs/architecture.md
+@@ -265,6 +265,10 @@ and `scripts/tidy-fired.ts`, over the corpus, which passes changed a body;
+ `--label-census <file>` (`mir/census.rs`) and `scripts/label-census.ts`,
+ each compiler-made label a body keeps, by the MIR shape that left it
+ ([ADR 0659](decisions/0659-tidy-is-a-list-of-stages-with-contracts.md)).
++`mir/tidy/stability.rs` owns whether reading an expression across a call
++keeps its value and effects: `plain_field`, `read_past_calls`, and the
++recursive fresh-literal predicate. Movement and binding passes consume those
++answers rather than repeating the stability rule.
+ `mir/tidy/moves.rs` decides where a temporary's value may be read in its
+ place, and why, apart from the rewrite that moves it ([ADR 0689](decisions/0689-a-moves-decision-is-apart-from-the-move.md)).
+ Its `held_receivers` calls a field's function through its object where the
 diff --git a/docs/decisions/0364-mir-lowering.md b/docs/decisions/0364-mir-lowering.md
-index 8abfec7..8bc5ac1 100644
+index 8abfec7..844a49b 100644
 --- a/docs/decisions/0364-mir-lowering.md
 +++ b/docs/decisions/0364-mir-lowering.md
-@@ -1677,3 +1677,34 @@ leftover is written and the run dropped after. `coalesce_of_a_library_as_itertoo
+@@ -1677,3 +1677,43 @@ leftover is written and the run dropped after. `coalesce_of_a_library_as_itertoo
  holds itertools' `next` as it writes it, its dep of the edition its crate
  is, `//@ edition: 2018`, a directive the pairs read as the corpus's cases
  do. Mutations `cleanup-reads-uncounted` and `cleanup-temporaries-one-each`.
++
++
++## Amendment: one expression-stability module before extension (#1867)
++
++The parent tidy module reached its file-size boundary. Its existing plain-field,
++read-across-call and recursive literal-stability predicates move unchanged to
++mir/tidy/stability.rs, with their existing mutations. No rule or output changes
++in this preparatory split; callers consume the same answers through the parent
++module. The extension and its new proofs follow separately.
 +
 +
 +## Amendment: stable fresh literals before native argument reads (#1867)
@@ -51,12 +75,12 @@ index 8abfec7..8bc5ac1 100644
 +amendment records the implementation and proof requirements, not completed
 +whole-suite or mutation results.
 diff --git a/docs/guide/interop/bindings.md b/docs/guide/interop/bindings.md
-index 9c3d3e8..ef475de 100644
+index 6ee8564..293db13 100644
 --- a/docs/guide/interop/bindings.md
 +++ b/docs/guide/interop/bindings.md
-@@ -851,6 +851,14 @@ shape is `if js::truthy(a) { b } else { a }`, and `a || b` its other
- way round, `if js::truthy(a) { a } else { b }`
- ([ADR 0880](../../decisions/0880-a-test-of-truth-and-its-value-is-and.md)):
+@@ -931,6 +931,14 @@ export function nodeRequire(module, key) {
+ }
+ ```
  
 +Records and arrays borrowed directly in call arguments keep their stable
 +fields at the call site, including before a later native getter or logical
@@ -66,21 +90,271 @@ index 9c3d3e8..ef475de 100644
 +necessary evaluation points ([ADR 0364](../../decisions/0364-mir-lowering.md),
 +#1867).
 +
- ```rust
- use js::Unknown;
- 
+ `js::shown(value)` displays any value as JS's template shows it,
+ `` `${value}` ``: an object by its `toString`, a number as JS writes it,
+ `1e+21`. Its text is a string wherever it goes, alone too, padded, and by
 diff --git a/scripts/mutations/lower/mir/tidy.ts b/scripts/mutations/lower/mir/tidy.ts
-index 49d8538..617904f 100644
+index 49d8538..4b41333 100644
 --- a/scripts/mutations/lower/mir/tidy.ts
 +++ b/scripts/mutations/lower/mir/tidy.ts
-@@ -2,6 +2,22 @@
- import type { Mutation } from "../../../mutations";
- 
- export const mutations: Mutation[] = [
+@@ -28,15 +28,6 @@ export const mutations: Mutation[] = [
+       "a comment before a tail None",
+     ],
+   },
+-  {
+-    name: "mir-tidy-inlined-past-changed-reads",
+-    breaks:
+-      "a temporary that does something is written past reads of what it changes, `d.n + reset(d)`",
+-    file: "src/lower/mir/tidy.rs",
+-    find: "    let plain_root = matches!(&root.kind, ExprKind::Var(v) if plain.contains(v.as_str()) && !set.contains(v.as_str()));\n",
+-    replace: "    let plain_root = true;\n",
+-    tests: ["test/corpus.test.ts", "-t", "assignment_order"],
+-  },
+   {
+     name: "mir-tidy-falsy-temporary-kept",
+     breaks:
+@@ -55,20 +46,6 @@ export const mutations: Mutation[] = [
+     replace: "",
+     tests: ["test/bindings.test.ts", "-t", "skips what's falsy"],
+   },
+-  {
+-    name: "mir-tidy-constant-objects-block",
+-    breaks:
+-      "a call isn't read in place past an object of constants before it, `const _3 = unquoted(..)`",
+-    file: "src/lower/mir/tidy.rs",
+-    find: "read_past_calls(result, set, &plain)\n        }\n        _ => e.is_made_of_constants(),\n",
+-    replace:
+-      "read_past_calls(result, set, &plain)\n        }\n        _ => e.is_constant(),\n",
+-    tests: [
+-      "test/lowering-functions.test.ts",
+-      "-t",
+-      "past an object of constants",
+-    ],
+-  },
+   {
+     name: "shown-child-conditional",
+     breaks:
+@@ -100,91 +77,6 @@ export const mutations: Mutation[] = [
+       "negated matches, string methods",
+     ],
+   },
+-  {
+-    name: "plain-field-blocks-inline",
+-    breaks:
+-      "a prop MIR holds for a borrow stays a `const _14`, read past `meta.tag` of a plain value",
+-    file: "src/lower/mir/tidy.rs",
+-    find: "    let plain_root = matches!(&root.kind, ExprKind::Var(v) if plain.contains(v.as_str()) && !set.contains(v.as_str()));\n",
+-    replace: "    let plain_root = false;\n",
+-    tests: [
+-      "test/jsx-children.test.ts",
+-      "test/jsx-evaluation-order.test.ts",
+-      "test/jsx-events.test.ts",
+-      "test/jsx-props.test.ts",
+-      "test/jsx-react-dev.test.ts",
+-      "test/jsx-types.test.ts",
+-      "test/jsx.test.ts",
+-    ],
+-  },
+-  {
+-    name: "mir-tidy-import-blocks-inline",
+-    breaks:
+-      "a prop MIR holds for a borrow stays a `const _13`, read past an imported tag, `<Seo>`",
+-    file: "src/lower/mir/tidy.rs",
+-    find: "        ExprKind::Symbol(_) => true,\n        ExprKind::Arrow(..)",
+-    replace: "        ExprKind::Arrow(..)",
+-    tests: [
+-      "test/jsx-children.test.ts",
+-      "test/jsx-evaluation-order.test.ts",
+-      "test/jsx-events.test.ts",
+-      "test/jsx-props.test.ts",
+-      "test/jsx-react-dev.test.ts",
+-      "test/jsx-types.test.ts",
+-      "test/jsx.test.ts",
+-    ],
+-  },
+-  {
+-    name: "mir-tidy-sibling-element-blocks",
+-    breaks:
+-      "a prop MIR holds for a borrow stays a `const _16`, read past a sibling element, `<Search isOpen={show} />`",
+-    file: "src/lower/mir/tidy.rs",
+-    find: "        ExprKind::Jsx(_) => inert_element(e, set),\n",
+-    replace: "",
+-    tests: [
+-      "test/jsx-children.test.ts",
+-      "test/jsx-evaluation-order.test.ts",
+-      "test/jsx-events.test.ts",
+-      "test/jsx-props.test.ts",
+-      "test/jsx-react-dev.test.ts",
+-      "test/jsx-types.test.ts",
+-      "test/jsx.test.ts",
+-    ],
+-  },
+-  {
+-    name: "mir-tidy-closure-made-blocks",
+-    breaks:
+-      "a closure's making, `const value = () => ..`, blocks props held before it, `const value$3 = cn(..)`",
+-    file: "src/lower/mir/tidy.rs",
+-    find: "        ExprKind::Arrow(..) | ExprKind::AsyncArrow(..) => true,\n        ExprKind::Member(of, _) => {\n",
+-    replace: "        ExprKind::Member(of, _) => {\n",
+-    tests: [
+-      "test/jsx-children.test.ts",
+-      "test/jsx-evaluation-order.test.ts",
+-      "test/jsx-events.test.ts",
+-      "test/jsx-props.test.ts",
+-      "test/jsx-react-dev.test.ts",
+-      "test/jsx-types.test.ts",
+-      "test/jsx.test.ts",
+-    ],
+-  },
+-  {
+-    name: "mir-tidy-choice-blocks",
+-    breaks:
+-      'a conditional of parameters, `selected ? "page" : undefined`, blocks a prop held after it',
+-    file: "src/lower/mir/tidy.rs",
+-    find: "        ExprKind::Cond(a, b, c) => past(a) && past(b) && past(c),\n",
+-    replace: "",
+-    tests: [
+-      "test/jsx-children.test.ts",
+-      "test/jsx-evaluation-order.test.ts",
+-      "test/jsx-events.test.ts",
+-      "test/jsx-props.test.ts",
+-      "test/jsx-react-dev.test.ts",
+-      "test/jsx-types.test.ts",
+-      "test/jsx.test.ts",
+-    ],
+-  },
+   {
+     name: "mir-tidy-concise-handlers-kept",
+     breaks:
+@@ -202,29 +94,6 @@ export const mutations: Mutation[] = [
+       "test/jsx.test.ts",
+     ],
+   },
+-  {
+-    name: "inert-element-chosen-not",
+-    breaks:
+-      "a child chosen of elements, `open ? <b /> : <i />`, stops classes held for a later child being read in place",
+-    file: "src/lower/mir/tidy.rs",
+-    find: "        ExprKind::Cond(a, b, c) => [a, b, c].iter().all(|e| inert_element(e, changing)),\n",
+-    replace: "",
+-    tests: ["test/snapshots.test.ts", "-t", "^apis"],
+-    snapshots: true,
+-  },
+-  {
+-    name: "spread-items-not-read-past-calls",
+-    breaks:
+-      "`...first` of an array whose items nothing changes stops a later call's value being read in place",
+-    file: "src/lower/mir/tidy.rs",
+-    find: '            if !set.contains(v.as_str()) && plain.contains(&format!("...{v}"))),\n',
+-    replace: "            if !set.contains(v.as_str()) && false),\n",
+-    tests: [
+-      "test/lowering-collections.test.ts",
+-      "-t",
+-      "arrays joined are one array of their items",
+-    ],
+-  },
+   {
+     name: "jsx-child-truth-test-kept",
+     breaks:
+@@ -259,46 +128,6 @@ export const mutations: Mutation[] = [
+     replace: "",
+     tests: ["test/emission.test.ts", "-t", "source map points from fib.js"],
+   },
+-  {
+-    name: "mir-tidy-template-unread-past",
+-    breaks:
+-      "text made of what calls can't change, `${a} ${b}`, isn't read past a call, and what follows it stays a function called in place",
+-    file: "src/lower/mir/tidy.rs",
+-    find: "        ExprKind::Template(_, values, _) => values.iter().all(past),\n",
+-    replace: "",
+-    tests: ["test/corpus.test.ts", "-t", "^format_args_order.rs$"],
+-    snapshots: true,
+-  },
+-  {
+-    name: "mir-tidy-pure-call-unread-past",
+-    breaks:
+-      "a call of the runtime's that only reads, `$debugStr(s)`, isn't read past a call",
+-    file: "src/lower/mir/tidy.rs",
+-    find: "        ExprKind::Call(callee, args) if callee.helper_name().is_some_and(crate::runtime::is_pure) => {\n            args.iter().all(past)\n        }\n",
+-    replace: "",
+-    tests: ["test/corpus.test.ts", "-t", "^text_edits.rs$"],
+-    snapshots: true,
+-  },
+-  {
+-    name: "mir-tidy-item-unread-past",
+-    breaks:
+-      "an item of a plain value, `pair[0]`, isn't read past a call, as its field is, and what follows stays a function called in place",
+-    file: "src/lower/mir/tidy.rs",
+-    find: "        ExprKind::Index(_, index) => plain_root && past(index),\n",
+-    replace: "",
+-    tests: ["test/corpus.test.ts", "-t", "^const_generic_traits.rs$"],
+-    snapshots: true,
+-  },
+-  {
+-    name: "tidy-applied-call-not-past",
+-    breaks:
+-      "a function called at once on a held value is taken to read what a call may change, and the `Option` formatted after it stays a function called in place",
+-    file: "src/lower/mir/tidy.rs",
+-    find: "            past(given) && read_past_calls(result, set, &plain)\n",
+-    replace: "            false\n",
+-    tests: ["test/corpus.test.ts", "-t", "^iter_next_back.rs$"],
+-    snapshots: true,
+-  },
+   {
+     name: "member-read-in-place-unfolded",
+     breaks:
+@@ -433,24 +262,6 @@ export const mutations: Mutation[] = [
+     replace: "    let stopped = |_: &mut Vec<Stmt>| {};\n",
+     tests: ["test/tidy-stages.test.ts", "-t", "unwinding_drop_aborts_locals"],
+   },
+-  {
+-    name: "plain-iterator-spread-passes",
+-    breaks: "a spread of a plain value that's an iterator, a function's `inspect(see)`, is taken to do nothing, so `[...it, probe(9)]` runs `see` before `probe(9)` where Rust makes the chain's argument first (#1015)",
+-    file: "src/lower/mir/tidy.rs",
+-    find: "            if !set.contains(v.as_str()) && plain.contains(&format!(\"...{v}\"))),\n",
+-    replace: "            if !set.contains(v.as_str()) && (plain.contains(v.as_str()) || plain.contains(&format!(\"...{v}\")))),\n",
+-    tests: ["test/corpus.test.ts", "-t", "^inspect_by_a_function_before_a_chain_argument.rs$"],
+-  },
+-  {
+-    name: "plain-field-of-a-struct-beside-a-cell-not-read-past-calls",
+-    breaks:
+-      "a struct literal of a struct with a `Cell` beside its plain fields hoists each value after a call into a temporary, `const value$2 = shouldSet(t) ? ..; return { .., text: value$2 }`, as its plain field `instance.id` isn't taken as unchanged by the call (#1045)",
+-    file: "src/lower/mir/tidy.rs",
+-    find: "                || (plain_field(e, plain) && matches!(&root.kind, ExprKind::Var(v) if !set.contains(v.as_str())))\n",
+-    replace: "",
+-    tests: ["test/corpus.test.ts", "-t", "literal_of_a_struct_beside_a_cell"],
+-    snapshots: true,
+-  },
+   {
+     name: "contracts-forget-too",
+     breaks:
+@@ -468,12 +279,4 @@ export const mutations: Mutation[] = [
+     replace: "",
+     tests: ["test/tidy-stages.test.ts", "-t", "tidy-fired"],
+   },
+-  {
+-    name: "js-global-unknown-to-tidy",
+-    breaks: "a JS global lowering named, `Math` of `Math.max`, is taken to change past a call, so a read of it is held apart (#1674)",
+-    file: "src/lower/mir/tidy.rs",
+-    find: "                    && (of.facts.has(js::Known::BuiltIn) || of.facts.has(js::Known::Lasting))",
+-    replace: "                    && of.facts.has(js::Known::Lasting)",
+-    tests: ["test/effects.test.ts", "-t", "held past a JS global's read"],
+-  },
+ ];
+diff --git a/scripts/mutations/lower/mir/tidy/stability.ts b/scripts/mutations/lower/mir/tidy/stability.ts
+new file mode 100644
+index 0000000..054ec92
+--- /dev/null
++++ b/scripts/mutations/lower/mir/tidy/stability.ts
+@@ -0,0 +1,218 @@
++// Mutations of src/lower/mir/tidy/stability.rs: expression stability across calls.
++import type {Mutation} from "../../../../mutations";
++
++export const mutations: Mutation[] = [
 +  {
 +    name: "mir-tidy-stable-literal-arguments-kept",
 +    breaks: "stable fresh object and array arguments prevent later native getter expressions from remaining at the call site",
-+    file: "src/lower/mir/tidy.rs",
++    file: "src/lower/mir/tidy/stability.rs",
 +    find: "ExprKind::Jsx(_) | ExprKind::Object(..) | ExprKind::Array(_) => inert_element(e, set),",
 +    replace: "ExprKind::Jsx(_) => inert_element(e, set),",
 +    tests: ["test/lowering-native-aggregate-arguments.test.ts"],
@@ -88,16 +362,211 @@ index 49d8538..617904f 100644
 +  {
 +    name: "mir-tidy-literal-contents-unchecked",
 +    breaks: "a literal's getters, computed keys, spreads or closure-written contents are treated as stable",
-+    file: "src/lower/mir/tidy.rs",
++    file: "src/lower/mir/tidy/stability.rs",
 +    find: "ExprKind::Jsx(_) | ExprKind::Object(..) | ExprKind::Array(_) => inert_element(e, set),",
 +    replace: "ExprKind::Jsx(_) | ExprKind::Object(..) | ExprKind::Array(_) => true,",
-+    unitTests: "fresh_literals_require_stable_contents",
++    unitTests: "lower::mir::tidy::literal_movement_tests::fresh_literals_require_stable_contents",
 +  },
-   {
-     name: "comments-before-unprinted-return-dropped",
-     breaks:
++  {
++    name: "mir-tidy-inlined-past-changed-reads",
++    breaks:
++      "a temporary that does something is written past reads of what it changes, `d.n + reset(d)`",
++    file: "src/lower/mir/tidy/stability.rs",
++    find: "    let plain_root = matches!(&root.kind, ExprKind::Var(v) if plain.contains(v.as_str()) && !set.contains(v.as_str()));\n",
++    replace: "    let plain_root = true;\n",
++    tests: ["test/corpus.test.ts", "-t", "assignment_order"],
++  },
++  {
++    name: "mir-tidy-constant-objects-block",
++    breaks:
++      "a call isn't read in place past an object of constants before it, `const _3 = unquoted(..)`",
++    file: "src/lower/mir/tidy/stability.rs",
++    find: "        ExprKind::Jsx(_) | ExprKind::Object(..) | ExprKind::Array(_) => inert_element(e, set),\n",
++    replace:
++      "        ExprKind::Object(..) if e.is_made_of_constants() => false,\n        ExprKind::Jsx(_) | ExprKind::Object(..) | ExprKind::Array(_) => inert_element(e, set),\n",
++    tests: [
++      "test/lowering-functions.test.ts",
++      "-t",
++      "past an object of constants",
++    ],
++  },
++  {
++    name: "plain-field-blocks-inline",
++    breaks:
++      "a prop MIR holds for a borrow stays a `const _14`, read past `meta.tag` of a plain value",
++    file: "src/lower/mir/tidy/stability.rs",
++    find: "    let plain_root = matches!(&root.kind, ExprKind::Var(v) if plain.contains(v.as_str()) && !set.contains(v.as_str()));\n",
++    replace: "    let plain_root = false;\n",
++    tests: [
++      "test/jsx-children.test.ts",
++      "test/jsx-evaluation-order.test.ts",
++      "test/jsx-events.test.ts",
++      "test/jsx-props.test.ts",
++      "test/jsx-react-dev.test.ts",
++      "test/jsx-types.test.ts",
++      "test/jsx.test.ts",
++    ],
++  },
++  {
++    name: "mir-tidy-import-blocks-inline",
++    breaks:
++      "a prop MIR holds for a borrow stays a `const _13`, read past an imported tag, `<Seo>`",
++    file: "src/lower/mir/tidy/stability.rs",
++    find: "        ExprKind::Symbol(_) => true,\n        ExprKind::Arrow(..)",
++    replace: "        ExprKind::Arrow(..)",
++    tests: [
++      "test/jsx-children.test.ts",
++      "test/jsx-evaluation-order.test.ts",
++      "test/jsx-events.test.ts",
++      "test/jsx-props.test.ts",
++      "test/jsx-react-dev.test.ts",
++      "test/jsx-types.test.ts",
++      "test/jsx.test.ts",
++    ],
++  },
++  {
++    name: "mir-tidy-sibling-element-blocks",
++    breaks:
++      "a prop MIR holds for a borrow stays a `const _16`, read past a sibling element, `<Search isOpen={show} />`",
++    file: "src/lower/mir/tidy/stability.rs",
++    find: "        ExprKind::Jsx(_) | ExprKind::Object(..) | ExprKind::Array(_) => inert_element(e, set),\n",
++    replace: "        ExprKind::Jsx(_) | ExprKind::Object(..) | ExprKind::Array(_) => !matches!(&e.kind, ExprKind::Jsx(_)) && inert_element(e, set),\n",
++    tests: [
++      "test/jsx-children.test.ts",
++      "test/jsx-evaluation-order.test.ts",
++      "test/jsx-events.test.ts",
++      "test/jsx-props.test.ts",
++      "test/jsx-react-dev.test.ts",
++      "test/jsx-types.test.ts",
++      "test/jsx.test.ts",
++    ],
++  },
++  {
++    name: "mir-tidy-closure-made-blocks",
++    breaks:
++      "a closure's making, `const value = () => ..`, blocks props held before it, `const value$3 = cn(..)`",
++    file: "src/lower/mir/tidy/stability.rs",
++    find: "        ExprKind::Arrow(..) | ExprKind::AsyncArrow(..) => true,\n        ExprKind::Member(of, _) => {\n",
++    replace: "        ExprKind::Member(of, _) => {\n",
++    tests: [
++      "test/jsx-children.test.ts",
++      "test/jsx-evaluation-order.test.ts",
++      "test/jsx-events.test.ts",
++      "test/jsx-props.test.ts",
++      "test/jsx-react-dev.test.ts",
++      "test/jsx-types.test.ts",
++      "test/jsx.test.ts",
++    ],
++  },
++  {
++    name: "mir-tidy-choice-blocks",
++    breaks:
++      'a conditional of parameters, `selected ? "page" : undefined`, blocks a prop held after it',
++    file: "src/lower/mir/tidy/stability.rs",
++    find: "        ExprKind::Cond(a, b, c) => past(a) && past(b) && past(c),\n",
++    replace: "",
++    tests: [
++      "test/jsx-children.test.ts",
++      "test/jsx-evaluation-order.test.ts",
++      "test/jsx-events.test.ts",
++      "test/jsx-props.test.ts",
++      "test/jsx-react-dev.test.ts",
++      "test/jsx-types.test.ts",
++      "test/jsx.test.ts",
++    ],
++  },
++  {
++    name: "inert-element-chosen-not",
++    breaks:
++      "a child chosen of elements, `open ? <b /> : <i />`, stops classes held for a later child being read in place",
++    file: "src/lower/mir/tidy/stability.rs",
++    find: "        ExprKind::Cond(a, b, c) => [a, b, c].iter().all(|e| inert_element(e, changing)),\n",
++    replace: "",
++    tests: ["test/snapshots.test.ts", "-t", "^apis"],
++    snapshots: true,
++  },
++  {
++    name: "spread-items-not-read-past-calls",
++    breaks:
++      "`...first` of an array whose items nothing changes stops a later call's value being read in place",
++    file: "src/lower/mir/tidy/stability.rs",
++    find: '            if !set.contains(v.as_str()) && plain.contains(&format!("...{v}"))),\n',
++    replace: "            if !set.contains(v.as_str()) && false),\n",
++    tests: [
++      "test/lowering-collections.test.ts",
++      "-t",
++      "arrays joined are one array of their items",
++    ],
++  },
++  {
++    name: "mir-tidy-template-unread-past",
++    breaks:
++      "text made of what calls can't change, `${a} ${b}`, isn't read past a call, and what follows it stays a function called in place",
++    file: "src/lower/mir/tidy/stability.rs",
++    find: "        ExprKind::Template(_, values, _) => values.iter().all(past),\n",
++    replace: "",
++    tests: ["test/corpus.test.ts", "-t", "^format_args_order.rs$"],
++    snapshots: true,
++  },
++  {
++    name: "mir-tidy-pure-call-unread-past",
++    breaks:
++      "a call of the runtime's that only reads, `$debugStr(s)`, isn't read past a call",
++    file: "src/lower/mir/tidy/stability.rs",
++    find: "        ExprKind::Call(callee, args) if callee.helper_name().is_some_and(crate::runtime::is_pure) => {\n            args.iter().all(past)\n        }\n",
++    replace: "",
++    tests: ["test/corpus.test.ts", "-t", "^text_edits.rs$"],
++    snapshots: true,
++  },
++  {
++    name: "mir-tidy-item-unread-past",
++    breaks:
++      "an item of a plain value, `pair[0]`, isn't read past a call, as its field is, and what follows stays a function called in place",
++    file: "src/lower/mir/tidy/stability.rs",
++    find: "        ExprKind::Index(_, index) => plain_root && past(index),\n",
++    replace: "",
++    tests: ["test/corpus.test.ts", "-t", "^const_generic_traits.rs$"],
++    snapshots: true,
++  },
++  {
++    name: "tidy-applied-call-not-past",
++    breaks:
++      "a function called at once on a held value is taken to read what a call may change, and the `Option` formatted after it stays a function called in place",
++    file: "src/lower/mir/tidy/stability.rs",
++    find: "            past(given) && read_past_calls(result, set, &plain)\n",
++    replace: "            false\n",
++    tests: ["test/corpus.test.ts", "-t", "^iter_next_back.rs$"],
++    snapshots: true,
++  },
++  {
++    name: "plain-iterator-spread-passes",
++    breaks: "a spread of a plain value that's an iterator, a function's `inspect(see)`, is taken to do nothing, so `[...it, probe(9)]` runs `see` before `probe(9)` where Rust makes the chain's argument first (#1015)",
++    file: "src/lower/mir/tidy/stability.rs",
++    find: "            if !set.contains(v.as_str()) && plain.contains(&format!(\"...{v}\"))),\n",
++    replace: "            if !set.contains(v.as_str()) && (plain.contains(v.as_str()) || plain.contains(&format!(\"...{v}\")))),\n",
++    tests: ["test/corpus.test.ts", "-t", "^inspect_by_a_function_before_a_chain_argument.rs$"],
++  },
++  {
++    name: "plain-field-of-a-struct-beside-a-cell-not-read-past-calls",
++    breaks:
++      "a struct literal of a struct with a `Cell` beside its plain fields hoists each value after a call into a temporary, `const value$2 = shouldSet(t) ? ..; return { .., text: value$2 }`, as its plain field `instance.id` isn't taken as unchanged by the call (#1045)",
++    file: "src/lower/mir/tidy/stability.rs",
++    find: "                || (plain_field(e, plain) && matches!(&root.kind, ExprKind::Var(v) if !set.contains(v.as_str())))\n",
++    replace: "",
++    tests: ["test/corpus.test.ts", "-t", "literal_of_a_struct_beside_a_cell"],
++    snapshots: true,
++  },
++  {
++    name: "js-global-unknown-to-tidy",
++    breaks: "a JS global lowering named, `Math` of `Math.max`, is taken to change past a call, so a read of it is held apart (#1674)",
++    file: "src/lower/mir/tidy/stability.rs",
++    find: "                    && (of.facts.has(js::Known::BuiltIn) || of.facts.has(js::Known::Lasting))",
++    replace: "                    && of.facts.has(js::Known::Lasting)",
++    tests: ["test/effects.test.ts", "-t", "held past a JS global's read"],
++  },
++];
 diff --git a/src/lower/mir/tidy.rs b/src/lower/mir/tidy.rs
-index 1096a03..28b0a20 100644
+index 1096a03..8917b9e 100644
 --- a/src/lower/mir/tidy.rs
 +++ b/src/lower/mir/tidy.rs
 @@ -21,6 +21,8 @@ mod destructuring;
@@ -109,20 +578,163 @@ index 1096a03..28b0a20 100644
  mod logicals;
  mod loop_labels;
  mod loops;
-@@ -510,7 +512,9 @@ fn read_past_calls(e: &Expr, set: &IndexSet<String>, plain: &IndexSet<String>) -
-                 || matches!(&of.kind, ExprKind::Var(v) if !set.contains(v.as_str()))
-                     && (of.facts.has(js::Known::BuiltIn) || of.facts.has(js::Known::Lasting))
-         }
+@@ -28,6 +30,7 @@ mod moves;
+ mod mut_items;
+ mod options;
+ mod shadows;
++mod stability;
+ mod stages;
+ mod strict_switches;
+ mod switches;
+@@ -38,6 +41,7 @@ mod values;
+ pub(super) use self::again::Again;
+ pub(super) use self::bindings::{is_temporary, temporary, unsuffixed_params, user_name};
+ pub(super) use self::destructuring::{copied_params, destructured_params};
++use self::stability::{plain_field, read_past_calls};
+ pub(super) use self::values::{call_path, field_path, writer_body};
+ use self::{
+     bindings::*, branches::*, comparisons::*, copied::*, decided::*, destructuring::*, jumps::*, logicals::*, loops::*,
+@@ -466,137 +470,6 @@ fn written_first(stmts: &mut [Stmt], switches: &[Switch]) {
+     }
+ }
+ 
+-/// Whether `e` is a read of plain Rust data, which nothing changes: a field
+-/// however deep of a variable of plain data, or one of a plain variable's
+-/// of a struct not all plain, `q.title` beside a `Cell` (`Found::plain`).
+-pub(super) fn plain_field(e: &Expr, plain: &IndexSet<String>) -> bool {
+-    let mut root = e;
+-    while let ExprKind::Member(of, _) = &root.kind {
+-        root = of;
+-    }
+-    matches!(e.kind, ExprKind::Member(..))
+-        && (matches!(&root.kind, ExprKind::Var(v) if plain.contains(v.as_str()))
+-            || field_path(e).is_some_and(|path| plain.contains(&path)))
+-}
+-
+-/// Whether reading `e` after a call reads what it did before: a constant, a
+-/// variable no closure sets, `set`'s, which a call can't then; an import,
+-/// `<Seo>`'s tag, a module's export being never set again, a `static mut`
+-/// its `{ value }`; a field of a plain value, `meta.tag`, which no call can
+-/// change, as MIR's lowering reads it where it's read, or a builtin's
+-/// function, `Object.fromEntries`; an element of such, a closure made, and a
+-/// test or a choice of such, `selected ? "page" : undefined`.
+-fn read_past_calls(e: &Expr, set: &IndexSet<String>, plain: &IndexSet<String>) -> bool {
+-    let past = |e: &Expr| read_past_calls(e, set, plain);
+-    let mut root = e;
+-    while let ExprKind::Member(of, _) | ExprKind::Index(of, _) = &root.kind {
+-        root = of;
+-    }
+-    let plain_root = matches!(&root.kind, ExprKind::Var(v) if plain.contains(v.as_str()) && !set.contains(v.as_str()));
+-    match &e.kind {
+-        ExprKind::Var(v) => !set.contains(v.as_str()),
+-        // An item of a plain value, `pair[0]`, as a field of one is.
+-        ExprKind::Index(_, index) => plain_root && past(index),
+-        ExprKind::Symbol(_) => true,
+-        ExprKind::Arrow(..) | ExprKind::AsyncArrow(..) => true,
+-        ExprKind::Member(of, _) => {
+-            // Of a variable no closure sets, a plain field of it, `a.id` of
+-            // an `&A` with a `Cell` beside it, too (#1045).
+-            plain_root
+-                || (plain_field(e, plain) && matches!(&root.kind, ExprKind::Var(v) if !set.contains(v.as_str())))
+-                // One of JS's own globals, `Math.max`, as lowering named it
+-                // (`Known::BuiltIn`), never a name the crate's may share
+-                // (#1674).
+-                || matches!(&of.kind, ExprKind::Var(v) if !set.contains(v.as_str()))
+-                    && (of.facts.has(js::Known::BuiltIn) || of.facts.has(js::Known::Lasting))
+-        }
 -        ExprKind::Jsx(_) => inert_element(e, set),
-+        // Fresh literals whose inputs stay unchanged run no reads of their own.
-+        // Like JSX, they can precede a later native getter inside a call.
-+        ExprKind::Jsx(_) | ExprKind::Object(..) | ExprKind::Array(_) => inert_element(e, set),
-         // The items of an array nothing changes, `...first`; not a plain
-         // value's, an iterator's, a function's `inspect(see)`, which
-         // spreading steps, running what it calls (#1015).
+-        // The items of an array nothing changes, `...first`; not a plain
+-        // value's, an iterator's, a function's `inspect(see)`, which
+-        // spreading steps, running what it calls (#1015).
+-        ExprKind::Spread(a) => matches!(&a.kind, ExprKind::Var(v)
+-            if !set.contains(v.as_str()) && plain.contains(&format!("...{v}"))),
+-        ExprKind::Unary(UnaryOp::Not, a) => past(a),
+-        ExprKind::Binary(
+-            Op::Eq
+-            | Op::Ne
+-            | Op::LooseEq
+-            | Op::LooseNe
+-            | Op::Lt
+-            | Op::Le
+-            | Op::Gt
+-            | Op::Ge
+-            | Op::And
+-            | Op::Or
+-            | Op::Coalesce,
+-            a,
+-            b,
+-        ) => past(a) && past(b),
+-        ExprKind::Cond(a, b, c) => past(a) && past(b) && past(c),
+-        // Text or a number made of such, `${a}-${b}`, `a + 1`, `String(n)`,
+-        // and a call of the runtime's that only reads, `$debugStr(s)`.
+-        ExprKind::Template(_, values, _) => values.iter().all(past),
+-        ExprKind::Stringed(a) | ExprKind::Unary(_, a) => past(a),
+-        ExprKind::Binary(_, a, b) => past(a) && past(b),
+-        ExprKind::Call(callee, args) if callee.helper_name().is_some_and(crate::runtime::is_pure) => {
+-            args.iter().all(past)
+-        }
+-        // A function called at once, `((value) => ..)(value$1)`: its body,
+-        // its parameter what it's given.
+-        ExprKind::Call(callee, args)
+-            if let ExprKind::Arrow(params, body) = &callee.kind
+-                && let [js::Pattern::Name(param)] = params.as_slice()
+-                && let [
+-                    Stmt {
+-                        kind: StmtKind::Return(Some(result)),
+-                        ..
+-                    },
+-                ] = body.as_slice()
+-                && let [given] = args.as_slice() =>
+-        {
+-            let mut plain = plain.clone();
+-            plain.swap_remove(param.as_str());
+-            past(given) && read_past_calls(result, set, &plain)
+-        }
+-        _ => e.is_made_of_constants(),
+-    }
+-}
+-
+-/// Whether making `e` reads only what no call changes: an element, array or
+-/// object of constants, of variables nothing sets again, of imports and of
+-/// arrows, which capture what they read, and of such elements.
+-fn inert_element(e: &Expr, changing: &IndexSet<String>) -> bool {
+-    let props = |props: &[js::Prop]| {
+-        props.iter().all(|p| {
+-            let (js::Prop::Field(_, v)
+-            | js::Prop::Getter(_, v)
+-            | js::Prop::Setter(_, v)
+-            | js::Prop::Method(_, v)
+-            | js::Prop::Spread(v)
+-            | js::Prop::Keyed(_, v)
+-            | js::Prop::KeyedMethod(_, v)) = p;
+-            !matches!(p, js::Prop::Spread(_) | js::Prop::Keyed(..) | js::Prop::KeyedMethod(..))
+-                && inert_element(v, changing)
+-        })
+-    };
+-    match &e.kind {
+-        ExprKind::Var(v) => !changing.contains(v.as_str()),
+-        ExprKind::Symbol(_) | ExprKind::Arrow(..) | ExprKind::AsyncArrow(..) => true,
+-        ExprKind::Array(items) => items.iter().all(|i| inert_element(i, changing)),
+-        ExprKind::Object(fields, ..) => props(fields),
+-        // A choice of them, `open ? <IconClose /> : <IconHamburger />`.
+-        ExprKind::Cond(a, b, c) => [a, b, c].iter().all(|e| inert_element(e, changing)),
+-        ExprKind::Jsx(jsx) => {
+-            let tag = match &jsx.tag {
+-                js::JsxTag::Component(tag) => inert_element(tag, changing),
+-                _ => true,
+-            };
+-            tag && props(&jsx.props) && jsx.children.iter().all(|c| inert_element(c, changing))
+-        }
+-        _ => e.is_made_of_constants(),
+-    }
+-}
+-
+ /// The variables what's called may set: a closure's, and a getter's and
+ /// setter's handle's, `{ get value() { return n; }, set value(v) { n = v; } }`.
+ fn set_elsewhere(body: &[Stmt]) -> IndexSet<String> {
 diff --git a/src/lower/mir/tidy/literal_movement_tests.rs b/src/lower/mir/tidy/literal_movement_tests.rs
 new file mode 100644
-index 0000000..3eab15c
+index 0000000..a3828bc
 --- /dev/null
 +++ b/src/lower/mir/tidy/literal_movement_tests.rs
 @@ -0,0 +1,25 @@
@@ -136,12 +748,12 @@ index 0000000..3eab15c
 +    let set = IndexSet::from_iter(["changing".to_owned()]);
 +    let plain = IndexSet::default();
 +    let allowed = |value: Expr| read_past_calls(&value, &set, &plain);
-+    let field = |value: Expr| Expr::object(vec![Prop::Field("value".to_owned(), value)]);
++    let field = |value: Expr| Expr::object(vec![Prop::Field("entry".to_owned(), value)]);
 +    assert!(allowed(field(Expr::array(vec![Expr::var("stable")]))));
 +    assert!(allowed(Expr::array(vec![field(Expr::var("stable"))])));
 +    for value in [
 +        field(Expr::var("changing")),
-+        field(Expr::member(Expr::var("external"), "value")),
++        field(Expr::member(Expr::var("external"), "entry")),
 +        field(Expr::call(Expr::var("external"), Vec::new())),
 +        Expr::object(vec![Prop::Spread(Expr::var("external"))]),
 +        Expr::object(vec![Prop::Keyed(Expr::var("key"), Expr::var("stable"))]),
@@ -151,6 +763,197 @@ index 0000000..3eab15c
 +        assert!(!allowed(value));
 +    }
 +}
+diff --git a/src/lower/mir/tidy/stability.rs b/src/lower/mir/tidy/stability.rs
+new file mode 100644
+index 0000000..ac2453a
+--- /dev/null
++++ b/src/lower/mir/tidy/stability.rs
+@@ -0,0 +1,137 @@
++//! Stability of expression reads across calls, consumed by tidy movement.
++use super::values::field_path;
++use crate::collections::IndexSet;
++use crate::js::{self, Expr, ExprKind, Op, Stmt, StmtKind, UnaryOp};
++
++/// Whether `e` is a read of plain Rust data, which nothing changes: a field
++/// however deep of a variable of plain data, or one of a plain variable's
++/// of a struct not all plain, `q.title` beside a `Cell` (`Found::plain`).
++pub(super) fn plain_field(e: &Expr, plain: &IndexSet<String>) -> bool {
++    let mut root = e;
++    while let ExprKind::Member(of, _) = &root.kind {
++        root = of;
++    }
++    matches!(e.kind, ExprKind::Member(..))
++        && (matches!(&root.kind, ExprKind::Var(v) if plain.contains(v.as_str()))
++            || field_path(e).is_some_and(|path| plain.contains(&path)))
++}
++
++/// Whether reading `e` after a call reads what it did before: a constant, a
++/// variable no closure sets, `set`'s, which a call can't then; an import,
++/// `<Seo>`'s tag, a module's export being never set again, a `static mut`
++/// its `{ value }`; a field of a plain value, `meta.tag`, which no call can
++/// change, as MIR's lowering reads it where it's read, or a builtin's
++/// function, `Object.fromEntries`; an element of such, a closure made, and a
++/// test or a choice of such, `selected ? "page" : undefined`.
++pub(super) fn read_past_calls(e: &Expr, set: &IndexSet<String>, plain: &IndexSet<String>) -> bool {
++    let past = |e: &Expr| read_past_calls(e, set, plain);
++    let mut root = e;
++    while let ExprKind::Member(of, _) | ExprKind::Index(of, _) = &root.kind {
++        root = of;
++    }
++    let plain_root = matches!(&root.kind, ExprKind::Var(v) if plain.contains(v.as_str()) && !set.contains(v.as_str()));
++    match &e.kind {
++        ExprKind::Var(v) => !set.contains(v.as_str()),
++        // An item of a plain value, `pair[0]`, as a field of one is.
++        ExprKind::Index(_, index) => plain_root && past(index),
++        ExprKind::Symbol(_) => true,
++        ExprKind::Arrow(..) | ExprKind::AsyncArrow(..) => true,
++        ExprKind::Member(of, _) => {
++            // Of a variable no closure sets, a plain field of it, `a.id` of
++            // an `&A` with a `Cell` beside it, too (#1045).
++            plain_root
++                || (plain_field(e, plain) && matches!(&root.kind, ExprKind::Var(v) if !set.contains(v.as_str())))
++                // One of JS's own globals, `Math.max`, as lowering named it
++                // (`Known::BuiltIn`), never a name the crate's may share
++                // (#1674).
++                || matches!(&of.kind, ExprKind::Var(v) if !set.contains(v.as_str()))
++                    && (of.facts.has(js::Known::BuiltIn) || of.facts.has(js::Known::Lasting))
++        }
++        // Fresh literals whose inputs stay unchanged run no reads of their own.
++        // Like JSX, they can precede a later native getter inside a call.
++        ExprKind::Jsx(_) | ExprKind::Object(..) | ExprKind::Array(_) => inert_element(e, set),
++        // The items of an array nothing changes, `...first`; not a plain
++        // value's, an iterator's, a function's `inspect(see)`, which
++        // spreading steps, running what it calls (#1015).
++        ExprKind::Spread(a) => matches!(&a.kind, ExprKind::Var(v)
++            if !set.contains(v.as_str()) && plain.contains(&format!("...{v}"))),
++        ExprKind::Unary(UnaryOp::Not, a) => past(a),
++        ExprKind::Binary(
++            Op::Eq
++            | Op::Ne
++            | Op::LooseEq
++            | Op::LooseNe
++            | Op::Lt
++            | Op::Le
++            | Op::Gt
++            | Op::Ge
++            | Op::And
++            | Op::Or
++            | Op::Coalesce,
++            a,
++            b,
++        ) => past(a) && past(b),
++        ExprKind::Cond(a, b, c) => past(a) && past(b) && past(c),
++        // Text or a number made of such, `${a}-${b}`, `a + 1`, `String(n)`,
++        // and a call of the runtime's that only reads, `$debugStr(s)`.
++        ExprKind::Template(_, values, _) => values.iter().all(past),
++        ExprKind::Stringed(a) | ExprKind::Unary(_, a) => past(a),
++        ExprKind::Binary(_, a, b) => past(a) && past(b),
++        ExprKind::Call(callee, args) if callee.helper_name().is_some_and(crate::runtime::is_pure) => {
++            args.iter().all(past)
++        }
++        // A function called at once, `((value) => ..)(value$1)`: its body,
++        // its parameter what it's given.
++        ExprKind::Call(callee, args)
++            if let ExprKind::Arrow(params, body) = &callee.kind
++                && let [js::Pattern::Name(param)] = params.as_slice()
++                && let [
++                    Stmt {
++                        kind: StmtKind::Return(Some(result)),
++                        ..
++                    },
++                ] = body.as_slice()
++                && let [given] = args.as_slice() =>
++        {
++            let mut plain = plain.clone();
++            plain.swap_remove(param.as_str());
++            past(given) && read_past_calls(result, set, &plain)
++        }
++        _ => e.is_made_of_constants(),
++    }
++}
++
++/// Whether making `e` reads only what no call changes: an element, array or
++/// object of constants, of variables nothing sets again, of imports and of
++/// arrows, which capture what they read, and of such elements.
++fn inert_element(e: &Expr, changing: &IndexSet<String>) -> bool {
++    let props = |props: &[js::Prop]| {
++        props.iter().all(|p| {
++            let (js::Prop::Field(_, v)
++            | js::Prop::Getter(_, v)
++            | js::Prop::Setter(_, v)
++            | js::Prop::Method(_, v)
++            | js::Prop::Spread(v)
++            | js::Prop::Keyed(_, v)
++            | js::Prop::KeyedMethod(_, v)) = p;
++            !matches!(p, js::Prop::Spread(_) | js::Prop::Keyed(..) | js::Prop::KeyedMethod(..))
++                && inert_element(v, changing)
++        })
++    };
++    match &e.kind {
++        ExprKind::Var(v) => !changing.contains(v.as_str()),
++        ExprKind::Symbol(_) | ExprKind::Arrow(..) | ExprKind::AsyncArrow(..) => true,
++        ExprKind::Array(items) => items.iter().all(|i| inert_element(i, changing)),
++        ExprKind::Object(fields, ..) => props(fields),
++        // A choice of them, `open ? <IconClose /> : <IconHamburger />`.
++        ExprKind::Cond(a, b, c) => [a, b, c].iter().all(|e| inert_element(e, changing)),
++        ExprKind::Jsx(jsx) => {
++            let tag = match &jsx.tag {
++                js::JsxTag::Component(tag) => inert_element(tag, changing),
++                _ => true,
++            };
++            tag && props(&jsx.props) && jsx.children.iter().all(|c| inert_element(c, changing))
++        }
++        _ => e.is_made_of_constants(),
++    }
++}
+diff --git a/test/corpus/literal_argument_read_order.js b/test/corpus/literal_argument_read_order.js
+new file mode 100644
+index 0000000..b0d1d34
+--- /dev/null
++++ b/test/corpus/literal_argument_read_order.js
+@@ -0,0 +1,42 @@
++// Generated by rust-js from test/corpus/literal_argument_read_order.rs. Do not edit.
++
++import { $displayF64, $print } from "@rust-js/std";
++
++export function entry() {
++  main();
++}
++
++function read(name, value) {
++  $print(`${name} `);
++  return value;
++}
++
++function total(point, bounds) {
++  return point.x + point.y + bounds.width + bounds.top + bounds.left;
++}
++
++function totalArray(point, bounds) {
++  return point[0] + point[1] + bounds.width + bounds.top + bounds.left;
++}
++
++function main() {
++  let value = total(
++    {
++      x: read("x", 1),
++      y: read("y", 2),
++    },
++    {
++      width: read("width", 3),
++      top: read("top", 4),
++      left: read("left", 5),
++    },
++  );
++  $print(`= ${$displayF64(value)}\n`);
++  value = totalArray([read("x", 1), read("y", 2)], {
++    width: read("width", 3),
++    top: read("top", 4),
++    left: read("left", 5),
++  });
++  $print(`= ${$displayF64(value)}\n`);
++}
++//# sourceMappingURL=case.js.map
 diff --git a/test/corpus/literal_argument_read_order.rs b/test/corpus/literal_argument_read_order.rs
 new file mode 100644
 index 0000000..0ca93fb
@@ -206,10 +1009,10 @@ index 0000000..0ca93fb
 +}
 diff --git a/test/lowering-native-aggregate-arguments.test.ts b/test/lowering-native-aggregate-arguments.test.ts
 new file mode 100644
-index 0000000..dbc3b75
+index 0000000..d59ae93
 --- /dev/null
 +++ b/test/lowering-native-aggregate-arguments.test.ts
-@@ -0,0 +1,81 @@
+@@ -0,0 +1,108 @@
 +import {beforeAll,expect,test} from "bun:test";
 +import {readFileSync,writeFileSync} from "node:fs";
 +import {join} from "node:path";
@@ -253,6 +1056,11 @@ index 0000000..dbc3b75
 +        },
 +    })
 +}
++pub struct DocArg { pub document:&'static webapi::Document }
++pub fn take_doc(_document:&DocArg,value:f64)->f64 { value }
++pub fn global_before(event:&PointerEvent)->f64 {
++    take_doc(&DocArg { document:window_global::document() }, event.client_x())
++}
 +`);
 +  run([compiler,join(dir,"lib.rs"),"-o",join(dir,"lib.js"),"--","--extern","js="+join(target,"libjs.rmeta"),"--extern","webapi="+join(target,"libwebapi.rmeta"),"-L",target]);
 +  const lib = await import(join(dir,"lib.js"));
@@ -275,6 +1083,28 @@ index 0000000..dbc3b75
 +  } finally {
 +    if(original)Object.defineProperty(globalThis,"getComputedStyle",original);
 +    else Reflect.deleteProperty(globalThis,"getComputedStyle");
++  }
++  // A bare global may throw even though it is represented as a variable.
++  // Earlier literal arguments retain that read before a later host getter.
++  const documentDescriptor=Object.getOwnPropertyDescriptor(globalThis,"document");
++  try {
++    const calls:string[]=[];
++    const event=Object.defineProperty({},"clientX",{get(){calls.push("clientX");return 4;}});
++    Reflect.deleteProperty(globalThis,"document");
++    expect(()=>lib.globalBefore(event)).toThrow(ReferenceError);
++    expect(calls).toEqual([]);
++    Object.defineProperty(globalThis,"document",{configurable:true,get(){calls.push("document");return {};}});
++    expect(lib.globalBefore(event)).toBe(4);
++    expect(calls).toEqual(["document","clientX"]);
++    calls.length=0;const marker={};
++    Object.defineProperty(globalThis,"document",{configurable:true,get(){calls.push("document");throw marker;}});
++    let same=false;
++    try{lib.globalBefore(event);}catch(error){same=error===marker;}
++    expect(same).toBe(true);
++    expect(calls).toEqual(["document"]);
++  } finally {
++    if(documentDescriptor)Object.defineProperty(globalThis,"document",documentDescriptor);
++    else Reflect.deleteProperty(globalThis,"document");
 +  }
 +  const output=readFileSync(join(dir,"lib.js"),"utf8");
 +  for(const name of ["nested","nestedArray"]) {
