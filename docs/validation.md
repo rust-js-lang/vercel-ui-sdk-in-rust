@@ -22,6 +22,14 @@ See [structured evidence](evidence/1833-validation.json), [complete first gate](
 
 Published main has since moved to 363522b with Unicode and library-contract changes. Those incoming changes have been fetched and inspected; adoption requires a separate source/behavior audit and is not silently folded into this fixed-base checkpoint.
 
+## Unshipped engine-library review (#1903)
+
+The stable TypeScript 7.0.2 parser and canonical library graph are implemented in a review based on published 363522b. The parser/printer, library isolation/selection, updater policy/orchestration and builtin coverage tests pass 16 cases/80 assertions across three files. All 13 affected/new source mutations are caught; architecture and mutation-catalog checks pass 89 tests/46,593 assertions, and typechecking passes.
+
+The engine selects 87 ESNext libraries; their hashes are recorded. Within currently measured families, coverage changes from 748/748 to 749/779, losing no covered member and exposing 30 unbound members. New native roots still require discovery under #1904. The existing signature owner correctly rejects newly accepted Temporal.PlainDate inputs; that failure remains unwaived.
+
+The actual definitions --check selects eligible 7.1.0-beta over compatible stable 7.0.2. The unchanged updater channel policy conflicts with the lead’s stable-first condition, so that decision remains pending. Real mutating regeneration and the required full gate have not run; isolated command fixtures prove orchestration and loss retention, not actual WebAPI/React regeneration. Generated builtin/WebAPI outputs are unchanged. The retained review is absent from series.json and is not production code. See [structured evidence](evidence/1903-validation.json), [focused tests](evidence/1903-focused.txt) and [static checks](evidence/1903-architecture.txt).
+
 ## Historical unsafe-boundary checkpoint (2680f61)
 
 Published compiler base bc26493 includes #1867; the duplicate implementation patch is retired. The sole active patch is #1899, preserving checked optional_call and introducing unsafe optional_call_unchecked through the same native path owner. The existing js::cast remains the single unchecked assertion API. The user explicitly approved preserving the upstream JavaScript behavior on 2026-11-15. Setup is idempotent on two consecutive runs.

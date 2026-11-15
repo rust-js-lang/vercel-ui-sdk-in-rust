@@ -1,0 +1,45 @@
+$ bun scripts/taskTime.ts run library-and-update-contracts -- bun test test/typescript.test.ts test/definitions.test.ts test/builtins-coverage.test.ts --parallel
+bun test v1.4.4 (38afee6c8) 14x PARALLEL
+
+test/definitions.test.ts:
+(pass) definition updates retain release channels and the three-day cool-off [0.28ms]
+(pass) the parser and root consume the same engine release without a separate ES library package [0.15ms]
+
+test/builtins-coverage.test.ts:
+(pass) the js crate binds what it bound of TypeScript's ES library [65.22ms]
+
+test/typescript.test.ts:
+(pass) read gives a file's declarations, by TypeScript's own parser [80.00ms]
+
+test/builtins-coverage.test.ts:
+(pass) the typed arrays are what their template writes [29.40ms]
+
+test/typescript.test.ts:
+(pass) print writes a model as TypeScript prints it, a header first [15.92ms]
+
+test/builtins-coverage.test.ts:
+(pass) the standard errors of a kind are what their template writes [21.79ms]
+
+test/typescript.test.ts:
+(pass) print writes a name that's an identifier as it is, and quotes any other [9.70ms]
+(pass) print writes a union with unknown or any as that keyword [10.08ms]
+
+test/builtins-coverage.test.ts:
+(pass) Intl is what its template writes [28.57ms]
+
+test/typescript.test.ts:
+(pass) read takes @types/react's element attributes apart [47.62ms]
+(pass) read keeps an export list that names a type as text [10.48ms]
+
+test/definitions.test.ts:
+(pass) definition regeneration reports both libraries and retains a lost-member baseline [235.79ms]
+
+test/typescript.test.ts:
+(pass) print writes erasable syntax only [175.84ms]
+(pass) construct signatures retain generics and optional/rest arguments in every member position [22.47ms]
+(pass) library selection uses the engine graph and leaves ordinary sessions isolated [61.84ms]
+
+ 16 pass
+ 0 fail
+ 80 expect() calls
+Ran 16 tests across 3 files. [500.00ms]

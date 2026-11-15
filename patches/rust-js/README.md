@@ -7,3 +7,5 @@ Published gitlink: 4c07105be615eadc254f2896ba329fcf551102a3. series.json is the 
 The separate port-previews directory also holds unfinished selector work (#1902) and the scope-guard output preview. Neither is an active compiler patch or a claimed completed port. New numeric wrong answer #1908 and borrowed-box callback wrong answer #1909 are assigned upstream. createDetails remains missing.
 
 Rebase/revalidate the scope review after #1909 lands, then activate only a validated patch or adopt the published fix directly. Historical #1867/#1899 evidence remains available. Complete milestone-one and Pages deployment are still open.
+
+1903-engine-libraries.review.patch is an unshipped working review based on 363522bc0d35cc3089640895e39fe4a38937cf14. It is absent from series.json. Stable-parser/library tests, typechecking and 13 source mutations pass, but widened Temporal signature coverage, release-channel policy, actual definitions regeneration and the full gate remain open. Evidence: docs/evidence/1903-validation.json. No published compiler revision or active SDK patch contains this review.

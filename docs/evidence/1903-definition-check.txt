@@ -1,0 +1,3 @@
+$ bun scripts/taskTime.ts run definition-versions-parallel -- bun run definitions --check
+$ bun scripts/definitions.ts --check
+typescript: 7.0.2 -> 7.1.0-beta
