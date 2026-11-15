@@ -1,7 +1,7 @@
 {
   "date": "2026-11-15",
   "issue": 1917,
-  "shipped": false,
+  "shipped": true,
   "activeSeries": [],
   "base": "e0f07bcf58165b127b7399d6486eca98eb4e90dc",
   "reviewCommit": "157661a07d631b6df86e2267125270b1d0f85b61",
@@ -72,5 +72,8 @@
         "(fail) startup retains the prune failure and waits for both children [36.95ms]"
       ]
     }
-  ]
+  ],
+  "upstreamFix": "705057eb6fd017ea32572ef4a51ded85a4e1cdc6",
+  "patchRetired": true,
+  "retirement": "Published upstream and adopted by SDK; inactive duplicate review removed."
 }

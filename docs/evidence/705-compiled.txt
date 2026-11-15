@@ -1,0 +1,46 @@
+$ bun rust-js/tooling/cli.js test --package ui-sdk-core-in-rust
+bun test v1.4.4 (38afee6c8)
+
+node_modules/.cache/rust-js/test/wasm32-unknown-unknown/debug/rust-js/ui_sdk_core_in_rust-e211719789d40925/foundation/date/plain_date.test.js:
+(pass) foundation::date::plain_date::tests::day_number_origin_and_supported_endpoints [0.09ms]
+(pass) foundation::date::plain_date::tests::complete_gregorian_cycle_round_trips_every_day [9.36ms]
+(pass) foundation::date::plain_date::tests::gregorian_centuries_and_leap_days [0.09ms]
+
+node_modules/.cache/rust-js/test/wasm32-unknown-unknown/debug/rust-js/ui_sdk_core_in_rust-e211719789d40925/foundation/kernel/details.test.js:
+(pass) foundation::kernel::details::tests::cascades_inherit_and_restore_nested_sources [0.14ms]
+(pass) foundation::kernel::details::tests::input_tracking_is_lazy_and_programmatic_events_inherit_the_cause [0.05ms]
+
+node_modules/.cache/rust-js/test/wasm32-unknown-unknown/debug/rust-js/ui_sdk_core_in_rust-e211719789d40925/foundation/kernel/undo_stack.test.js:
+(pass) foundation::kernel::undo_stack::tests::grouping_seal_and_branching_preserve_history [0.59ms]
+(pass) foundation::kernel::undo_stack::tests::mapping_callbacks_may_reenter_without_borrowing_conflicts [0.42ms]
+
+node_modules/.cache/rust-js/test/wasm32-unknown-unknown/debug/rust-js/ui_sdk_core_in_rust-e211719789d40925/foundation/motion/physics.test.js:
+(pass) foundation::motion::physics::tests::default_sheet_spring_settles_without_overshoot [0.08ms]
+
+node_modules/.cache/rust-js/test/wasm32-unknown-unknown/debug/rust-js/ui_sdk_core_in_rust-e211719789d40925/foundation/motion/projection.test.js:
+(pass) foundation::motion::projection::tests::projection_matches_geometric_deceleration [0.03ms]
+(pass) foundation::motion::projection::tests::nearest_ties_favor_the_first_candidate [0.16ms]
+
+node_modules/.cache/rust-js/test/wasm32-unknown-unknown/debug/rust-js/ui_sdk_core_in_rust-e211719789d40925/foundation/motion/rubber_band.test.js:
+(pass) foundation::motion::rubber_band::tests::travel_resists_and_approaches_the_dimension [0.03ms]
+(pass) foundation::motion::rubber_band::tests::release_slope_matches_the_derivative [0.02ms]
+
+node_modules/.cache/rust-js/test/wasm32-unknown-unknown/debug/rust-js/ui_sdk_core_in_rust-e211719789d40925/foundation/motion/spring.test.js:
+(pass) foundation::motion::spring::tests::all_damping_regimes_preserve_initial_conditions_and_approach_rest [0.10ms]
+(pass) foundation::motion::spring::tests::settling_requires_both_position_and_velocity [0.03ms]
+
+node_modules/.cache/rust-js/test/wasm32-unknown-unknown/debug/rust-js/ui_sdk_core_in_rust-e211719789d40925/foundation/number/steps.test.js:
+(pass) foundation::number::steps::tests::nonpositive_or_nan_steps_leave_the_grid_maximum_unchanged [0.49ms]
+(pass) foundation::number::steps::tests::wraps_in_both_directions_and_excludes_the_upper_bound [0.02ms]
+(pass) foundation::number::steps::tests::invalid_spans_return_the_lower_bound_including_its_zero_sign [0.02ms]
+(pass) foundation::number::steps::tests::non_finite_values_follow_remainder_semantics
+
+node_modules/.cache/rust-js/test/wasm32-unknown-unknown/debug/rust-js/ui_sdk_core_in_rust-e211719789d40925/foundation/platform/scrollbar.test.js:
+(pass) foundation::platform::scrollbar::tests::rtl_gutter_and_bottom_rail_exclude_content_and_borders [0.04ms]
+
+node_modules/.cache/rust-js/test/wasm32-unknown-unknown/debug/rust-js/ui_sdk_core_in_rust-e211719789d40925/foundation/platform/sides.test.js:
+(pass) foundation::platform::sides::tests::only_logical_sides_follow_direction [0.03ms]
+
+ 20 pass
+ 0 fail
+Ran 20 tests across 10 files. [31.00ms]

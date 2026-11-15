@@ -2,11 +2,19 @@
 
 2026-11-15. Milestone one remains open: complete core, Web Components, Rust docs/live examples, and an actual verified GitHub Pages deployment are required.
 
-## Current published compiler adoption (e0f07bc)
+## Current published compiler adoption (705057e)
+
+The SDK pins clean published 705057e, including the landed startup fix #1917. Its duplicate inactive review is retired. The actual compiler identity 9bc91a3415a2375b matches source and the binary built in the private full gate; the stale shared 99f binary was not reused. Dependencies were refreshed through the locked Bun install. SDK regeneration changes no output.
+
+Native 21 pass, compiled 20 pass in 10 files and strict Clippy pass. The complete reference suite remains 72 pass/9 fail with 317,313 assertions across 81 cases; its full case/status set exactly matches e0. Chromium remains 22 pass/2 known closest failures across 24 cases. See [adoption proof](evidence/705-adoption.json). No incomplete API or remaining regression is waived.
+
+The inactive #1919/#1921 review passes the full compiler gate in 420.31 seconds on 705057e (326 other files, 9 browser files), plus all 13 new/affected mutants and five focused cases/22 assertions on beta and stable engines. The shared Member guard accepts structured call signatures while still rejecting made-up kinds, and every consumer was audited. See [exact reader proof](evidence/1919-1921-validation.json). This review awaits upstream landing; no complete core/Web/docs/Pages milestone is claimed.
+
+## Historical published compiler adoption (e0f07bc)
 
 The SDK now pins published e0f07bc, including the computed-symbol and generic-default readers (#1912/#1916); their duplicate inactive review patches are retired. The active patch series remains empty. The compiler build identity owner reports 99f613233edef5e7 in both source checkouts, matching the copied published binary. Regeneration changes no SDK generated file.
 
-Actual checks: native21 pass, compiled20 pass in10 files, strict Clippy passes, complete reference/type/source72 pass/9 fail (81 tests,317,313 assertions), Chromium22 pass/2 known closest failures. No remaining regression is waived. See [current adoption evidence](evidence/e0-adoption.json).
+Actual checks: native21 pass, compiled 20 pass in 10 files, strict Clippy passes, complete reference/type/source72 pass/9 fail (81 tests,317,313 assertions), Chromium22 pass/2 known closest failures. No remaining regression is waived. See [current adoption evidence](evidence/e0-adoption.json).
 
 The independent startup timing fix #1917 passes the complete compiler gate in323seconds before rebase (322 other files,9 browser files). On e0f07bc, its implementation/tests/catalog are unchanged; incoming-scope checks and four owner mutants pass. The inactive review awaits upstream landing. Warm build/cache differs from earlier cold runs; no isolated speed-up is claimed. See [exact startup proof](evidence/1917-validation.json).
 

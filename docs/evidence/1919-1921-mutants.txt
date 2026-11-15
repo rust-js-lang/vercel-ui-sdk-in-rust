@@ -1,0 +1,39 @@
+source template: 92581888 bytes in 2.1 s
+source typescript-member-unknown-accepted: caught; peak workspace 92585984 bytes
+source typescript-construct-is-call: caught; peak workspace 92585984 bytes
+source const-type-parameter-unprinted: caught; peak workspace 92585984 bytes
+source typescript-construct-unread: caught; peak workspace 92585984 bytes
+source type-parameter-default-unprinted: caught; peak workspace 92585984 bytes
+source typescript-call-signature-read-as-construct: caught; peak workspace 92585984 bytes
+source typescript-call-signature-result-any: caught; peak workspace 92585984 bytes
+source typescript-call-signature-guard-refuses: caught; peak workspace 92585984 bytes
+source typescript-call-signature-parameters-unprinted: caught; peak workspace 92585984 bytes
+source typescript-call-signature-printed-as-construct: caught; peak workspace 92585984 bytes
+source typescript-call-signature-unread: caught; peak workspace 92585984 bytes
+source typescript-parameter-ordinary-made-const: caught; peak workspace 92585984 bytes
+source typescript-parameter-const-unread: caught; peak workspace 92585984 bytes
+typescript-parameter-const-unread	caught
+typescript-parameter-ordinary-made-const	caught
+typescript-call-signature-unread	caught
+typescript-call-signature-read-as-construct	caught
+typescript-call-signature-printed-as-construct	caught
+typescript-call-signature-parameters-unprinted	caught
+typescript-call-signature-result-any	caught
+typescript-call-signature-guard-refuses	caught
+const-type-parameter-unprinted	caught
+type-parameter-default-unprinted	caught
+typescript-construct-unread	caught
+typescript-construct-is-call	caught
+typescript-member-unknown-accepted	caught
+slow	typescript-parameter-const-unread	build 20 s, tests 18 s
+slow	typescript-parameter-ordinary-made-const	build 14 s, tests 22 s
+slow	typescript-call-signature-unread	build 16 s, tests 20 s
+slow	typescript-call-signature-printed-as-construct	build 16 s, tests 19 s
+slow	typescript-call-signature-parameters-unprinted	build 17 s, tests 17 s
+slow	typescript-call-signature-guard-refuses	build 15 s, tests 19 s
+slow	typescript-call-signature-result-any	build 19 s, tests 15 s
+slow	typescript-call-signature-read-as-construct	build 20 s, tests 13 s
+slow	type-parameter-default-unprinted	build 21 s, tests 11 s
+slow	typescript-construct-unread	build 24 s, tests 6.5 s
+13 of 13 mutations caught
+mutation, each 3.2 s (usual 4.5 s)

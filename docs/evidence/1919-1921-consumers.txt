@@ -1,0 +1,25 @@
+bun test v1.4.4 (38afee6c8)
+
+test/webapi-coverage.test.ts:
+(pass) the webapi crate binds what it bound of TypeScript's DOM [336.61ms]
+(pass) the webapi crate is what its generator writes [1694.44ms]
+(pass) a function the webapi crate reads is a dyn Fn of its signature, not a JsObject [128.45ms]
+
+test/intl-arguments.test.ts:
+(pass) Intl locale unions and date inputs preserve native calls in Bun and Chromium [977.57ms]
+(pass) pinned TypeScript argument unions are admitted by the Rust bindings [650.84ms]
+(pass) the Rust input unions reject nonmembers [253.29ms]
+
+test/builtins-coverage.test.ts:
+(pass) the js crate binds what it bound of TypeScript's ES library [55.98ms]
+(pass) the typed arrays are what their template writes [20.21ms]
+(pass) the standard errors of a kind are what their template writes [17.07ms]
+(pass) Intl is what its template writes [19.94ms]
+
+test/node-coverage.test.ts:
+(pass) the node crate binds what it bound of Node.js [859.24ms]
+
+ 11 pass
+ 0 fail
+ 314 expect() calls
+Ran 11 tests across 4 files. [5.24s]

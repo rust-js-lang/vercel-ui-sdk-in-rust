@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-15",
+  "upstream": "705057eb6fd017ea32572ef4a51ded85a4e1cdc6",
+  "activeSeries": [],
+  "cleanPublishedSource": true,
+  "compilerBuildIdentity": "9bc91a3415a2375b",
+  "binarySha256": "f4187e5407244906ee73e3fbf9b2c3bfa89579f5295595add0cf1d694b6afbc1",
+  "identityProof": "Actual build.rs identity matches private705 source and binary built by its full gate. Clean shared705 source agrees, but its stale99f613233edef5e7 binary was not relabelled or used.",
+  "generatedSdkDiff": "None",
+  "native": {
+    "passed": 21,
+    "failed": 0
+  },
+  "compiled": {
+    "passed": 20,
+    "failed": 0,
+    "files": 10
+  },
+  "clippy": {
+    "exitCode": 0,
+    "warningsDenied": true
+  },
+  "reference": {
+    "passed": 72,
+    "failed": 9,
+    "tests": 81,
+    "files": 19,
+    "assertions": 317313,
+    "seconds": 4.28
+  },
+  "chromium": {
+    "passed": 22,
+    "failed": 2,
+    "tests": 24,
+    "seconds": 2.7
+  },
+  "referenceStatusesEqualToE0": true,
+  "uniqueReferenceStatuses": 81,
+  "knownFailures": "The same incomplete createDetails/closest, source fidelity and numeric/native case gaps remain; no failure waived and no milestone or deployment completion claimed."
+}

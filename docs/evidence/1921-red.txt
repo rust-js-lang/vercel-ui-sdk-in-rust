@@ -1,0 +1,33 @@
+bun test v1.4.4 (38afee6c8)
+
+test/typescript-call.test.ts:
+(pass) original callable interface and object signatures pass strict consumers [117.87ms]
+53 |   try {
+54 |     const model = await session.read(input);
+55 |     const declaration = model.declarations[0];
+56 |     if (declaration.kind !== "interface") throw new Error("interface expected");
+57 |     expect(checkedMembers(declaration.members)).toBe(declaration.members);
+58 |     expect(declaration.members.map(m => m.kind)).toEqual(["call", "call", "construct", "method", "method"]);
+                                                      ^
+error: expect(received).toEqual(expected)
+
+  [
+-   "call",
+-   "call",
++   "other",
++   "other",
+    "construct",
+    "method",
+    "method",
+  ]
+
+- Expected  - 2
++ Received  + 2
+
+      at <anonymous> (<sdk-checkout>/rust-js/test/typescript-call.test.ts:58:50)
+(fail) call members preserve overloads and stay distinct from constructs and named methods [19.87ms]
+
+ 1 pass
+ 1 fail
+ 3 expect() calls
+Ran 2 tests across 1 file. [201.00ms]

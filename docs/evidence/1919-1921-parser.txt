@@ -1,0 +1,35 @@
+bun test v1.4.4 (38afee6c8)
+
+test/typescript-const.test.ts:
+(pass) const parameter inputs are valid for the original strict consumer [105.42ms]
+(pass) const modifiers survive parameter model and declaration round trips [81.96ms]
+(pass) printed const parameters preserve literal inference for strict callers [96.64ms]
+
+test/typescript-symbols.test.ts:
+(pass) computed symbol members keep their declaration keys through the model [24.46ms]
+(pass) computed symbol declarations remain usable by strict TypeScript consumers [94.99ms]
+(pass) computed member expressions outside symbol paths are refused explicitly [24.16ms]
+
+test/typescript-call.test.ts:
+(pass) original callable interface and object signatures pass strict consumers [50.07ms]
+(pass) call members preserve overloads and stay distinct from constructs and named methods [66.20ms]
+
+test/typescript-defaults.test.ts:
+(pass) reading generic defaults preserves them in every parameter-bearing declaration [24.21ms]
+(pass) original and printed defaults accept strict callers that omit type arguments [98.95ms]
+
+test/typescript.test.ts:
+(pass) read gives a file's declarations, by TypeScript's own parser [49.48ms]
+(pass) print writes a model as TypeScript prints it, a header first [12.07ms]
+(pass) print writes a name that's an identifier as it is, and quotes any other [10.98ms]
+(pass) print writes a conditional type, and an object alias's members' docs [11.36ms]
+(pass) print writes a union with unknown or any as that keyword [9.30ms]
+(pass) read takes @types/react's element attributes apart [25.88ms]
+(pass) read keeps an export list that names a type as text [12.74ms]
+(pass) print writes erasable syntax only [162.97ms]
+(pass) construct signatures retain generics and optional/rest arguments in every member position [25.23ms]
+
+ 19 pass
+ 0 fail
+ 73 expect() calls
+Ran 19 tests across 5 files. [1132.00ms]

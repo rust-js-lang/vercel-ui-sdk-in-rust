@@ -1,0 +1,68 @@
+bun test v1.4.4 (38afee6c8)
+
+test/typescript-const.test.ts:
+(pass) const parameter inputs are valid for the original strict consumer [202.19ms]
+60 |   writeFileSync(input, declarations);
+61 |   const session = await open([input]);
+62 |   try {
+63 |     const model = await session.read(input);
+64 |     const [keep, plain, constrained, factory, functionType] = model.declarations;
+65 |     expect(keep).toMatchObject({ typeParameters: [{ name: "T", const: true }] });
+                      ^
+error: expect(received).toMatchObject(expected)
+
+  {
++   "declare": true,
++   "exported": true,
++   "kind": "function",
++   "name": "keep",
++   "params": [
++     {
++       "name": "value",
++       "optional": false,
++       "rest": false,
++       "type": {
++         "args": [],
++         "kind": "reference",
++         "name": "T",
++       },
++     },
++   ],
++   "returns": {
++     "args": [],
++     "kind": "reference",
++     "name": "T",
++   },
+    "typeParameters": [
+      {
+-       "const": true,
+        "name": "T",
+      },
+    ],
+  }
+
+- Expected  - 1
++ Received  + 21
+
+      at <anonymous> (<sdk-checkout>/rust-js/test/typescript-const.test.ts:65:18)
+(fail) const modifiers survive parameter model and declaration round trips [30.34ms]
+841 |           ),
+842 |         ],
+843 |         typeNode(m.type),
+844 |       );
+845 |     default:
+846 |       throw new Error(`a ${m.kind} member isn't one TypeScript is given`);
+                      ^
+error: a other member isn't one TypeScript is given
+      at member (<sdk-checkout>/rust-js/typescript/index.js:846:17)
+      at map (1:11)
+      at statement (<sdk-checkout>/rust-js/typescript/index.js:657:29)
+      at <anonymous> (<sdk-checkout>/rust-js/typescript/index.js:168:61)
+      at print (<sdk-checkout>/rust-js/typescript/index.js:182:23)
+      at async <anonymous> (<sdk-checkout>/rust-js/test/typescript-const.test.ts:89:59)
+(fail) printed const parameters preserve literal inference for strict callers [76.66ms]
+
+ 1 pass
+ 2 fail
+ 3 expect() calls
+Ran 3 tests across 1 file. [392.00ms]

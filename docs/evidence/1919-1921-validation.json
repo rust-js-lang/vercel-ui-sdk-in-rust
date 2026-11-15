@@ -1,0 +1,176 @@
+{
+  "date": "2026-11-15",
+  "issues": [
+    1919,
+    1921
+  ],
+  "shipped": false,
+  "activeSeries": [],
+  "base": "705057eb6fd017ea32572ef4a51ded85a4e1cdc6",
+  "reviewCommit": "5727eb5f3fcefb17c85613d1c489aafd5f276ca1",
+  "patch": "patches/rust-js/1919-1921-declaration-readers.review.patch",
+  "patchSha256": "5932a4403a1dd3ab77d3bc1032c693a438a496dc0315043e2563990e2a172a6b",
+  "fullCompilerGate": {
+    "executed": true,
+    "exitCode": 0,
+    "seconds": 420.31,
+    "sourceBase": "705057eb6fd017ea32572ef4a51ded85a4e1cdc6",
+    "otherFiles": 326,
+    "browserFiles": 9,
+    "newOwnerMutantsCaught": 8,
+    "backendBuildIdentity": "9bc91a3415a2375b",
+    "engine": "7.1.0-beta",
+    "log": "docs/evidence/1919-1921-full-check.txt",
+    "limitations": "Fresh compiler build55s/native tests56s;0MB old compiles kept; std-iterator corpus ran whole without ancestor map. Pruner separately5.6s. Whole-gate costs, not an isolated speed-up comparison. Post-gate source/test/catalog unchanged; docs updated only."
+  },
+  "focused": {
+    "reviewBaseBeforeRebase": "157661a07d631b6df86e2267125270b1d0f85b61",
+    "declarationOwnerUnchangedByRebase": true,
+    "newSuites": {
+      "passed": 5,
+      "failed": 0,
+      "assertions": 22,
+      "files": 2
+    },
+    "allParserSuites": {
+      "passed": 19,
+      "failed": 0,
+      "assertions": 73,
+      "files": 5
+    },
+    "consumers": {
+      "passed": 11,
+      "failed": 0,
+      "assertions": 314,
+      "files": 4,
+      "baselinesChanged": false
+    },
+    "static": {
+      "passed": 89,
+      "failed": 0,
+      "assertions": 46805,
+      "files": 2
+    },
+    "typecheckExitCode": 0,
+    "affectedMutantsCaught": 13,
+    "sourceOnlyMutationsBackend": "Identity-verified e0 backend99f613233edef5e7 used only to avoid unused setup build; no backend program in these parser tests. Full gate builds actual705 backend."
+  },
+  "stableProbe": {
+    "engine": "7.0.2",
+    "passed": 5,
+    "failed": 0,
+    "assertions": 22,
+    "files": 2,
+    "adaptations": "Exact declaration logic; only reviewed stable API entry names/namespace factory and test fixture plumbing adapted."
+  },
+  "consumerAudit": [
+    "typescript/index.js: explicit Member call variant and checkedMembers branch; made-up unknown kind remains refused",
+    "builtins/coverage.ts: named property/method and construct selection; skips unnamed calls",
+    "webapi/coverage.ts: named property/method/index/construct selection; skips unnamed calls",
+    "node/coverage.ts: named property/method selection",
+    "next/coverage.ts: named property/method selection",
+    "next/generate-fonts.ts: property selection",
+    "react/attributes.ts: property selection before fields",
+    "react/literals.ts: property selection",
+    "react/generate.ts: property selection for DOM/CSS generation",
+    "react/coverage.ts: declaration export coverage, no Member dispatch"
+  ],
+  "firstSetupAttempt": {
+    "exitCode": 124,
+    "behaviorEvidence": false,
+    "reason": "Bare focused invocation reached30s bound in automatic compiler build; subsequent source-only checks use verified published compiler override, with no timeout increase."
+  },
+  "mutants": [
+    {
+      "name": "typescript-parameter-const-unread",
+      "sha256": "e3f3444254405ba57484488a7e2e17821fcc3455525059ab3e284e920eeaab91",
+      "failures": [
+        "(fail) const modifiers survive parameter model and declaration round trips [40.84ms]"
+      ]
+    },
+    {
+      "name": "typescript-parameter-ordinary-made-const",
+      "sha256": "617fcbeaba706e9aeb1507b924d6bb7756d7f45d8784b0de96051c26bbbd2ec2",
+      "failures": [
+        "(fail) const modifiers survive parameter model and declaration round trips [42.52ms]"
+      ]
+    },
+    {
+      "name": "typescript-call-signature-unread",
+      "sha256": "a1c712e62b25379ff651f251275900f21659428fca1fe6fd9afcf14a3c7cadbf",
+      "failures": [
+        "(fail) call members preserve overloads and stay distinct from constructs and named methods [33.21ms]"
+      ]
+    },
+    {
+      "name": "typescript-call-signature-read-as-construct",
+      "sha256": "21903477756b094d10d2b4a4d1385da227834ec24317c583853136d5947008d7",
+      "failures": [
+        "(fail) call members preserve overloads and stay distinct from constructs and named methods [72.18ms]"
+      ]
+    },
+    {
+      "name": "typescript-call-signature-printed-as-construct",
+      "sha256": "6692f151112c13efaba01b7d266e89500658585931566dba5fd5be23310e55ee",
+      "failures": [
+        "(fail) call members preserve overloads and stay distinct from constructs and named methods [62.80ms]"
+      ]
+    },
+    {
+      "name": "typescript-call-signature-parameters-unprinted",
+      "sha256": "b79d1d1e6aa3c2a090bbf3d142fb030ad4705a8c7e6751cb622aacca19d3b76e",
+      "failures": [
+        "(fail) call members preserve overloads and stay distinct from constructs and named methods [90.64ms]"
+      ]
+    },
+    {
+      "name": "typescript-call-signature-result-any",
+      "sha256": "8d23a26bf4af9643c7814bc8c7351b4b2aace895a335fb898bf58968e5eb67cd",
+      "failures": [
+        "(fail) call members preserve overloads and stay distinct from constructs and named methods [43.46ms]"
+      ]
+    },
+    {
+      "name": "typescript-call-signature-guard-refuses",
+      "sha256": "b7bc0a28989323224d085b6c30c0c8c24802b8b4f68fcf70264f67df379bccb6",
+      "failures": [
+        "(fail) call members preserve overloads and stay distinct from constructs and named methods [46.71ms]"
+      ]
+    },
+    {
+      "name": "typescript-construct-unread",
+      "sha256": "88b77d0658c6da9c5dafa6d3d5ffc2962707ed79a14ea63d6d2344ea3e0040a3",
+      "failures": [
+        "(fail) construct signatures retain generics and optional/rest arguments in every member position [197.31ms]"
+      ]
+    },
+    {
+      "name": "typescript-construct-is-call",
+      "sha256": "17ad50b415a05188467b998515f6ec146f723844d9e2d5dc96a103689ba104c6",
+      "failures": [
+        "(fail) construct signatures retain generics and optional/rest arguments in every member position [176.32ms]"
+      ]
+    },
+    {
+      "name": "typescript-member-unknown-accepted",
+      "sha256": "2abe12958ffe0d9a3fd0585827d14e9fa6b818dfc097cc0c3a44c544db20b6fa",
+      "failures": [
+        "(fail) construct signatures retain generics and optional/rest arguments in every member position [126.03ms]"
+      ]
+    },
+    {
+      "name": "const-type-parameter-unprinted",
+      "sha256": "bf5bd1492bb291433b9292090922253ca8d2c1cae1ce9cd24fa05e180460819d",
+      "failures": [
+        "(fail) print writes a conditional type, and an object alias's members' docs [163.45ms]"
+      ]
+    },
+    {
+      "name": "type-parameter-default-unprinted",
+      "sha256": "c3414bddeb52ac846e04c25b5a913e7c7a5fd28e47562a638bb410a491636bf0",
+      "failures": [
+        "(fail) print writes a conditional type, and an object alias's members' docs [209.53ms]"
+      ]
+    }
+  ]
+}

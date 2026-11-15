@@ -1,0 +1,5 @@
+$ bun rust-js/tooling/cli.js clippy --package ui-sdk-core-in-rust -- -D warnings
+    Checking rust-js-builtins v0.0.2 (<sdk-checkout>/rust-js/builtins)
+    Checking rust-js-webapi v0.0.3 (<sdk-checkout>/rust-js/webapi)
+    Checking ui-sdk-core-in-rust v0.1.0-alpha.1 (<sdk-checkout>/crates/core)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.72s

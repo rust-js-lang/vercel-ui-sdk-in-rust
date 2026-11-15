@@ -1,0 +1,15 @@
+bun test v1.4.4 (38afee6c8)
+
+reader-call.test.ts:
+(pass) original callable interface and object signatures pass strict consumers [171.73ms]
+(pass) call members preserve overloads and stay distinct from constructs and named methods [157.84ms]
+
+reader-const.test.ts:
+(pass) const parameter inputs are valid for the original strict consumer [73.32ms]
+(pass) const modifiers survive parameter model and declaration round trips [111.91ms]
+(pass) printed const parameters preserve literal inference for strict callers [180.46ms]
+
+ 5 pass
+ 0 fail
+ 22 expect() calls
+Ran 5 tests across 2 files. [743.00ms]
