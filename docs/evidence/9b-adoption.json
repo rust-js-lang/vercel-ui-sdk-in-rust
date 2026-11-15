@@ -83,5 +83,6 @@
     },
     "note": "Observed native Rust and Bun on the same machine. No fixed JS Unicode version is assumed."
   },
-  "milestone": "Incomplete core/Web/docs/examples/Pages. No deployment claimed. Unshipped1903/1912 reviews stay outside the active series."
+  "milestone": "Incomplete core/Web/docs/examples/Pages. No deployment claimed. Unshipped1903/1912 reviews stay outside the active series.",
+  "logFormatting": "Saved native/reference logs normalize trailing line whitespace and final blank lines; substantive output is unchanged."
 }

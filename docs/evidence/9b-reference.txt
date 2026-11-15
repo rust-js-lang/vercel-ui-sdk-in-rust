@@ -10,7 +10,7 @@ tests/change-details.test.ts:
 104 |   expect(calls).toEqual(["keys", "descriptor:1", "get:1", "descriptor:2", "get:2", "descriptor:reason", "get:reason", "descriptor:symbol", "get:symbol"]);
 105 |   return rows;
 106 | }
-107 | 
+107 |
 108 | test("change details runtime exports match the complete original module", () => {
 109 |   expect(Object.keys(port).sort()).toEqual(Object.keys(original).sort());
                                          ^
@@ -32,7 +32,7 @@ error: expect(received).toEqual(expected)
 113 |   const rows = contract(original.createDetails);
 114 |   expect(rows.length).toBeGreaterThan(20);
 115 | });
-116 | 
+116 |
 117 | test("createDetails matches the complete original object and cancellation contract", () => {
 118 |   expect(typeof port.createDetails).toBe("function");
                                           ^
@@ -81,7 +81,7 @@ error: expect(received).toEqual(expected)
   {
 -   "diagnostics": "",
 -   "exitCode": 0,
-+   "diagnostics": 
++   "diagnostics":
 + "../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-closest-types-kCLRU6/consumer.ts(1,9): error TS2305: Module '"/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/platform/platform.js"' has no exported member 'composedClosest'.
 + ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-closest-types-kCLRU6/consumer.ts(5,1): error TS2578: Unused '@ts-expect-error' directive.
 + ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-closest-types-kCLRU6/consumer.ts(7,1): error TS2578: Unused '@ts-expect-error' directive.
@@ -110,7 +110,7 @@ error: expect(received).toEqual(expected)
   {
 -   "diagnostics": "",
 -   "exitCode": 0,
-+   "diagnostics": 
++   "diagnostics":
 + "../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(7,29): error TS2344: Type 'false' does not satisfy the constraint 'true'.
 + ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(7,45): error TS2694: Namespace '"/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details"' has no exported member 'ChangeDetails'.
 + ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(8,29): error TS2344: Type 'false' does not satisfy the constraint 'true'.
@@ -263,7 +263,7 @@ tests/physics.test.ts:
 (pass) preset fields remain mutable shared values, including a null dimension [0.12ms]
 
 tests/platform.test.ts:
-21 | 
+21 |
 22 | test("shortcut aliases, Unicode, inherited names and invalid forms retain upstream results", () => {
 23 |   for (const apple of [true, false]) {
 24 |     for (const shortcut of shortcuts) {
@@ -289,7 +289,7 @@ error: expect(received).toEqual(expected)
 94 |     expect(rows[0].initial).toBe(platform === "apple");
 95 |   }
 96 | });
-97 | 
+97 |
 98 | test("platform runtime exports match the complete original module", () => {
 99 |   expect(Object.keys(ported).sort()).toEqual(Object.keys(original).sort());
                                           ^
@@ -319,7 +319,7 @@ error: expect(received).toEqual(expected)
 (fail) platform runtime exports match the complete original module [0.20ms]
  99 |   expect(Object.keys(ported).sort()).toEqual(Object.keys(original).sort());
 100 | });
-101 | 
+101 |
 102 | test("composed closest retains the complete original source structure", () => {
 103 |   const transpiler = new Bun.Transpiler({loader:"js", minifyWhitespace:true, minifySyntax:false, minifyIdentifiers:false});
 104 |   expect(transpiler.transformSync(ported.composedClosest.toString()))
