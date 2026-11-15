@@ -63,4 +63,6 @@ export {
   setPlatform,
   supportsTopLayer,
 } from "./foundation/platform/platform.js";
+
+export { onScrollbar, pressedScrollbar } from "./foundation/platform/scrollbar.js";
 //# sourceMappingURL=lib.js.map

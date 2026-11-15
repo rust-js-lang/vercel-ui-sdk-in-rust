@@ -2,13 +2,33 @@
 
 2026-11-15. Milestone one remains open: complete core, Web Components, Rust docs/live examples, and an actual verified GitHub Pages deployment are required.
 
-## Published compiler adoption
+## Current compiler and SDK checkpoint
 
-The current pin is fa9b630, containing the published Intl/model work and ten owner registrations (9abbb76e3), the queued-exit/workspace fix (fb2e59e74), the nullish-boundary correction (d6e9a72dc), and generic inheritance constraints (c0f460246). The upstream reviewer reports full checks passing and unchanged React regeneration for the Intl and harness landings.
+The published compiler base is ec7990f. It includes the prior Intl/model, harness, nullish-boundary and inheritance-constraint work, plus published native trailing-None/undefined argument corrections. The active #1867 patch adds the validated stable-literal movement fix while upstream review proceeds. It is applied through the single series.json list; setup is checked for idempotence. The private review commits are source evidence, not published compiler revisions.
 
-The exact review-owner tree a8a3675b was compared with 9abbb76e3. No Intl/model/generator/binding/mutation code differs. The differences are the agreed removal of a historical timeout ledger row, an independently added enumerate regression, and the published 21-line #1840 regression. The latter exactly matches the retained local reproduction. Superseded private implementation and reproduction patches are removed; series.json is empty.
+The preparatory split preserves all three function bodies and all 16 existing mutation definitions. The expanded real-WebAPI object/array/global-order regression passes 34 assertions, the native safety unit passes, and all 140 structure/CI/registration tests pass. All 18 moved/new owner mutations are caught; their actual failing test names and log hashes are retained in [the evidence](evidence/1867-validation.json).
 
-The #1866 acceptance test is now upstream. Its Text diagnostic is TS2740, verified against the same declaration written by hand; the string diagnostic is TS2344. The generic closest binding follow-up remains with the bindings owner. No unsafe closest assertion is shipped.
+The first complete gate ends in 429 seconds with exactly two expected-output failures: a newly adopted enum corpus snapshot and the improved readability report. After owner-driven regeneration and review, the clean review tree passes check:fast --all in 307 seconds. The implementation and mutation tests are unchanged; the final run does not repeat the 18 already-caught mutations. Forty-one existing corpus snapshots and the std_traits example now retain stable literals at their uses. The readability report records 94 fewer renamed bindings and 70 fewer role fallbacks. All affected corpus cases agree with native Rust.
+
+These durations describe different workloads and cache states, not an isolated speed-up: the first gate's mutation job takes 390 seconds and keeps 1 MB of prior compiles; the final run keeps 60 MB and has no uncommitted owner mutations to repeat. The final browser group takes 4m27s, the crate corpus 2m06s, and the last active tail is the normal intervals-shadow check. The reserved window's warm estimate was too low; the team was informed and the machine released at terminal status. Complete [first](evidence/1867-first-check.txt) and [final](evidence/1867-final-check.txt) output is retained.
+
+| Current SDK check | Result |
+| --- | --- |
+| Normal linked build | pass |
+| Native Rust | 21 pass |
+| Compiled Rust invariants | 20 pass |
+| Strict Clippy | pass, warnings denied |
+| Complete reference/type suite | 68 pass, 6 fail; 317,431 assertions; 74 tests in 18 files |
+| Scrollbar reference/source tests | 4 pass, 3,788 assertions |
+| Original/compiled scrollbar strict consumers | 2 pass |
+| Targeted scrollbar Chromium comparisons | 2 pass |
+| Complete current Chromium suite | not rerun; historical complete result below retains its original scope |
+
+The six integrated failures are the existing calendar/environment required-input declarations, pending generic closest declaration/export, required own point with undefined, and numeric union getter-order mismatch. No failing assertion is weakened. This checkpoint does not complete the core/Web/docs/Pages milestone.
+
+Bun discovery is scoped to tests/ so an ordinary SDK test does not walk the compiler submodule and generated build trees. Compiled Rust tests still run correctly with that configuration. The observed filtered discovery took 27.84 seconds during the compiler gate; after scoping and using an explicit file path, the four tests took 28 milliseconds. Cache/load and command spelling are not isolated, so these observations are not a benchmark claim.
+
+Formatting is checked for the SDK package with cargo fmt --package ui-sdk-core-in-rust -- --check (pass). An overly broad cargo fmt --all --check also traversed generated path-dependency bindings and hit its 20-second deadline; that command is not the SDK formatting scope. No generated dependency source was rewritten.
 
 ## Last complete integrated SDK snapshot
 
@@ -28,22 +48,18 @@ Source checkpoint:64f9405. Compiler:ef8807570597a4132d4442dd78315a7b39eaba06 plu
 
 A separate closest generic fixture was added later: its original consumer passes and compiled consumer remains failing because the function is intentionally absent pending the binding design. The table is not relabelled as a new-pin or new-fixture full run.
 
-## Targeted scrollbar work
+## Complete scrollbar module
 
-The complete two-function scrollbar module is prepared in the working tree, not committed as a completed port. On fb2e59e74 plus the then-pending feature, its build passes;3 reference tests pass3,786 assertions, both original/compiled strict consumers pass, and2 Chromium comparisons pass. The browser cases cover real LTR/RTL, detached, text, root and iframe nodes, plus getter order, root/zero-size early exits and thrown-value identity. The focused native RTL gutter/bottom-rail boundary test now passes (one test; 20 filtered out) on the current working source.
+Both original runtime exports are ported. Native RTL gutter/bottom-rail tests cover borders, content, nonfinite coordinates and rail boundaries. Differential numerical matrices cover fractional geometry and getter/short-circuit read order. Strict TypeScript consumers accept valid original callers and reject invalid ones. Chromium compares real LTR/RTL, detached, text, root and iframe nodes, plus getter order, root/zero-size early exits and thrown-value identity.
 
-The generated numeric function matches the original structure. The DOM wrapper retains unnecessary aggregate-argument temporaries, #1867. A reduced real-WebAPI object case passes ten runtime rows and then fails its source assertion on four extra bindings. A smaller plain-field case already passed and was not falsely presented as a reproduction.
-
-The proposed fix extends the existing stable-literal predicate to ordinary objects and arrays. Before the preparatory split, its expanded object/array/global-read regression passes 34 assertions; the owner safety unit and new native differential corpus case also pass. The first full compiler gate exits 1 after 535 seconds: 40 corpus snapshot mismatches, one example snapshot mismatch, mutation registration and architecture checks need follow-up. Recorded corpus problems are snapshot-only; this is not a claim that the full gate passes.
-
-The size rule requires a separate preparatory split of the existing stability predicates and their mutation catalog. Its initial build exposes two missing imports; these are corrected, with rebuilding and full validation pending the compiler team's shared-machine audit. All 18 moved/new mutation anchors apply in a lightweight preflight; mutant execution remains pending. The private review base is 8bcb4049e, while the published SDK gitlink remains fa9b630. The existing constant-object mutation now targets its original behavior through the new owner rather than mutating a fallback ordinary objects no longer reach. patches/rust-js/1867-stable-literal-arguments-review.patch is review-only and excluded from setup. No new scrollbar source is marked complete.
+Both generated function bodies match the pinned original after TypeScript erasure, formatting and export-placement normalization only. A regression enforces that complete comparison. Rust retains the original comments, destructuring, native instanceof check, repeated getters, parseFloat fallback and coordinate/property evaluation order. The #1867 patch removes the earlier unneeded aggregate-argument temporaries without reshaping the Rust source.
 
 ## Retained gaps
 
 - #1845: required own point with undefined and required input arity remain failing. No assertions are weakened.
 - #1846: union property classification reads a getter where the original tests membership; the evaluation-order regression remains failing.
 - Generic closest: optional_call exists and inheritance constraints are fixed; the native selector/generic result binding is still required. Complete-export, browser and separate strict consumer failures remain visible.
-- #1867: source fidelity of nested native getter argument literals remains under validation.
+- #1867: source fidelity is validated through the retained patch; published upstream adoption remains pending.
 - Full change-source/createDetails vocabulary and scope-guard output #1833, projection output #1814, undo-stack output #1815/#1816, Date numeric binding coverage #1837 and Locale week-info/library-version policy #1831 remain part of the audit.
 
 Published #1862 keeps the document fallback lazy; native, compiled and explicit-document/no-global comparisons pass at the recorded snapshot. Published #1863 removes the two private bool-index cache checks. The nonempty-split helper and broader source/output differences remain under audit.

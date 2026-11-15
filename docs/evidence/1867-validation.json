@@ -1,0 +1,259 @@
+{
+  "date": "2026-11-15",
+  "issue": "https://github.com/rust-js-lang/rust-js/issues/1867",
+  "upstream": "220c1a0d7278872286a620a8e4ee4210ca46f9bd",
+  "compiler": {
+    "publishedBase": "ec7990f147f07c2828e1e6e313f0ad8110d61e59",
+    "localReviewSplit": "6752bd42e9910574b8509829ac684d083ce1904d",
+    "localReviewFeature": "a1338f380a99acdafd980ebfdf1c44cd21e87670",
+    "sourceTree": "82c11b36b7f9110f0028656d6d61d411f3e03e8d",
+    "patch": "1867-stable-literal-arguments.patch",
+    "patchSha256": "b4d396a6f872ebb930b8f2017f223348129184e40b09a7b75e2adb9889d575c5",
+    "patchReconstruction": {
+      "tree": "82c11b36b7f9110f0028656d6d61d411f3e03e8d",
+      "matchesValidatedSourceTree": true
+    },
+    "setupIdempotence": {
+      "exitCodes": [
+        0,
+        0
+      ],
+      "state": "complete series already applied on its published base"
+    }
+  },
+  "preparatorySplit": {
+    "functionBodies": "unchanged after formatting and required visibility change",
+    "existingMutationDefinitionsPreserved": 16
+  },
+  "focused": {
+    "realWebApi": {
+      "tests": 1,
+      "assertions": 34
+    },
+    "nativeSafety": {
+      "passed": 1
+    },
+    "structureCiRegistry": {
+      "passed": 140,
+      "assertions": 47046
+    }
+  },
+  "compilerGates": {
+    "first": {
+      "exit": 1,
+      "seconds": 429,
+      "failures": [
+        "one newly adopted corpus snapshot",
+        "improved readability report"
+      ],
+      "ownerMutationJobSeconds": 390
+    },
+    "final": {
+      "exit": 0,
+      "seconds": 307,
+      "scope": "check:fast --all on clean detached review HEAD; all 18 mutations already caught on the identical implementation in the preceding gate"
+    }
+  },
+  "mutations": [
+    {
+      "name": "mir-tidy-stable-literal-arguments-kept",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) native getter arguments stay in nested literals with evaluation order intact [310.22ms]"
+      ],
+      "logSha256": "4bda0ac518c2e7359b1f37f28d5779f63886c48be8c051b11045b42cb8e73420"
+    },
+    {
+      "name": "mir-tidy-literal-contents-unchecked",
+      "verdict": "caught",
+      "failedTests": [
+        "test lower::mir::tidy::literal_movement_tests::fresh_literals_require_stable_contents ... FAILED"
+      ],
+      "logSha256": "e9d1816bcd496e7c216f5850ca925031fc8b5a3d1f03f4f7f0356eee4ff8bfec"
+    },
+    {
+      "name": "mir-tidy-inlined-past-changed-reads",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) assignment_order.rs [1652.30ms]"
+      ],
+      "logSha256": "8e67ac5622de67a6a44bc4d85858b36d3f2df49b643f03f99667928423de6828"
+    },
+    {
+      "name": "mir-tidy-constant-objects-block",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) a call from MIR is read in place past an object of constants before it [143.06ms]"
+      ],
+      "logSha256": "53d20a7a8084ee55bef7a8396a76f247ae43c93755f99b3c95ccef64e5427627"
+    },
+    {
+      "name": "plain-field-blocks-inline",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) adapter_size_hints.rs [153.21ms]",
+        "(fail) adapter_drops.rs [768.10ms]",
+        "(fail) address_of_what_a_cell_lends.rs [151.10ms]",
+        "(fail) adapter_made_in_generic_code_asked_its_hint.rs [164.97ms]",
+        "(fail) adapter_of_a_borrowed_iterator_where_addresses_are_asked.rs [243.30ms]",
+        "(fail) copied_given_len.rs [107.13ms]",
+        "(fail) cycle_drops_what_it_replaces.rs [116.38ms]"
+      ],
+      "logSha256": "4de456d4b5ebf428d4291d0ba765d05754109b82184e68d490c944c1b8b46a5c"
+    },
+    {
+      "name": "mir-tidy-import-blocks-inline",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) a prop held for a borrow is read where it's written, past an imported tag [406.95ms]"
+      ],
+      "logSha256": "4c71660833f6cd52218d4e1e1a239f3a842d637e0014cd9f1bff5d0035bde943"
+    },
+    {
+      "name": "mir-tidy-sibling-element-blocks",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) JSX keeps children that read what never changes, and a filtered child, in place [254.19ms]"
+      ],
+      "logSha256": "d9cbe9beec08dc96ae999f33c6f8298b71e53ee8d004abaf78b00e9acd34bb28"
+    },
+    {
+      "name": "mir-tidy-closure-made-blocks",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) props held ahead of a closure child are read where they're written [250.70ms]"
+      ],
+      "logSha256": "27812e1dbe5f2ea5fe410ce45ec2c3db2c5bf769216c135997bd02aaeaa16b72"
+    },
+    {
+      "name": "mir-tidy-choice-blocks",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) JSX keeps a field of what never changes in place [279.23ms]"
+      ],
+      "logSha256": "a7fc18537273254d06c0dd81c85cdfb6112dd6579cefea13df9ef6a80aaebe4e"
+    },
+    {
+      "name": "inert-element-chosen-not",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) apis: the generated JS is its snapshot [1510.95ms]"
+      ],
+      "logSha256": "eb6ed423de288eebe7966f514686a63a6219d4822ad3c23c241a5e2c0c857ad6"
+    },
+    {
+      "name": "spread-items-not-read-past-calls",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) arrays joined are one array of their items [171.05ms]"
+      ],
+      "logSha256": "118fbfddca0b5c02ca22be824c3f56b3cf500e4537b020165f57a267892e49e2"
+    },
+    {
+      "name": "mir-tidy-template-unread-past",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) format_args_order.rs [1191.49ms]"
+      ],
+      "logSha256": "e9bdf502e9502440a5cbd2b015a1da6bea9dc80e3ade86426de63c39e82e5ceb"
+    },
+    {
+      "name": "mir-tidy-pure-call-unread-past",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) text_edits.rs [1244.83ms]"
+      ],
+      "logSha256": "87b44b5cef9e0a664b817dc1a74ddfbea1e46e94121f5ea6073622c194eb6cca"
+    },
+    {
+      "name": "mir-tidy-item-unread-past",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) const_generic_traits.rs [1499.23ms]"
+      ],
+      "logSha256": "623578a25127471e9c03c58d5554c1e7a8670ad81c243db61fc020bffaf7630c"
+    },
+    {
+      "name": "tidy-applied-call-not-past",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) iter_next_back.rs [1477.86ms]"
+      ],
+      "logSha256": "9b0454693f2c33496d15f8fa6cb3a7f9bce3ad51c855db1dae7d6d72f7984282"
+    },
+    {
+      "name": "plain-iterator-spread-passes",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) inspect_by_a_function_before_a_chain_argument.rs [872.37ms]"
+      ],
+      "logSha256": "06621a39504273eae7d23f6ca5a8dd020137741e65fd61834595acd405d16598"
+    },
+    {
+      "name": "plain-field-of-a-struct-beside-a-cell-not-read-past-calls",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) literal_of_a_struct_beside_a_cell.rs [1070.06ms]"
+      ],
+      "logSha256": "296c608cdfcc1daf7357ff027f7b19384faa82aa119ef860647e3b1270ecef72"
+    },
+    {
+      "name": "js-global-unknown-to-tidy",
+      "verdict": "caught",
+      "failedTests": [
+        "(fail) a value `{:?}` reads twice is held past a JS global's read [132.84ms]"
+      ],
+      "logSha256": "69aa7f658c1a4ba32a9a67b6dea98d1f2c5ae5e7b043623bbfd41ddf2a070dcf"
+    }
+  ],
+  "sdk": {
+    "native": {
+      "passed": 21
+    },
+    "compiledRust": {
+      "passed": 20
+    },
+    "clippy": {
+      "exit": 0,
+      "warnings": "denied"
+    },
+    "referenceAndTypes": {
+      "passed": 68,
+      "failed": 6,
+      "assertions": 317431,
+      "tests": 74,
+      "files": 18
+    },
+    "scrollbar": {
+      "referenceAndSource": {
+        "passed": 4,
+        "assertions": 3788
+      },
+      "strictConsumers": {
+        "passed": 2
+      },
+      "chromium": {
+        "passed": 2
+      },
+      "sourceComparison": "complete function bodies equal after type erasure, formatting and export placement normalization only"
+    },
+    "remainingFailures": [
+      "calendar required input declaration",
+      "environment required input declaration",
+      "composedClosest generic declaration",
+      "required own point property with undefined",
+      "numeric union membership reads a getter",
+      "missing composedClosest runtime export"
+    ],
+    "format": {
+      "command": "cargo fmt --package ui-sdk-core-in-rust -- --check",
+      "exit": 0
+    }
+  },
+  "scope": "A validated scrollbar module and compiler correction, not completion of the full core/Web/docs/Pages milestone. Upstream compiler review remains pending.",
+  "upstreamInventory": {
+    "revision": "220c1a0d7278872286a620a8e4ee4210ca46f9bd",
+    "files": 2611,
+    "unchanged": true
+  }
+}

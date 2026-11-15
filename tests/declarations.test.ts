@@ -147,3 +147,16 @@ for (const kind of ["upstream", "compiled"] as const) test("composed closest dec
     expect(check(file)).toEqual({exitCode: 0, diagnostics: ""});
   } finally {rmSync(directory, {recursive: true, force: true});}
 });
+
+for (const kind of ["upstream", "compiled"] as const) test("scrollbar declarations preserve point, geometry and pointer contracts: " + kind, async () => {
+  const directory = mkdtempSync(join(tmpdir(), "ui-sdk-scrollbar-types-"));
+  try {
+    const fixture = await Bun.file(resolve(import.meta.dir, "types/scrollbar.ts")).text();
+    const target = kind === "upstream"
+      ? resolve(upstream, "packages/core/src/foundation/platform/scrollbar.ts")
+      : resolve(root, "crates/core/src/foundation/platform/scrollbar.js");
+    const file = join(directory, "consumer.ts");
+    await Bun.write(file, fixture.replace("../../crates/core/src/foundation/platform/scrollbar.js", target));
+    expect(check(file)).toEqual({exitCode: 0, diagnostics: ""});
+  } finally {rmSync(directory, {recursive: true, force: true});}
+});

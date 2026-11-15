@@ -1,0 +1,3 @@
+# Keep test discovery inside the SDK; the compiler submodule has its own suite.
+[test]
+root = "tests"

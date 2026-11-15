@@ -1,0 +1,52 @@
+$ bun scripts/checkFast.ts --all
+cargo build 505 ms (usual 500 ms)
+pruning what tests keep 3.2 s (usual 6.0 s)
+pruning kept compiles 1.1 s (usual 3.3 s): 60 MB kept
+node bindings build 3.5 s (usual 3.1 s)
+no test map of HEAD or an ancestor of it on this machine: `bun run test-map` records one: the corpus with std's iterator structs runs whole
+test/child.test.ts: warning: child observed 411 ms past its 1000 ms deadline (<bun> -e): a blocked parent or a slow child
+ok   check:fast corpus 10/14 38 s (usual 1 min 37 s)
+ok   check:fast the declarations' TypeScript callers 39 s
+ok   check:fast corpus 12/14 40 s (usual 1 min 39 s)
+ok   check:fast corpus 14/14 40 s (usual 1 min 33 s)
+ok   check:fast corpus 11/14 41 s (usual 1 min 34 s)
+ok   check:fast corpus 7/14 41 s (usual 1 min 38 s)
+ok   check:fast corpus 2/14 41 s (usual 1 min 40 s)
+ok   check:fast corpus 6/14 41 s (usual 1 min 35 s)
+ok   check:fast corpus 9/14 41 s (usual 1 min 37 s)
+ok   check:fast corpus 1/14 42 s (usual 1 min 35 s)
+ok   check:fast clippy 1.6 s (usual 26 s)
+ok   check:fast the metamorphic rewrites of the change's cases 15 s
+ok   check:fast cargo test 1.5 s (usual 25 s)
+ok   check:fast corpus 8/14 48 s (usual 1 min 36 s)
+ok   check:fast corpus 13/14 47 s (usual 1 min 41 s)
+ok   check:fast corpus 5/14 47 s (usual 1 min 33 s)
+ok   check:fast corpus 4/14 48 s (usual 1 min 18 s)
+ok   check:fast corpus 3/14 48 s (usual 1 min 40 s)
+ok   check:fast the metamorphic sample 11/14 12 s (usual 14 s)
+ok   check:fast the Vite example's build 3.5 s (usual 9.5 s)
+ok   check:fast the metamorphic sample 12/14 19 s (usual 18 s)
+ok   check:fast the metamorphic sample 13/14 21 s (usual 31 s)
+ok   check:fast the metamorphic sample 10/14 12 s (usual 13 s)
+ok   check:fast the metamorphic sample 4/14 10.0 s (usual 12 s)
+ok   check:fast the metamorphic sample 6/14 12 s (usual 17 s)
+ok   check:fast the metamorphic sample 1/14 28 s (usual 36 s)
+ok   check:fast the metamorphic sample 3/14 24 s (usual 30 s)
+ok   check:fast the metamorphic sample 9/14 34 s (usual 44 s)
+ok   check:fast the metamorphic sample 2/14 18 s (usual 26 s)
+ok   check:fast the object model's sample 57 s (usual 1 min 4 s)
+ok   check:fast the metamorphic sample 14/14 9.2 s (usual 14 s)
+ok   check:fast the metamorphic sample 7/14 9.8 s (usual 14 s)
+ok   check:fast the metamorphic sample 5/14 11 s (usual 16 s)
+ok   check:fast the metamorphic sample 8/14 12 s (usual 17 s)
+ok   check:fast fmt 9.5 s (usual 9.6 s)
+ok   check:fast the `&mut` matrix's sample 8.1 s (usual 8.4 s)
+ok   check:fast the `None` matrix's sample 2.9 s (usual 4.5 s)
+ok   check:fast the browsers' test files 4 min 27 s (usual 4 min 47 s) (9 files)
+ok   check:fast the crate corpus 2 min 6 s (usual 1 min 44 s)
+ok   check:fast typecheck 562 ms (usual 500 ms)
+ok   check:fast readability passes 39 s
+ok   check:fast every other test file 4 min 58 s (usual 6 min) (313 files)
+the cores 94% busy on average, under half busy 3% of the time
+
+all passed: check:fast --all 5 min 7 s (usual 7 min 1 s)

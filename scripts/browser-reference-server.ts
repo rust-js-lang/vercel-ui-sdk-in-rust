@@ -9,6 +9,8 @@ if (revision.exitCode !== 0 || revision.stdout.toString().trim() !== provenance.
 }
 
 const entries = [
+  ["/reference/scrollbar.js", resolve(upstream, "packages/core/src/foundation/platform/scrollbar.ts")],
+  ["/ported/scrollbar.js", resolve(root, "crates/core/src/foundation/platform/scrollbar.js")],
   ["/reference/platform.js", resolve(upstream, "packages/core/src/foundation/platform/platform.ts")],
   ["/ported/platform.js", resolve(root, "crates/core/src/foundation/platform/platform.js")],
   ["/reference/env.js", resolve(upstream, "packages/core/src/foundation/platform/env.ts")],

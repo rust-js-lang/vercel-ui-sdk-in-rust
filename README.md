@@ -22,11 +22,12 @@ bun run test:compiled
 bun run test
 bun run test:browser
 bun run clippy
+cargo fmt --package ui-sdk-core-in-rust -- --check
 bun run check:upstream
 ```
 
-The published compiler now includes the Intl/model feature, its ten source-owner mutations, the native optional-argument correction, the worker/queued-exit harness fix, and generic inheritance constraints. Their private implementation patches are removed; the application list in patches/rust-js/series.json is empty. The pending #1867 review artifact is excluded from setup.
+The compiler is pinned to published ec7990f plus the active, validated #1867 patch in [the patch series](patches/rust-js/README.md). Earlier Intl/model, optional-argument, harness and inheritance fixes are upstream. Setup reconstructs exactly the compiler source tree that passed the complete local gate and is checked for idempotence. The new patch remains until upstream review and adoption.
 
-The last complete SDK snapshot passed 20 native tests, 19 compiled invariants and strict Clippy, with 61 reference passes/5 failures and 20 Chromium passes/1 failure. A separate closest generic contract remains failing while its native binding form is completed. These results retain their exact older source/pin in [validation evidence](docs/validation.md); they are not a full check of the latest compiler or unfinished scrollbar module.
+The complete scrollbar module now preserves the original function bodies and has native, differential, strict-type and Chromium coverage. Current checks pass 21 native tests, 20 compiled invariants and strict Clippy. The complete reference/type suite reports 68 passes and six retained failures; the two targeted scrollbar Chromium cases pass. The latest complete Chromium suite has not been rerun. Exact scopes, compiler-gate results and all 18 caught owner mutations are in [the validation evidence](docs/validation.md).
 
-The scrollbar port has targeted reference/type/browser proof but remains outside the published SDK pending the compiler source-fidelity fix in [#1867](https://github.com/rust-js-lang/rust-js/issues/1867). No source workaround or release completion is claimed.
+The six reference/type failures remain visible around required optional-value contracts, numeric union membership and the pending generic closest API. This checkpoint does not complete milestone one.

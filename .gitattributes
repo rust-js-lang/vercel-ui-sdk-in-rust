@@ -1,2 +1,2 @@
-# A blank context line in a unified patch contains one meaningful space.
-patches/rust-js/*.patch whitespace=-blank-at-eol
+# Unified patches keep meaningful blank context lines, including at EOF.
+patches/rust-js/*.patch whitespace=-blank-at-eol,-blank-at-eof

@@ -1,0 +1,157 @@
+$ bun scripts/checkFast.ts --all
+cargo build 513 ms (usual 550 ms)
+pruning what tests keep 6.2 s (usual 5.1 s)
+pruning kept compiles 3.3 s (usual 2.4 s): 1 MB kept, another build's dropped
+node bindings build 3.3 s (usual 3.1 s)
+no test map of HEAD or an ancestor of it on this machine: `bun run test-map` records one: the corpus with std's iterator structs runs whole
+ok   check:fast corpus 11/14 45 s (usual 1 min 36 s)
+ok   check:fast corpus 12/14 44 s (usual 1 min 41 s)
+ok   check:fast corpus 1/14 46 s (usual 1 min 36 s)
+ok   check:fast corpus 10/14 43 s (usual 1 min 39 s)
+ok   check:fast corpus 2/14 47 s (usual 1 min 42 s)
+FAIL corpus 9/14 (49s), its whole output: <workspace>/rust-js/.cache/check-logs/2026-11-15T02-41-29-566Z-58648
+ok   check:fast the declarations' TypeScript callers 1 min 10 s
+ok   check:fast cargo test 1.6 s (usual 25 s)
+ok   check:fast the metamorphic rewrites of the change's cases 21 s
+ok   check:fast corpus 8/14 57 s (usual 1 min 37 s)
+test/child.test.ts: warning: child observed 421 ms past its 1000 ms deadline (<bun> -e): a blocked parent or a slow child
+ok   check:fast corpus 13/14 59 s (usual 1 min 45 s)
+ok   check:fast corpus 4/14 59 s (usual 1 min 33 s)
+ok   check:fast the metamorphic sample 11/14 14 s (usual 13 s)
+ok   check:fast the metamorphic sample 6/14 19 s (usual 16 s)
+ok   check:fast the metamorphic sample 13/14 40 s (usual 30 s)  ⚠ slower than usual: why?
+ok   check:fast the Vite example's build 18 s (usual 9.0 s)  ⚠ slower than usual: why?
+ok   check:fast clippy 56 s (usual 17 s)  ⚠ slower than usual: why?
+ok   check:fast the metamorphic sample 1/14 29 s (usual 37 s)
+ok   check:fast the metamorphic sample 10/14 10 s (usual 14 s)
+ok   check:fast the metamorphic sample 4/14 10 s (usual 13 s)
+ok   check:fast the metamorphic sample 7/14 12 s (usual 14 s)
+ok   check:fast the metamorphic sample 5/14 11 s (usual 16 s)
+ok   check:fast corpus 6/14 37 s (usual 1 min 36 s)
+ok   check:fast corpus 14/14 36 s (usual 1 min 34 s)
+ok   check:fast corpus 7/14 35 s (usual 1 min 43 s)
+ok   check:fast corpus 5/14 32 s (usual 1 min 47 s)
+ok   check:fast the metamorphic sample 3/14 18 s (usual 31 s)
+ok   check:fast the metamorphic sample 2/14 17 s (usual 27 s)
+ok   check:fast corpus 3/14 32 s (usual 1 min 47 s)
+ok   check:fast the metamorphic sample 9/14 29 s (usual 49 s)
+ok   check:fast fmt 14 s (usual 9.4 s)
+ok   check:fast the object model's sample 1 min 3 s (usual 1 min 5 s)
+ok   check:fast the metamorphic sample 12/14 24 s (usual 17 s)  ⚠ slower than usual: why?
+ok   check:fast readability passes 51 s
+ok   check:fast the `None` matrix's sample 7.4 s (usual 4.1 s)
+ok   check:fast the metamorphic sample 14/14 15 s (usual 14 s)
+ok   check:fast the metamorphic sample 8/14 17 s (usual 17 s)
+FAIL test/readability.test.ts (1s), its whole output: <workspace>/rust-js/.cache/check-logs/2026-11-15T02-41-29-566Z-58648
+ok   check:fast the `&mut` matrix's sample 7.4 s (usual 8.4 s)
+ok   check:fast the browsers' test files 6 min (usual 4 min 45 s)  ⚠ slower than usual: why? (9 files)
+ok   check:fast the crate corpus 43 s (usual 1 min 48 s)
+ok   check:fast typecheck 544 ms (usual 500 ms)
+ok   check:fast mutations the change adds 6 min 30 s (usual 1 min 6 s)  ⚠ slower than usual: why?
+the cores 94% busy on average, under half busy 4% of the time
+
+── corpus 9/14 ──
+ines.rs [404.97ms]
+(pass) stepped_range_loops.rs [299.53ms]
+(pass) str_split_once_by_a_closure_searches_as_std.rs [189.81ms]
+(pass) struct_keys_of_a_type_parameter.rs [697.43ms]
+(pass) switch_default_comment.rs [257.11ms]
+(pass) switch_of_an_optional_bool.rs [336.52ms]
+(pass) take_destructors.rs [489.55ms]
+(pass) temporary_shaped_names.rs [252.72ms]
+(pass) thread_local_exported_at_load.rs [262.50ms]
+(pass) thread_local_set_before_use.rs [389.36ms]
+(pass) trailing_none_items.rs [336.11ms]
+(pass) trie_of_counted_rcs.rs [315.36ms]
+(pass) tuple_part_set_through_a_dyn.rs [193.78ms]
+(pass) union_bytes.rs [193.15ms]
+(pass) unread_map_of_a_held_iterator.rs [172.47ms]
+(pass) untagged_null_option_held.rs [386.67ms]
+(pass) unwrap_none.rs [198.81ms]
+(pass) user_into_iter.rs [194.92ms]
+(pass) vec_capacity_grown.rs [445.36ms]
+(pass) vec_into_array.rs [291.60ms]
+(pass) while_let_at_end.rs [338.69ms]
+(pass) wrapping_assign_of_a_copy.rs [174.93ms]
+(pass) write_result_through_a_dictionary.rs [340.12ms]
+(pass) writer_sink_fn_value_of_a_dictionary_type.rs [373.81ms]
+(pass) writer_sink_unit_made_by_a_call.rs [142.95ms]
+(pass) zip_fold_steps_the_shorter.rs [273.85ms]
+(pass) zip_of_own_from_its_back_asks_each_len_once.rs [301.75ms]
+(skip) a directive native Rust disagrees with is reported
+(skip) an ignored case that passes is reported, so the list only shrinks
+(skip) a case whose library JS differs, or doesn't, as its directive doesn't say, is reported
+(skip) a compile-fail case rust-js compiles, or rejects for another reason, is reported
+(skip) unknown and repeated directives are reported
+(skip) print! without a process writes whole lines, and loses none
+(skip) a crate's own features and edition are its own
+(skip) rustc checks programs for rust-js's 32-bit usize
+(skip) a crate's own features are read from its syntax, not its text
+(skip) a crate's own features and tools are as rustc configures them
+(skip) an unexpected cfg is rustc's warning, not a panic
+
+13 tests skipped:
+(skip) the corpus has cases
+(skip) every snapshot in the corpus is the JS of a case that runs
+(skip) a directive native Rust disagrees with is reported
+(skip) an ignored case that passes is reported, so the list only shrinks
+(skip) a case whose library JS differs, or doesn't, as its directive doesn't say, is reported
+(skip) a compile-fail case rust-js compiles, or rejects for another reason, is reported
+(skip) unknown and repeated directives are reported
+(skip) print! without a process writes whole lines, and loses none
+(skip) a crate's own features and edition are its own
+(skip) rustc checks programs for rust-js's 32-bit usize
+(skip) a crate's own features are read from its syntax, not its text
+(skip) a crate's own features and tools are as rustc configures them
+(skip) an unexpected cfg is rustc's warning, not a panic
+
+
+1 tests failed:
+(fail) enum_variants_of_the_same_fields_copied_and_compared_once.rs [1804.04ms]
+
+ 182 pass
+ 13 skip
+ 1 fail
+ 183 expect() calls
+Ran 196 tests across 1 file. [48.74s]
+
+
+── test/readability.test.ts ──
+bun test v1.4.4 (38afee6c8)
+not yet in docs/readability.txt, counted once it's blessed: test/corpus/literal_argument_read_order.js
+
+test/readability.test.ts:
+48 |   const now = new Map(files.map((file) => [file.slice(root.length + 1), measure(readFileSync(file, "utf8").split("\n"))]));
+49 |   if (process.env.BLESS) writeFileSync(baseline, report(now));
+50 |   const { grown, better, added } = moved(measuredOf(readFileSync(baseline, "utf8")), now);
+51 |   if (added.length > 0) console.log(`not yet in docs/readability.txt, counted once it's blessed: ${added.join(", ")}`);
+52 |   expect(grown, "the generated JS reads worse: read the construct, and bless it only where its ADR says why").toEqual([]);
+53 |   expect(better, "the generated JS reads better: run `bun run bless` and review the diff").toEqual([]);
+                                                                                                ^
+error: the generated JS reads better: run `bun run bless` and review the diff
+
+- []
++ [
++   "renamed x$1: 474.2 to 471.7 in 10,000 lines",
++   "role fallbacks: 260.1 to 258.1 in 10,000 lines",
++ ]
+
+- Expected  - 1
++ Received  + 4
+
+      at <anonymous> (<workspace>/rust-js/test/readability.test.ts:53:92)
+(fail) the generated JS reads no worse than it read: no shape's share grew [381.09ms]
+(pass) a label in the generated JS is one its Rust wrote [106.51ms]
+(pass) a case added moves no share, and a shape added to a case grows one [0.43ms]
+(pass) each shape is a line's, and the gate counts them all [1.72ms]
+
+ 3 pass
+ 1 fail
+ 12 expect() calls
+Ran 4 tests across 1 file. [519.00ms]
+
+
+each failing job's whole output: <workspace>/rust-js/.cache/check-logs/2026-11-15T02-41-29-566Z-58648
+
+2 failed in 429s
+error: script "check:fast" exited with code 1

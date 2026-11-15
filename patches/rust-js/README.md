@@ -1,11 +1,11 @@
-# Compiler review artifacts
+# Compiler patch series
 
-Published pin: fa9b630. Intl/model support and its ten source-owner registrations, the unchanged #1840 regression, the #1861 harness correction, and #1866 generic inheritance constraints are upstream. Their superseded private implementation and reproduction patches are removed.
+Published compiler base: ec7990f. series.json owns the ordered patch list.
 
-series.json is the single ordered application list. It is currently empty; setup applies no implementation patch.
+1867-stable-literal-arguments.patch applies the validated stable-literal movement correction and its preparatory stability-owner split. It includes the safety proofs, 18 caught owner mutations, 41 reviewed existing corpus snapshots, the std_traits example snapshot and their derived readability report. It reuses the existing recursive stability predicate; no observable Rust/JavaScript difference is accepted.
 
-1867-stable-literal-arguments-review.patch retains a pending movement-owner fix and proof against 8bcb4049e. Before the preparatory module split, the expanded real-WebAPI object/array/global-order test passes 34 assertions, the native safety unit test passes, and the new native differential corpus case passes. The first complete gate exits 1 after 535 seconds: 40 corpus snapshots, one example snapshot, mutation registration and architecture checks require follow-up. The architecture size rule requires moving the existing stability owner and its mutations before extending it. All 18 moved/new mutation anchors apply after retargeting; that preflight does not prove that the tests catch the mutants. The initial split build found two missing imports, now corrected but not rebuilt during the team audit. This review artifact is excluded from setup and remains unvalidated as a complete fix.
+The first complete gate on this implementation catches all 18 owner mutants and finishes in 429 seconds with only one newly adopted snapshot mismatch and an improved readability baseline. Those goldens are regenerated and reviewed. The final clean review tree passes check:fast --all in 307 seconds. The implementation and mutation tests do not change between these runs. Exact bases, local review objects, caught-test names and scoped results are retained in docs/evidence/1867-validation.json and the two check logs. The local review objects are not published compiler revisions.
 
-The scrollbar port remains uncommitted pending its full source/output audit. The closest native generic binding follow-up also remains with the upstream owner; no unsafe closest assertion is published.
+The patch is active in setup so a clean checkout reproduces the scrollbar port while upstream review proceeds. Remove it after adopting the published fix and checking the affected SDK paths. Earlier Intl/model, nullish-boundary, harness and inheritance-constraint fixes are already published and have no retained duplicate implementation patch.
 
-Historical measurements retain their exact scopes in docs/validation.md, docs/mutation-preparation-1861.md and docs/evidence/1861-core-outcomes.json.
+The faithful generic closest result binding is still pending; no unsafe closest assertion is shipped. Historical measurements retain their original scopes in docs/validation.md and docs/mutation-preparation-1861.md.

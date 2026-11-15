@@ -46,3 +46,7 @@ pub use foundation::platform::support::{
     format_shortcut, has_command_modifier, initial_apple, is_apple, matches_shortcut,
     portal_target, prefers_reduced_motion, set_platform, supports_top_layer,
 };
+
+pub use foundation::platform::scrollbar::{
+    ScrollbarBorders, ScrollbarBox, ScrollbarPoint, on_scrollbar, pressed_scrollbar,
+};

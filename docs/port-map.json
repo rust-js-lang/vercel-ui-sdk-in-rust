@@ -319,6 +319,27 @@
         "https://github.com/rust-js-lang/rust-js/issues/1863",
         "https://github.com/rust-js-lang/rust-js/issues/1866"
       ]
+    },
+    {
+      "source": "packages/core/src/foundation/platform/scrollbar.ts",
+      "rust": "crates/core/src/foundation/platform/scrollbar.rs",
+      "status": "implemented",
+      "exports": [
+        "onScrollbar",
+        "pressedScrollbar"
+      ],
+      "evidence": [
+        "tests/scrollbar.test.ts",
+        "tests/browser/scrollbar.spec.ts",
+        "tests/types/scrollbar.ts",
+        "tests/declarations.test.ts",
+        "docs/evidence/1867-validation.json",
+        "docs/validation.md"
+      ],
+      "issues": [
+        "https://github.com/rust-js-lang/rust-js/issues/1867"
+      ],
+      "remaining": "Compiler correction is retained as the active, validated patch pending upstream adoption."
     }
   ]
 }
