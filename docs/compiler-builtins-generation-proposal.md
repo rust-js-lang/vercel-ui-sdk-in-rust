@@ -17,7 +17,7 @@ Proposed #1903 implementation:
 3. Use this one session/library selection for both member coverage and argument-union conformance. Remove the old year regex and the typescript-es dependency. The parser's existing exact pin becomes the library pin too, already satisfying the approved 7.0.2+ minimum.
 4. Keep definitions as the single update command. Its metadata requests must run through Bun, preserving its existing release cool-off and approved release channels. Include the builtins regeneration/coverage report as well as the required webapi and existing React-port checks. Do not silently bless removed members.
 
-The lead approved this approach. One condition remains for implementation: test a stable 7.x parser first and use it if compatible. Retain the beta only if the canonical parser API needs it, with the precise compatibility evidence in an ADR. The single pin must govern both parser and library.
+The lead approved this approach. The stable 7.0.2 parser is compatible after the reviewed unstable-API import changes, including the current generic-default declaration writer. The lead approved stable-first updates: select the newest eligible stable release after the three-day cool-off. A prerelease is eligible only if no stable release supplies a capability explicitly named in the definitions configuration, with a test that fails without that capability. No current capability requires beta. Pin 7.0.2 for this review; the one pin governs both parser and library.
 
 ## Generation boundary
 
@@ -81,15 +81,20 @@ Proof must include deterministic regeneration, a clean-checkout no-diff rerun, p
 
 Run the complete compiler gate and affected mutations before landing. Adopt the published compiler revision in the SDK, remove obsolete retained patches, then resume and verify the stopped port. A generator file or a green member-name coverage percentage alone does not prove signature or behavior fidelity.
 
-## New audit findings awaiting implementation review
+## Approved Locale contract and tracked gaps
 
-#1912 fixes computed symbol keys in the declaration reader, with a canonical
-inventory formatter consumed by browser coverage; its independent patch is
-inactive pending the full gate. #1914 shows that Rust-owned operations can
-still require a distinct host-native boundary: native non-locale String case
-conversion follows the host’s Unicode tables, while Rust correctly follows
-the toolchain’s. The generator policy must distinguish these jobs rather than
-exclude the host operation as an equivalent, use locale-sensitive substitutes,
-or add a second handwritten standard-member catalog. Concrete Locale API
-corrections and stable-versus-beta updater policy remain with the lead for
-pre-review; no established Rust API is changed by this proposal update.
+The lead approved this public boundary before implementation:
+
+- Constructor: `new(tag: impl IntoLocaleTag, options: Option<&LocaleOptions>)`. The sealed tag trait derives exactly from `string | Intl.Locale`; the existing locale-list union also admits arrays and cannot substitute for it. Migrate callers and retain no alias.
+- Generate `LocaleOptions.base_name` and the inherited optional `numeric() -> Option<bool>`, with `none_undefined` for the missing result.
+- Keep the established CaseFirst and HourCycle Rust names as naming policy only; derive their members from the library’s aliases.
+- Generate `get_time_zones() -> Option<Vec<String>>` with `none_undefined`.
+- Generate WeekInfo from the actual declared `firstDay` and `weekend` fields. Do not invent `minimalDays` from a documentation comment or add the absent legacy `weekInfo` property.
+
+The computed-symbol and generic-default reader fixes (#1912/#1916) pass the complete compiler gate together on d2e47ad in 8m27s, including all ten new owner mutants. They are queued for upstream landing; no generator or SDK API is claimed complete. Exact evidence is in [the validation record](evidence/1912-1916-validation.json).
+
+[Temporal bindings, #1918](https://github.com/rust-js-lang/rust-js/issues/1918) track all currently unbound Temporal alternatives, including all six inputs in Intl.FormattableTemporalObject. The engine/library migration must report every missing alternative with its linked open issue and fail on an unbound alternative without one. An explicit gap is not covered conformance. Bind Temporal as a full vertical after Intl under #1904; do not narrow the input union or silently skip cases.
+
+#1914 shows that Rust-owned operations can still require a distinct host-native boundary: native non-locale String case conversion follows the host’s Unicode tables, while Rust correctly follows the toolchain’s. The generator policy must distinguish these jobs rather than exclude the host operation as equivalent, use locale-sensitive substitutes, or add another handwritten standard-member catalog.
+
+The user’s explicit unsafe-boundary approval also applies here: preserve unchecked upstream JavaScript promises and document the caller’s obligations in Rust. Runtime checks that change the source behavior are not authorized by this policy.
