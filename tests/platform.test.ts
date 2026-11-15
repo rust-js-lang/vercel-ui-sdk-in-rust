@@ -17,7 +17,7 @@ function capture(run: () => unknown) {
   catch (error) {return {error: {name: error.name, message: error.message}};}
 }
 
-const shortcuts = ["mod+k", "mod+shift+n", "ctrl+alt+delete", "command+option+return", "meta+escape", "space", "up", "arrowleft", "pageup", "backspace", "opt+del", "control+home", "shift+tab", "cmd+end", "a", "1", "ß", "İ", "ı", "σ", "ς", "ẞ", "é", "😀", "\ud800", "\udfff", "constructor", "__proto__", "toString", "hasOwnProperty", "unrecognized", "", "+", "mod+", "mod++n", "A+B", "Control+N", "ctrl+n+n", "shift+mod+alt+z"];
+const shortcuts = ["mod+k", "mod+shift+n", "ctrl+alt+delete", "command+option+return", "meta+escape", "space", "up", "arrowleft", "pageup", "backspace", "opt+del", "control+home", "shift+tab", "cmd+end", "a", "1", "ß", "\u0277", "\ua7dd", "İ", "ı", "σ", "ς", "ẞ", "é", "😀", "\ud800", "\udfff", "constructor", "__proto__", "toString", "hasOwnProperty", "unrecognized", "", "+", "mod+", "mod++n", "A+B", "Control+N", "ctrl+n+n", "shift+mod+alt+z"];
 
 test("shortcut aliases, Unicode, inherited names and invalid forms retain upstream results", () => {
   for (const apple of [true, false]) {

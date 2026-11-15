@@ -1,0 +1,370 @@
+bun test v1.4.4 (38afee6c8)
+
+tests/calendar.test.ts:
+(pass) calendar parsing and conversion preserve validation, Date fields and undefined [2.81ms]
+(pass) calendar arithmetic matches every supported operation at boundaries and nonfinite offsets [3.71ms]
+(pass) month grids retain original shape, overflow clamping and option getter order [4.32ms]
+(pass) invalid arithmetic preserves exact RangeError messages and UTF-16 slicing/comparison [2.46ms]
+
+tests/change-details.test.ts:
+104 |   expect(calls).toEqual(["keys", "descriptor:1", "get:1", "descriptor:2", "get:2", "descriptor:reason", "get:reason", "descriptor:symbol", "get:symbol"]);
+105 |   return rows;
+106 | }
+107 | 
+108 | test("change details runtime exports match the complete original module", () => {
+109 |   expect(Object.keys(port).sort()).toEqual(Object.keys(original).sort());
+                                         ^
+error: expect(received).toEqual(expected)
+
+  [
+-   "createDetails",
+    "isDismissal",
+    "resolveSource",
+    "withSource",
+  ]
+
+- Expected  - 1
++ Received  + 0
+
+      at <anonymous> (/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/tests/change-details.test.ts:109:36)
+(fail) change details runtime exports match the complete original module [0.24ms]
+(pass) the pinned createDetails contract preserves spread, cancellation and thrown identity [0.51ms]
+113 |   const rows = contract(original.createDetails);
+114 |   expect(rows.length).toBeGreaterThan(20);
+115 | });
+116 | 
+117 | test("createDetails matches the complete original object and cancellation contract", () => {
+118 |   expect(typeof port.createDetails).toBe("function");
+                                          ^
+error: expect(received).toBe(expected)
+
+Expected: "function"
+Received: "undefined"
+
+      at <anonymous> (/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/tests/change-details.test.ts:118:37)
+(fail) createDetails matches the complete original object and cancellation contract [0.07ms]
+
+tests/change-source.test.ts:
+(pass) all source/reason/event combinations preserve lazy input tracking and inherited causes [0.85ms]
+(pass) nested interactions restore every outer source and preserve callback return identity [0.15ms]
+(pass) throwing callbacks and event-source readers restore context without replacing the exception [0.13ms]
+(pass) source scopes end synchronously when callbacks return promises [0.09ms]
+(pass) dismissals use the complete exact reason vocabulary [0.03ms]
+
+tests/compiler-patches.test.ts:
+(pass) overlapping compiler patches apply in order and remain idempotent [300.41ms]
+(pass) patch setup resumes a supported prefix and refuses to overwrite local edits [291.05ms]
+
+tests/declarations.test.ts:
+(pass) native event usage fixture accepts upstream's types and rejects invalid calls [669.38ms]
+(pass) native event declarations preserve event names, callback types and options [65.39ms]
+(pass) numeric move and sheet physics declarations keep literal and nullable contracts [50.29ms]
+(pass) calendar declarations preserve ISODate exports and narrowing: upstream [50.50ms]
+(pass) calendar declarations preserve ISODate exports and narrowing: compiled [49.91ms]
+(pass) root calendar reexports preserve the annotated ISODate name [50.37ms]
+(pass) layout declarations preserve HTML inputs and geometry results: upstream [63.53ms]
+(pass) layout declarations preserve HTML inputs and geometry results: compiled [65.64ms]
+(pass) environment declarations preserve platform and Element inputs: upstream [63.37ms]
+(pass) environment declarations preserve platform and Element inputs: compiled [62.56ms]
+(pass) platform declarations preserve DOM, shortcut and platform contracts: upstream [53.27ms]
+(pass) platform declarations preserve DOM, shortcut and platform contracts: compiled [51.37ms]
+(pass) composed closest declarations preserve generic element constraints: upstream [55.40ms]
+142 |     const target = kind === "upstream"
+143 |       ? resolve(upstream, "packages/core/src/foundation/platform/platform.ts")
+144 |       : resolve(root, "crates/core/src/foundation/platform/platform.js");
+145 |     const file = join(directory, "consumer.ts");
+146 |     await Bun.write(file, fixture.replace("../../crates/core/src/foundation/platform/platform.js", target));
+147 |     expect(check(file)).toEqual({exitCode: 0, diagnostics: ""});
+                              ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "diagnostics": "",
+-   "exitCode": 0,
++   "diagnostics": 
++ "../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-closest-types-kCLRU6/consumer.ts(1,9): error TS2305: Module '"/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/platform/platform.js"' has no exported member 'composedClosest'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-closest-types-kCLRU6/consumer.ts(5,1): error TS2578: Unused '@ts-expect-error' directive.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-closest-types-kCLRU6/consumer.ts(7,1): error TS2578: Unused '@ts-expect-error' directive.
++ "
++ ,
++   "exitCode": 2,
+  }
+
+- Expected  - 2
++ Received  + 7
+
+      at <anonymous> (/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/tests/declarations.test.ts:147:25)
+(fail) composed closest declarations preserve generic element constraints: compiled [52.75ms]
+(pass) scrollbar declarations preserve point, geometry and pointer contracts: upstream [52.41ms]
+(pass) scrollbar declarations preserve point, geometry and pointer contracts: compiled [52.39ms]
+(pass) change details preserve the complete vocabulary and conditional contracts: upstream [54.08ms]
+167 |     const fixture = await Bun.file(resolve(import.meta.dir, "types/change-details.ts")).text();
+168 |     const reference = resolve(upstream, "packages/core/src/foundation/kernel/details.ts");
+169 |     const target = kind === "upstream" ? reference : resolve(root, "crates/core/src/foundation/kernel/details.js");
+170 |     const file = join(directory, "consumer.ts");
+171 |     await Bun.write(file, fixture.replaceAll("__CANDIDATE_DETAILS__", target).replaceAll("__REFERENCE_DETAILS__", reference));
+172 |     expect(check(file)).toEqual({exitCode:0, diagnostics:""});
+                              ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "diagnostics": "",
+-   "exitCode": 0,
++   "diagnostics": 
++ "../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(7,29): error TS2344: Type 'false' does not satisfy the constraint 'true'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(7,45): error TS2694: Namespace '"/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details"' has no exported member 'ChangeDetails'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(8,29): error TS2344: Type 'false' does not satisfy the constraint 'true'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(8,45): error TS2694: Namespace '"/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details"' has no exported member 'CommitDetails'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(9,29): error TS2344: Type 'false' does not satisfy the constraint 'true'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(10,26): error TS2344: Type 'false' does not satisfy the constraint 'true'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(11,30): error TS2344: Type 'false' does not satisfy the constraint 'true'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(12,63): error TS2339: Property 'createDetails' does not exist on type 'typeof import("/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details")'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(13,46): error TS2339: Property 'createDetails' does not exist on type 'typeof import("/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details")'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(15,26): error TS2344: Type 'false' does not satisfy the constraint 'true'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(15,42): error TS2694: Namespace '"/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details"' has no exported member 'ReasonVocabulary'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(16,23): error TS2344: Type 'false' does not satisfy the constraint 'true'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(16,39): error TS2694: Namespace '"/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details"' has no exported member 'ChangeReason'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(17,23): error TS2344: Type 'false' does not satisfy the constraint 'true'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(17,39): error TS2694: Namespace '"/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details"' has no exported member 'ChangeDetails'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(18,23): error TS2344: Type 'false' does not satisfy the constraint 'true'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(18,39): error TS2694: Namespace '"/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details"' has no exported member 'CommitDetails'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(19,23): error TS2344: Type 'false' does not satisfy the constraint 'true'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(19,39): error TS2694: Namespace '"/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details"' has no exported member 'ChangeOptions'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(20,26): error TS2344: Type 'false' does not satisfy the constraint 'true'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(20,42): error TS2694: Namespace '"/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details"' has no exported member 'DismissReason'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(21,24): error TS2344: Type 'false' does not satisfy the constraint 'true'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(21,40): error TS2694: Namespace '"/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details"' has no exported member 'DismissAttemptDetails'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(22,30): error TS2344: Type 'false' does not satisfy the constraint 'true'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(22,46): error TS2694: Namespace '"/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details"' has no exported member 'DismissAttemptReason'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(24,26): error TS2339: Property 'createDetails' does not exist on type 'typeof import("/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details")'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(29,1): error TS2578: Unused '@ts-expect-error' directive.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(31,1): error TS2578: Unused '@ts-expect-error' directive.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(34,26): error TS2339: Property 'createDetails' does not exist on type 'typeof import("/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details")'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(36,1): error TS2578: Unused '@ts-expect-error' directive.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(38,1): error TS2578: Unused '@ts-expect-error' directive.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(40,26): error TS2339: Property 'createDetails' does not exist on type 'typeof import("/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details")'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(43,11): error TS2339: Property 'createDetails' does not exist on type 'typeof import("/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details")'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(51,29): error TS2694: Namespace '"/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details"' has no exported member 'DismissReason'.
++ ../../../../../var/folders/tp/k7_2jf0139lf9p0_tt3199w40000gp/T/ui-sdk-details-types-jZfnKj/consumer.ts(53,34): error TS2694: Namespace '"/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/crates/core/src/foundation/kernel/details"' has no exported member 'ChangeDetails'.
++ "
++ ,
++   "exitCode": 2,
+  }
+
+- Expected  - 2
++ Received  + 39
+
+      at <anonymous> (/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/tests/declarations.test.ts:172:25)
+(fail) change details preserve the complete vocabulary and conditional contracts: compiled [52.89ms]
+
+tests/environment.test.ts:
+(pass) environment exports, server guards, iOS detection and getter order match upstream [35.13ms]
+
+tests/layout.test.ts:
+(pass) layout arithmetic and getter order match upstream across content, fallback and transform cases [2.50ms]
+(pass) layout runtime exports match the original module [0.01ms]
+
+tests/motion-and-sides.test.ts:
+(pass) rubberBand exactly matches upstream, including defaults and exceptional numbers [0.64ms]
+(pass) rubberBandInverse exactly matches upstream, including defaults and exceptional numbers [0.46ms]
+(pass) rubberBandSlope exactly matches upstream, including defaults and exceptional numbers [0.39ms]
+(pass) every physical and logical side matches upstream in both writing directions [0.04ms]
+
+tests/number-keys.test.ts:
+(pass) numeric keys retain every orientation, direction, arrow policy and modifier [1.01ms]
+(pass) composition and wrapped native events leave candidate-selection keys alone [0.10ms]
+(pass) numeric key mapping preserves getter order, repeated key reads and short circuiting [0.20ms]
+(pass) unrelated modifiers and ignored keys do not read step modifiers [0.05ms]
+
+tests/number-scale.test.ts:
+(pass) fractionOf preserves exact original scaling including non-finite ranges and custom mappings [5.24ms]
+(pass) valueAt preserves exact original scaling including non-finite ranges and custom mappings [4.53ms]
+(pass) custom mapping getters, receiver and range reads retain original order [0.13ms]
+(pass) built-in logarithmic mappings retain the functions captured at module initialization [0.03ms]
+
+tests/number-steps.test.ts:
+(pass) clamp matches the actual upstream across finite values, infinities, NaN and signed zero [0.85ms]
+(pass) wrap matches the actual upstream across finite values, infinities, NaN and signed zero [0.89ms]
+
+tests/numeric-grid.test.ts:
+(pass) decimal precision and rounding preserve native conversion and RangeErrors [1.11ms]
+(pass) grids and fractional steps match upstream for finite and exceptional inputs [7.18ms]
+(pass) directional and bound moves match first reached snaps and custom step sizes [32.98ms]
+(pass) scrubbing preserves nearest ties, clamping, disabled snaps and easing [37.38ms]
+(pass) unsnapped scrubs retain their required own point property with undefined [0.93ms]
+302 |           value = implementation.scrubTo(1.3, range, options);
+303 |           break;
+304 |       }
+305 |       results.push({ value, calls });
+306 |     }
+307 |     expect(results[0], operation).toEqual(results[1]);
+                                        ^
+error: scrubTo
+
+  {
+    "calls": [
+      "option snap",
+      "option ease",
+      "snap",
++     "snap",
+      "threshold",
+      "snap",
+      "snap",
+      "points",
+      "min",
+      "max",
+      [
+        "ease",
+        0.3999999999999999,
+      ],
+      "min",
+      "max",
+    ],
+    "value": {
+      "point": 1,
+      "value": 1.252,
+    },
+  }
+
+- Expected  - 0
++ Received  + 1
+
+      at <anonymous> (/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/tests/numeric-grid.test.ts:307:35)
+(fail) numeric callbacks, range getters and union checks retain upstream evaluation order [0.64ms]
+(pass) copying a flattened range never reads an absent nested range property [0.04ms]
+329 |       },
+330 |     };
+331 |     return {result:implementation.scrubTo(1.3, range, {ease:false}), reads};
+332 |   });
+333 |   expect(rows[0]).toEqual({result:{value:2,point:2},reads:3});
+334 |   expect(rows[1]).toEqual(rows[0]);
+                        ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "reads": 3,
++   "reads": 4,
+    "result": {
+-     "point": 2,
+-     "value": 2,
++     "point": undefined,
++     "value": 1,
+    },
+  }
+
+- Expected  - 3
++ Received  + 3
+
+      at <anonymous> (/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/tests/numeric-grid.test.ts:334:19)
+(fail) scrubTo reads the threshold receiver once when a valid getter changes its value [0.10ms]
+
+tests/physics.test.ts:
+(pass) sheet physics presets retain all upstream tuning and object data [0.05ms]
+(pass) preset fields remain mutable shared values, including a null dimension [0.12ms]
+
+tests/platform.test.ts:
+21 | 
+22 | test("shortcut aliases, Unicode, inherited names and invalid forms retain upstream results", () => {
+23 |   for (const apple of [true, false]) {
+24 |     for (const shortcut of shortcuts) {
+25 |       for (const name of ["ariaKeyshortcuts", "formatShortcut", "hasCommandModifier"]) {
+26 |         expect(capture(() => ported[name](shortcut, apple))).toEqual(capture(() => original[name](shortcut, apple)));
+                                                                  ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "value": "ɷ",
++   "value": "꟝",
+  }
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/tests/platform.test.ts:26:62)
+(fail) shortcut aliases, Unicode, inherited names and invalid forms retain upstream results [2.12ms]
+(pass) shortcut dictionary reads preserve inherited getters, falsy values and repeated reads [0.33ms]
+(pass) shortcut matching preserves physical layout fallback and modifier getter order [28.48ms]
+(pass) shortcut event getter exceptions retain their identity and evaluation boundary [0.29ms]
+(pass) platform overrides preserve initial hydration values and shortcut defaults [0.17ms]
+94 |     expect(rows[0].initial).toBe(platform === "apple");
+95 |   }
+96 | });
+97 | 
+98 | test("platform runtime exports match the complete original module", () => {
+99 |   expect(Object.keys(ported).sort()).toEqual(Object.keys(original).sort());
+                                          ^
+error: expect(received).toEqual(expected)
+
+  [
+    "activeElement",
+    "ariaKeyshortcuts",
+-   "composedClosest",
+    "composedContains",
+    "composedHops",
+    "formatShortcut",
+    "hasCommandModifier",
+    "initialApple",
+    "isApple",
+    "matchesShortcut",
+    "portalTarget",
+    "prefersReducedMotion",
+    "setPlatform",
+    "supportsTopLayer",
+  ]
+
+- Expected  - 1
++ Received  + 0
+
+      at <anonymous> (/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/tests/platform.test.ts:99:38)
+(fail) platform runtime exports match the complete original module [0.20ms]
+ 99 |   expect(Object.keys(ported).sort()).toEqual(Object.keys(original).sort());
+100 | });
+101 | 
+102 | test("composed closest retains the complete original source structure", () => {
+103 |   const transpiler = new Bun.Transpiler({loader:"js", minifyWhitespace:true, minifySyntax:false, minifyIdentifiers:false});
+104 |   expect(transpiler.transformSync(ported.composedClosest.toString()))
+                                               ^
+TypeError: undefined is not an object (evaluating 'ported.composedClosest.toString')
+      at <anonymous> (/Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/tests/platform.test.ts:104:42)
+(fail) composed closest retains the complete original source structure [0.19ms]
+
+tests/projection.test.ts:
+(pass) release distance and nearest candidate exactly match upstream [0.63ms]
+(pass) snap choice preserves slow release, fling direction, ties and skip policy [24.73ms]
+
+tests/scrollbar.test.ts:
+(pass) scrollbar exports match the complete original module [0.05ms]
+(pass) scrollbar hit testing preserves fractional edges, RTL gutters and nonfinite coordinates [1.10ms]
+(pass) scrollbar numeric getters retain destructuring and short-circuit read order [0.27ms]
+(pass) scrollbar bodies retain the original source structure [0.34ms]
+
+tests/server-import.test.ts:
+(pass) kernel event modules import without browser globals on the server [18.93ms]
+(pass) platform imports and explicit-document focus work without browser globals [34.92ms]
+
+tests/spring.test.ts:
+(pass) analytic position and velocity match upstream in all damping regimes [10.41ms]
+(pass) settle times and exact CSS easing samples match upstream [2.23ms]
+(pass) solver callbacks and option getters keep upstream read order and receiver [0.14ms]
+(pass) CSS numeric conversion does not invoke Number.prototype.toString [0.04ms]
+
+tests/undo-stack.test.ts:
+(pass) seeded edit traces preserve groups, branching, live settings and exact state identity [6.29ms]
+(pass) clock, record getters and settings getters keep upstream evaluation order [0.13ms]
+(pass) map callbacks can reset, record and traverse their stack reentrantly [0.05ms]
+
+9 tests failed:
+(fail) change details runtime exports match the complete original module [0.24ms]
+(fail) createDetails matches the complete original object and cancellation contract [0.07ms]
+(fail) composed closest declarations preserve generic element constraints: compiled [52.75ms]
+(fail) change details preserve the complete vocabulary and conditional contracts: compiled [52.89ms]
+(fail) numeric callbacks, range getters and union checks retain upstream evaluation order [0.64ms]
+(fail) scrubTo reads the threshold receiver once when a valid getter changes its value [0.10ms]
+(fail) shortcut aliases, Unicode, inherited names and invalid forms retain upstream results [2.12ms]
+(fail) platform runtime exports match the complete original module [0.20ms]
+(fail) composed closest retains the complete original source structure [0.19ms]
+
+ 72 pass
+ 9 fail
+ 317313 expect() calls
+Ran 81 tests across 19 files. [2.66s]

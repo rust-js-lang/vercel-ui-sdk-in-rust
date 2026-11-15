@@ -1,0 +1,351 @@
+diff --git a/TESTS.md b/TESTS.md
+index d0f3eae..8654740 100644
+--- a/TESTS.md
++++ b/TESTS.md
+@@ -115,3 +115,5 @@ As of 2026-10-30, `main` at `120772e2`; times are CI's, check run 41022723550.
+ - **On the Mac**, each command has a timeout of about twice its usual time, and runs on all the cores: the suite in parallel groups took about 3 minutes (2026-10-30), the corpus in 8 parts 90 s (AGENTS.md). `bun run check:fast --all`, each file and each of the corpus's 12 parts a job of its pool, takes about 3 min with no change on the 12-core M6, the cores 92% busy, and about 6 min with an iterator change's rows (2026-11-07, DEVELOPMENT.md); run again where the compiler's build is the same, a change to the tests or the docs alone, about 1 min 50 s, each compile kept by its inputs given again (`test/compiles.ts`, ADR 1099, #874). Plain `bun run check:fast`, the inner loop's, runs each plain suite's file as a job and, by the test map (`bun run test-map`, about 130 s), only the files and corpus cases that ran a function the change touches: 53–74 s of a one-statement change to tidy, drops, the bindings or an iterator's code, 121 s to the runtime's with its iterator rows (2026-11-07, ADR 1101, #877); `test/test-map.test.ts` holds what a change picks.
+ 
+ To recount: the test totals are the `Ran N tests` lines in a check's `test (k/2)` logs. The corpus is `ls test/corpus/*.rs | wc -l`, the mutations are `grep -rc 'name:' scripts/mutations`, and the rustc counts are the line counts of `test/rustc-*.txt`.
++
++Added #1912 coverage on 2026-11-15: a separate three-case TypeScript-symbol suite covers computed-key model round trips, original/printed strict TypeScript consumers, literal string distinction and explicit unsupported-expression refusal (three pass, fourteen assertions). Seven new owner mutations cover the model, inventory formatting and browser consumer; all fourteen affected owner mutants are caught. The fix also passes independently with the published parser’s original beta dependency. Full compiler gate remains outstanding; historical totals are not a recount.
+diff --git a/docs/decisions/0206-typescript-module.md b/docs/decisions/0206-typescript-module.md
+index 4a6164b..031c73d 100644
+--- a/docs/decisions/0206-typescript-module.md
++++ b/docs/decisions/0206-typescript-module.md
+@@ -76,6 +76,33 @@ await ts.close();
+   a change to the model needs both released together: an older
+   `@rust-js/typescript` can't print a newer compiler's type parameters.
+ 
++## Amendment (2026-11-15): computed symbol keys remain expressions (#1912)
++
++The existing MemberName computed variant is used by the reader as well as
++the writer. Property and method signatures with symbol keys read the AST's
++ComputedPropertyName and preserve its qualified path. A literal string whose
++text looks bracketed remains a string; it is never guessed to be a symbol.
++The writer validates the existing symbol-path contract and refuses unsupported
++computed expressions explicitly instead of printing another key.
++Inventories use the model owner’s memberKey operation: computed paths retain
++their brackets, raw string labels stay compatible, and reserved bracket/quote
++prefixes are JSON-escaped so a literal name cannot collide with a symbol. The
++WebAPI coverage consumer uses that same operation; its existing baseline stays
++unchanged.
++
++The published parser previously read [Symbol.iterator] as a string, causing
++the printer to emit a quoted property with a different identity. Exact model
++and read/print/read proof covers methods, readonly properties and optional
++disposal methods. Independent strict TypeScript consumers accept both the
++original and printed Iterable and symbol-property contracts, while keeping
++the literal bracketed string method distinct. Source mutants break reading,
++printing, qualification and the explicit refusal independently.
++
++This is case N at the TypeScript tool boundary; native Rust cannot observe
++this reader. The fix does not require the separate engine-library review or
++change native runtime binding semantics. It is independently tested against
++the published parser's original beta engine and the stable-engine review.
++
+ ## Amendment (2026-11-15): construct signatures are structured members
+ 
+ A Member of kind construct holds typeParameters, params and returns, read
+diff --git a/docs/guide/libraries/README.md b/docs/guide/libraries/README.md
+index 38da0b8..9f5602c 100644
+--- a/docs/guide/libraries/README.md
++++ b/docs/guide/libraries/README.md
+@@ -852,6 +852,10 @@ the JS: `addEventListener` is `add_event_listener`, `new Event(..)` is
+   design: TypeScript's own types, class components, old names).
+   `grep '^Document.getElementById' webapi/coverage.txt`.
+ 
++Declaration tools retain computed symbol keys such as [Symbol.iterator] as
++expressions. A literal string key with the same bracketed text names a
++different property; it cannot stand in for a symbol member.
++
+ ## When a binding is missing
+ 
+ A JS API that one of these crates should bind and doesn't, a browser
+diff --git a/scripts/mutations/typescript/index.ts b/scripts/mutations/typescript/index.ts
+index 32e4f87..37d11ac 100644
+--- a/scripts/mutations/typescript/index.ts
++++ b/scripts/mutations/typescript/index.ts
+@@ -52,4 +52,64 @@ export const mutations: Mutation[] = [
+     replace: "break;",
+     tests,
+   },
++  {
++    "name": "typescript-computed-key-read-as-string",
++    "breaks": "a computed symbol becomes a quoted bracketed string key",
++    "file": "typescript/index.js",
++    "find": "return { computed: path(name.expression) };",
++    "replace": "return sourceOf(name, text);",
++    "tests": [
++      "test/typescript-symbols.test.ts"
++    ]
++  },
++  {
++    "name": "typescript-computed-key-printed-as-string",
++    "breaks": "the writer turns the model’s symbol key into a different string property",
++    "file": "typescript/index.js",
++    "find": "    return f.createComputedPropertyName(\n      rest.reduce(\n        (object, part) =>\n          f.createPropertyAccessExpression(object, undefined, id(part), NodeFlags.None),\n        id(first),\n      ),\n    );",
++    "replace": "    return string(\"[\" + name.computed + \"]\");",
++    "tests": [
++      "test/typescript-symbols.test.ts"
++    ]
++  },
++  {
++    "name": "typescript-computed-key-loses-owner",
++    "breaks": "a qualified symbol key loses its receiver path",
++    "file": "typescript/index.js",
++    "find": "path(node.expression) + \".\" + node.name.text",
++    "replace": "node.name.text",
++    "tests": [
++      "test/typescript-symbols.test.ts"
++    ]
++  },
++  {
++    "name": "typescript-computed-key-unchecked-expression",
++    "breaks": "the symbol-path model silently admits an unsupported expression",
++    "file": "typescript/index.js",
++    "find": "if (!parts.every((part) => isIdentifierText(part))) {",
++    "replace": "if (false) {",
++    "tests": [
++      "test/typescript-symbols.test.ts"
++    ]
++  },
++  {
++    "name": "typescript-inventory-literal-collides-with-symbol",
++    "breaks": "inventory labels conflate a bracketed string property with a symbol",
++    "file": "typescript/index.js",
++    "find": "return name.startsWith(\"[\") || name.startsWith(\"\\\"\") ? JSON.stringify(name) : name;",
++    "replace": "return name;",
++    "tests": [
++      "test/typescript-symbols.test.ts"
++    ]
++  },
++  {
++    "name": "typescript-computed-key-optional-path-narrowed",
++    "breaks": "an optional computed access is silently turned into an unconditional symbol path",
++    "file": "typescript/index.js",
++    "find": "node.kind === SyntaxKind.PropertyAccessExpression && !node.questionDotToken",
++    "replace": "node.kind === SyntaxKind.PropertyAccessExpression",
++    "tests": [
++      "test/typescript-symbols.test.ts"
++    ]
++  },
+ ];
+diff --git a/scripts/mutations/webapi/coverage.ts b/scripts/mutations/webapi/coverage.ts
+index f495162..e8d00b7 100644
+--- a/scripts/mutations/webapi/coverage.ts
++++ b/scripts/mutations/webapi/coverage.ts
+@@ -1,4 +1,16 @@
+ import type {Mutation} from "../../mutations";
+ export const mutations: Mutation[] = [
+   {name: "webapi-constructor-unread", breaks: "native DOM constructors disappear from the coverage inventory", file: "webapi/coverage.ts", find: 'if (x.kind === "construct") m.ctor = true;', replace: 'if (x.kind === "construct") m.ctor = false;', tests: ["test/webapi-coverage.test.ts", "-t", "the webapi crate binds what it bound"]},
++  {
++    "name": "webapi-symbol-key-unformatted",
++    "breaks": "the browser coverage consumer treats a structured symbol key as a string",
++    "file": "webapi/coverage.ts",
++    "find": "m.members.add(memberKey(member.name));",
++    "replace": "m.members.add(member.name);",
++    "tests": [
++      "test/webapi-coverage.test.ts",
++      "-t",
++      "the webapi crate binds what it bound"
++    ]
++  },
+ ];
+diff --git a/test/typescript-symbols.test.ts b/test/typescript-symbols.test.ts
+new file mode 100644
+index 0000000..3c4155a
+--- /dev/null
++++ b/test/typescript-symbols.test.ts
+@@ -0,0 +1,67 @@
++import { expect, test } from "bun:test";
++import { writeFileSync } from "node:fs";
++import { join } from "node:path";
++import { memberKey, open } from "@rust-js/typescript";
++import { fixture, root } from "./support";
++import { runSync } from "./child";
++
++test("computed symbol members keep their declaration keys through the model", async () => {
++  const file = join(fixture("typescript-symbol-keys"), "symbols.d.ts");
++  writeFileSync(file, "export interface Symbols {\n    [Symbol.iterator](): Iterator<string>;\n    readonly [Symbol.toStringTag]: string;\n    [Symbol.dispose]?(): void;\n}\n");
++  const ts = await open([file]);
++  try {
++    const model = await ts.read(file);
++    const declaration = model.declarations[0];
++    if (declaration.kind !== "interface") throw new Error("interface expected");
++    expect(declaration.members.map(member => "name" in member ? member.name : undefined)).toEqual([
++      { computed: "Symbol.iterator" }, { computed: "Symbol.toStringTag" }, { computed: "Symbol.dispose" },
++    ]);
++    const printed = await ts.print(model);
++    expect(printed).toContain("[Symbol.iterator](): Iterator<string>");
++    expect(printed).toContain("readonly [Symbol.toStringTag]: string");
++    expect(printed).toContain("[Symbol.dispose]?(): void");
++    expect(printed).not.toContain("\"[Symbol.iterator]\"");
++    const again = join(fixture("typescript-symbol-roundtrip"), "symbols.d.ts");
++    writeFileSync(again, printed);
++    const reread = await open([again]);
++    try { expect(await reread.read(again)).toEqual(model); } finally { await reread.close(); }
++  } finally { await ts.close(); }
++});
++
++
++test("computed symbol declarations remain usable by strict TypeScript consumers", async () => {
++  const dir = fixture("typescript-symbol-consumer");
++  const input = join(dir, "input.d.ts");
++  writeFileSync(input, 'export interface Symbols { [Symbol.iterator](): Iterator<string>; readonly [Symbol.toStringTag]: string; [Symbol.dispose]?(): void; "[Symbol.iterator]"(): number; }\n');
++  const ts = await open([input]);
++  try {
++    const model = await ts.read(input);
++    const declaration = model.declarations[0];
++    if (declaration.kind !== "interface") throw new Error("interface expected");
++    expect(declaration.members.at(-1)).toMatchObject({name:"[Symbol.iterator]"});
++    expect(memberKey("font-family")).toBe("font-family");
++    expect(memberKey(JSON.stringify("[Symbol.iterator]"))).toBe(JSON.stringify(JSON.stringify("[Symbol.iterator]")));
++    expect(declaration.members.map(member => "name" in member ? memberKey(member.name) : undefined)).toEqual(["[Symbol.iterator]", "[Symbol.toStringTag]", "[Symbol.dispose]", JSON.stringify("[Symbol.iterator]")]);
++    writeFileSync(join(dir,"output.d.ts"), await ts.print(model));
++    const consumer = (module: string) => 'import type { Symbols } from "./'+module+'";\ndeclare const value: Symbols;\nconst iterable: Iterable<string> = value;\nconst brand: string = value[Symbol.toStringTag];\nvalue[Symbol.dispose]?.();\nconst other: number = value["[Symbol.iterator]"]();\n';
++    for (const module of ["input","output"]) {
++      writeFileSync(join(dir,module+"-consumer.ts"),consumer(module+".d.ts"));
++      const config=join(dir,module+".json");
++      writeFileSync(config,JSON.stringify({compilerOptions:{strict:true,noEmit:true,types:[],lib:["esnext"],module:"esnext",moduleResolution:"bundler"},files:[module+"-consumer.ts"]}));
++      const checked=runSync([process.execPath,join(root,"node_modules/typescript/bin/tsc"),"-p",config],dir,10_000);
++      expect(checked.code,checked.stdout+checked.stderr).toBe(0);
++    }
++  } finally { await ts.close(); }
++});
++
++test("computed member expressions outside symbol paths are refused explicitly", async () => {
++  const file = join(fixture("typescript-computed-expression"),"input.d.ts");
++  for (const expression of ['Symbol["iterator"]', 'Symbol?.iterator']) {
++    writeFileSync(file, 'export interface Symbols { [' + expression + '](): Iterator<string>; }\n');
++    const ts = await open([file]);
++    try {
++      const model = await ts.read(file);
++      await expect(ts.print(model)).rejects.toThrow("computed member name is not a symbol path");
++    } finally { await ts.close(); }
++  }
++});
+diff --git a/typescript/index.js b/typescript/index.js
+index 4688e45..e763ef0 100644
+--- a/typescript/index.js
++++ b/typescript/index.js
+@@ -89,6 +89,16 @@ export function checkedMembers(members) {
+   return members;
+ }
+ 
++/** A stable member key for declaration inventories. A computed symbol and
++ * a literal bracketed string must not collide. Raw string keys keep the
++ * inventory’s spelling; reserved bracket/quote prefixes are JSON-escaped.
++ * @param {MemberName} name
++ * @returns {string} */
++export function memberKey(name) {
++  if (typeof name === "object") return "[" + name.computed + "]";
++  return name.startsWith("[") || name.startsWith("\"") ? JSON.stringify(name) : name;
++}
++
+ const KEYWORDS = {
+   [SyntaxKind.StringKeyword]: "string",
+   [SyntaxKind.NumberKeyword]: "number",
+@@ -413,13 +423,23 @@ function optional(node) {
+   );
+ }
+ 
++/** A computed symbol is a key expression, not a quoted string property.
++ * @returns {MemberName} */
++function readMemberName(name, text) {
++  if (name.kind !== SyntaxKind.ComputedPropertyName) return nameOf(name, text);
++  const path = (node) => node.kind === SyntaxKind.Identifier ? node.text
++    : node.kind === SyntaxKind.PropertyAccessExpression && !node.questionDotToken ? path(node.expression) + "." + node.name.text
++    : sourceOf(node, text);
++  return { computed: path(name.expression) };
++}
++
+ /** @returns {Member} */
+ function readMember(node, text) {
+   switch (node.kind) {
+     case SyntaxKind.PropertySignature:
+       return {
+         kind: "property",
+-        name: nameOf(node.name, text),
++        name: readMemberName(node.name, text),
+         optional: optional(node),
+         readonly: !!node.modifiers?.some(
+           (m) => m.kind === SyntaxKind.ReadonlyKeyword,
+@@ -431,7 +451,7 @@ function readMember(node, text) {
+     case SyntaxKind.MethodSignature:
+       return {
+         kind: "method",
+-        name: nameOf(node.name, text),
++        name: readMemberName(node.name, text),
+         optional: optional(node),
+         typeParameters: typeParameters(node, text),
+         params: node.parameters.map((p) => readParam(p, text)),
+@@ -762,7 +782,11 @@ function erasable(/** @type {Declaration} */ declaration) {
+ function propertyName(name) {
+   if (typeof name === "object")
+   {
+-    const [first, ...rest] = name.computed.split(".");
++    const parts = name.computed.split(".");
++    if (!parts.every((part) => isIdentifierText(part))) {
++      throw new Error("computed member name is not a symbol path: " + name.computed);
++    }
++    const [first, ...rest] = parts;
+     return f.createComputedPropertyName(
+       rest.reduce(
+         (object, part) =>
+diff --git a/webapi/coverage.ts b/webapi/coverage.ts
+index 3dfb74b..d5a17a6 100644
+--- a/webapi/coverage.ts
++++ b/webapi/coverage.ts
+@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
+ import { dirname, join } from "node:path";
+ 
+ import idl from "@webref/idl";
+-import { checkedMembers, open } from "@rust-js/typescript";
++import { checkedMembers, memberKey, open } from "@rust-js/typescript";
+ 
+ /** A class's members, and of them its methods, and what each that gives a
+  * `NodeListOf<X>` lists, `querySelectorAll`'s `Element`. */
+@@ -95,8 +95,8 @@ export async function typescriptInterfaces(): Promise<Map<string, { members: Set
+     if (d.kind !== "interface") continue;
+     const known = interfaces.get(d.name) ?? { members: new Set<string>(), required: new Set<string>() };
+     for (const member of checkedMembers(d.members)) {
+-      if (member.kind === "method" || member.kind === "property") known.members.add(member.name);
+-      if (member.kind === "property" && !member.optional) known.required.add(member.name);
++      if (member.kind === "method" || member.kind === "property") known.members.add(memberKey(member.name));
++      if (member.kind === "property" && !member.optional) known.required.add(memberKey(member.name));
+     }
+     interfaces.set(d.name, known);
+   }
+@@ -186,25 +186,25 @@ export async function typescript(): Promise<Map<string, Members>> {
+     if (d.kind === "interface") {
+       const m = of(d.name);
+       for (const e of d.extends) if (e.kind === "reference") m.extends.push(e.name);
+-      for (const member of checkedMembers(d.members)) if (member.kind === "method" || member.kind === "property") m.members.add(member.name);
+-      for (const member of checkedMembers(d.members)) if (member.kind === "method") m.methods.add(member.name);
+-      for (const member of checkedMembers(d.members)) if (member.kind === "property" && isFunction(member.type)) m.functions.add(member.name);
++      for (const member of checkedMembers(d.members)) if (member.kind === "method" || member.kind === "property") m.members.add(memberKey(member.name));
++      for (const member of checkedMembers(d.members)) if (member.kind === "method") m.methods.add(memberKey(member.name));
++      for (const member of checkedMembers(d.members)) if (member.kind === "property" && isFunction(member.type)) m.functions.add(memberKey(member.name));
+       // What may be `null`, `T | null` or `null`, and what can't, of its own.
+       const isNull = (t: any) => t?.kind === "keyword" && t.keyword === "null";
+       const mayBeNull = (t: any) => isNull(t) || (t?.kind === "union" && t.types.some(isNull));
+-      for (const member of checkedMembers(d.members)) if (member.kind === "property") (mayBeNull(member.type) ? m.nullable : m.narrowed).add(member.name);
++      for (const member of checkedMembers(d.members)) if (member.kind === "property") (mayBeNull(member.type) ? m.nullable : m.narrowed).add(memberKey(member.name));
+       for (const member of checkedMembers(d.members)) {
+         const back = member.kind === "method" ? givenBack(member) : undefined;
+-        if (back) m.givesBack.set(member.name, back);
++        if (back) m.givesBack.set(memberKey(member.name), back);
+         const item = listed(member);
+-        if (item && !m.lists.has(member.name)) m.lists.set(member.name, item);
++        if (item && !m.lists.has(memberKey(member.name))) m.lists.set(memberKey(member.name), item);
+       }
+     } else if (d.kind === "const" && d.type.kind === "object" && checkedMembers(d.type.members).some((x: any) => x.name === "prototype")) {
+       classes.add(d.name);
+       const m = of(d.name);
+       for (const x of checkedMembers(d.type.members)) {
+         if (x.kind === "construct") m.ctor = true;
+-        else if (x.name && x.name !== "prototype") m.statics.add(x.name);
++        else if (x.name && x.name !== "prototype") m.statics.add(memberKey(x.name));
+       }
+     }
+   }

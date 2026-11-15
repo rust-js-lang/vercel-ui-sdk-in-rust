@@ -2,7 +2,7 @@
   "date": "2026-11-15",
   "base": "4c07105be615eadc254f2896ba329fcf551102a3",
   "review": "46b6f78957ae0fc9e89068b0c8512e9abd678001",
-  "shipped": false,
+  "shipped": true,
   "activeSeries": [],
   "patchSha256": "39452feed5b43bec966a18d42fe9d4680b28ac2b621a5dda1a3ec37e28377450",
   "focused": {
@@ -149,10 +149,10 @@
     "binarySha256": "8df2659a2ac79f97f766493e4047ffc9e19b49b7dff1c460a83becd5e18ea28b",
     "sourceCheckout": "clean published a86fba95; no production src differences from 4c07105"
   },
-  "next": "Land #1909, rebase review and rerun affected/full required checks before activating #1833.",
+  "next": "Published fix adopted; continue full SDK/port validation and the remaining native-boundary gaps.",
   "landingBlocker": 1909,
   "sdkWrongAnswer": 1908,
-  "reviewStatus": "unshipped; no active patch or waiver",
+  "reviewStatus": "Superseded by adopted published fix; duplicate patch/preview retired. Original first/follow-up gate evidence is historical.",
   "sdkPublished": {
     "compiler": "4c07105be615eadc254f2896ba329fcf551102a3",
     "activeSeries": [],
@@ -177,5 +177,7 @@
       "assertions": 317495,
       "seconds": 2.25
     }
-  }
+  },
+  "upstreamFix": "9b14a0670e5e96672b834d798f558ebae0718855",
+  "adoptedCompiler": "9b14a0670e5e96672b834d798f558ebae0718855"
 }

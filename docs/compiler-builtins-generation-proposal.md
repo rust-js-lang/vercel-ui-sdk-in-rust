@@ -80,3 +80,16 @@ Retain the current Rust API where it accurately represents the source. Before ch
 Proof must include deterministic regeneration, a clean-checkout no-diff rerun, provenance/library hashes, full member and argument/result coverage deltas, real Rust callers derived from the library graph, independent strict TypeScript callers, and Bun/Chromium behavior for actual native APIs. Include property/getter ordering, thrown identity, optional/missing/null behavior, overload correlation, symbol keys, and generic/Promise contracts. Mutation tests must catch lost union alternatives and weakened required/optional rules. Existing webapi output remains unchanged unless a reviewed source or shared rule change requires it.
 
 Run the complete compiler gate and affected mutations before landing. Adopt the published compiler revision in the SDK, remove obsolete retained patches, then resume and verify the stopped port. A generator file or a green member-name coverage percentage alone does not prove signature or behavior fidelity.
+
+## New audit findings awaiting implementation review
+
+#1912 fixes computed symbol keys in the declaration reader, with a canonical
+inventory formatter consumed by browser coverage; its independent patch is
+inactive pending the full gate. #1914 shows that Rust-owned operations can
+still require a distinct host-native boundary: native non-locale String case
+conversion follows the host’s Unicode tables, while Rust correctly follows
+the toolchain’s. The generator policy must distinguish these jobs rather than
+exclude the host operation as an equivalent, use locale-sensitive substitutes,
+or add a second handwritten standard-member catalog. Concrete Locale API
+corrections and stable-versus-beta updater policy remain with the lead for
+pre-review; no established Rust API is changed by this proposal update.

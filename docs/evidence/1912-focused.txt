@@ -1,0 +1,48 @@
+$ bun scripts/taskTime.ts run computed-final-focused -- bun test test/typescript.test.ts test/typescript-symbols.test.ts test/definitions.test.ts test/builtins-coverage.test.ts --parallel
+bun test v1.4.4 (38afee6c8) 14x PARALLEL
+
+test/definitions.test.ts:
+(pass) definition updates retain release channels and the three-day cool-off [0.48ms]
+(pass) the parser and root consume the same engine release without a separate ES library package [0.16ms]
+
+test/typescript-symbols.test.ts:
+(pass) computed symbol members keep their declaration keys through the model [58.14ms]
+
+test/typescript.test.ts:
+(pass) read gives a file's declarations, by TypeScript's own parser [79.21ms]
+(pass) print writes a model as TypeScript prints it, a header first [9.61ms]
+
+test/builtins-coverage.test.ts:
+(pass) the js crate binds what it bound of TypeScript's ES library [97.77ms]
+
+test/typescript.test.ts:
+(pass) print writes a name that's an identifier as it is, and quotes any other [9.78ms]
+(pass) print writes a union with unknown or any as that keyword [15.09ms]
+
+test/builtins-coverage.test.ts:
+(pass) the typed arrays are what their template writes [30.15ms]
+(pass) the standard errors of a kind are what their template writes [14.68ms]
+
+test/typescript.test.ts:
+(pass) read takes @types/react's element attributes apart [23.07ms]
+(pass) read keeps an export list that names a type as text [10.47ms]
+
+test/builtins-coverage.test.ts:
+(pass) Intl is what its template writes [18.03ms]
+
+test/typescript-symbols.test.ts:
+(pass) computed symbol declarations remain usable by strict TypeScript consumers [97.77ms]
+(pass) computed member expressions outside symbol paths are refused explicitly [18.30ms]
+
+test/typescript.test.ts:
+(pass) print writes erasable syntax only [171.04ms]
+(pass) construct signatures retain generics and optional/rest arguments in every member position [20.86ms]
+(pass) library selection uses the engine graph and leaves ordinary sessions isolated [61.24ms]
+
+test/definitions.test.ts:
+(pass) definition regeneration reports both libraries and retains a lost-member baseline [504.43ms]
+
+ 19 pass
+ 0 fail
+ 94 expect() calls
+Ran 19 tests across 4 files. [554.00ms]

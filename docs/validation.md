@@ -2,7 +2,19 @@
 
 2026-11-15. Milestone one remains open: complete core, Web Components, Rust docs/live examples, and an actual verified GitHub Pages deployment are required.
 
-## Current published-contract checkpoint
+## Published scope-guard adoption (9b14a06)
+
+The SDK now pins published 9b14a06, including #1833 and #1909, with an empty active patch series. The duplicate scope review and output preview are retired. The actual compiler build-identity owner computes 563a29b90e11bca6 in both clean checkouts, matching the copied published binary; no compiler build or shared writes were needed. The three changed generated files were inspected in full diff: scope restoration now uses a finally with required abort guards, and Rust case conversion now uses Rust’s Unicode helpers.
+
+Native SDK tests pass21, compiled Rust passes20 across10 files, and strict Clippy passes. The complete reference/type/source suite reports72 pass/9 fail,317,313 assertions across81 tests in19 files. The old eight incomplete/incorrect cases remain. The added Unicode-version vectors now expose #1914 against actual regenerated SDK code: the port uses Rust case conversion where upstream uses host JS case conversion. This is a missing native-boundary operation, not permission to weaken Rust’s correct Unicode tables or insert local bindings. No regression is waived.
+
+The initial run hit stale copied local runtime exports. The documented root bun install --frozen-lockfile --force refresh resolves that setup mismatch; the counts above are from the refreshed run. A complete Chromium rerun awaits a short shared-machine window. The historical22/2 count below is not this pin’s result. See [adoption evidence](evidence/9b-adoption.json) and [full comparison log](evidence/9b-reference.txt).
+
+## Independent computed-symbol review (#1912)
+
+The declaration reader incorrectly quoted symbol keys; the fix uses the existing computed-name model and one model-owned inventory key formatter. Affected browser coverage now consumes that formatter, retaining its unchanged baseline and distinguishing literal bracketed string keys. The independent eight-file review applies directly to published9b14a06 without #1903. It passes three tests/14 assertions with both original beta and stable engines,19 tests/94 assertions in the combined review,89 static tests/46,614 assertions, typechecking and all14 affected owner mutants. The full compiler gate remains outstanding; this patch is inactive. See [exact evidence](evidence/1912-validation.json).
+
+## Historical published-contract checkpoint (4c07105)
 
 The compiler gitlink is published 4c07105. It contains #1845, #1846 and #1899; no active compiler patch remains. The SDK adopts present(value)/present(el), a present point field, and test(key) on the bound variant. ISO-date/RTL required-input types and the required undefined point key now match the original. The union test uses membership without reading the value.
 
@@ -10,15 +22,15 @@ The SDK was regenerated through the canonical host with RUST_JS_COMPILER selecti
 
 The remaining numeric trace exposes P0 #1908: Option::map_or duplicates the snap getter. A conforming changing getter yields value2/point2 upstream versus value1/pointundefined in the port. The dedicated result regression remains red. m1-lisa owns the compiler fix and the Option-combinator sweep; no application workaround was added.
 
-### Unshipped scope-guard review
+### Historical scope-guard review, now adopted upstream
 
 Private review 46b6f78957ae0fc9e89068b0c8512e9abd678001 is based on 4c07105. The initializer owner now supplies the complete eager-key set, including constants with no callable initializer-effects entry. The existing unwinding owner proves the actual callback and consumes the canonical function/closure body maps. Lazy, unknown and throwing controls remain conservative. Required stack-overflow guards remain accepted output.
 
 Six focused tests pass 52 assertions. All eight new owner mutants are caught; all 14 native corpus shards pass. The first full check:fast --all ends after 465 seconds with three failures. Two bookkeeping failures are corrected afterward: the fact-count contract is now67 and the architecture has the complete module path. All129 native compiler tests and all70 architecture tests/3559 assertions then pass. Implementation and mutation logic did not change after the gate.
 
-The remaining failure is the new corpus's dyn-fn metamorphic rewrite, which exposes pre-existing P0 #1909. A separate seven-line program reproduces it against the clean upstream binary: native Rust prints called, JavaScript throws TypeError without calling the callback. No waiver or known-failure entry was added. The review patch and output preview are retained outside the active series; the SDK runtime is regenerated from the published compiler, without this review applied.
+The remaining failure is the new corpus's dyn-fn metamorphic rewrite, which exposes pre-existing P0 #1909. A separate seven-line program reproduces it against the clean upstream binary: native Rust prints called, JavaScript throws TypeError without calling the callback. No waiver or known-failure entry was added. At that fixed-base checkpoint the review and output preview were inactive. They are now retired after adopting the published fix.
 
-See [structured evidence](evidence/1833-validation.json), [complete first gate](evidence/1833-first-check.txt), [native follow-up](evidence/1833-native-follow-up.txt), [architecture follow-up](evidence/1833-architecture-follow-up.txt), and the [baseline reproduction](evidence/1909-borrowed-box-fn.rs). The review waits for #1909 before landing and revalidation. These timings describe different workloads, not an isolated speed-up.
+See [structured evidence](evidence/1833-validation.json), [complete first gate](evidence/1833-first-check.txt), [native follow-up](evidence/1833-native-follow-up.txt), [architecture follow-up](evidence/1833-architecture-follow-up.txt), and the [baseline reproduction](evidence/1909-borrowed-box-fn.rs). That prerequisite is now published, and #1833 is adopted through 9b14a06; the first-gate evidence remains historical. These timings describe different workloads, not an isolated speed-up.
 
 Published main has since moved to 363522b with Unicode and library-contract changes. Those incoming changes have been fetched and inspected; adoption requires a separate source/behavior audit and is not silently folded into this fixed-base checkpoint.
 

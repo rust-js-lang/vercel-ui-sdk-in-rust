@@ -1,0 +1,151 @@
+{
+  "date": "2026-11-15",
+  "issue": 1912,
+  "shipped": false,
+  "activeSeries": [],
+  "standaloneBase": "9b14a0670e5e96672b834d798f558ebae0718855",
+  "originalReproductionBase": "363522bc0d35cc3089640895e39fe4a38937cf14",
+  "patch": "patches/rust-js/1912-computed-symbol-keys.review.patch",
+  "patchSha256": "e4a35d4c01078ebbf648c34d66a238eb773dfeb9cfdc8f9cbb0e9807f82936e3",
+  "independentApplyCheck": true,
+  "engines": {
+    "publishedBeta": {
+      "version": "7.1.0-beta",
+      "passed": 3,
+      "failed": 0,
+      "assertions": 14
+    },
+    "stableReview": {
+      "version": "7.0.2",
+      "passed": 3,
+      "failed": 0,
+      "assertions": 14
+    }
+  },
+  "combinedReview": {
+    "passed": 19,
+    "failed": 0,
+    "assertions": 94,
+    "files": 4
+  },
+  "inventoryConsumers": {
+    "browser": "passing existing coverage ratchet without changing its baseline",
+    "node": "passing existing coverage ratchet"
+  },
+  "static": {
+    "passed": 89,
+    "failed": 0,
+    "assertions": 46614,
+    "files": 2
+  },
+  "typecheck": {
+    "exitCode": 0
+  },
+  "mutants": [
+    {
+      "name": "typescript-libraries-ignore-selection",
+      "sha256": "7c088f61bb853d8633c464f0c6dcecba147deff9fc65e8fcbab2f2a3caf14706",
+      "failures": [
+        "(fail) library selection uses the engine graph and leaves ordinary sessions isolated [43.28ms]"
+      ]
+    },
+    {
+      "name": "typescript-libraries-count-user-files",
+      "sha256": "e8ef4f4f88974dcc05d2ec0ca558e73a9e52e86c6242e1d8d37bd345752a8d11",
+      "failures": [
+        "(fail) library selection uses the engine graph and leaves ordinary sessions isolated [15.33ms]"
+      ]
+    },
+    {
+      "name": "typescript-libraries-default-to-esnext",
+      "sha256": "54274c5452ddff2e19c06adf22429b5c81593d322358329a6518e47bd0862813",
+      "failures": [
+        "(fail) library selection uses the engine graph and leaves ordinary sessions isolated [97.08ms]"
+      ]
+    },
+    {
+      "name": "typescript-construct-unread",
+      "sha256": "9c535d98a8ab5265d6e65f53ffa4cda1a0eaf69f1b244498c248862b34a69559",
+      "failures": [
+        "(fail) construct signatures retain generics and optional/rest arguments in every member position [29.36ms]"
+      ]
+    },
+    {
+      "name": "typescript-construct-is-call",
+      "sha256": "b232a0ee54d139c04aa1a320ae62ccf14fd0661e052ba273774f40f11107c0d6",
+      "failures": [
+        "(fail) construct signatures retain generics and optional/rest arguments in every member position [16.19ms]"
+      ]
+    },
+    {
+      "name": "typescript-member-unknown-accepted",
+      "sha256": "1b966d112625332875e678ac6d6e00bca9e7ab8796c5503b712c09064d2648d3",
+      "failures": [
+        "(fail) construct signatures retain generics and optional/rest arguments in every member position [14.02ms]"
+      ]
+    },
+    {
+      "name": "typescript-computed-key-read-as-string",
+      "sha256": "5c5481644069a680830cfa474df79bed971324c22d95c9124fda710365eb3bf2",
+      "failures": [
+        "(fail) computed symbol members keep their declaration keys through the model [34.70ms]"
+      ]
+    },
+    {
+      "name": "typescript-computed-key-printed-as-string",
+      "sha256": "5eea43c368fda02ead704a5b2e72a2147655b28089732e6b57557eb9ae6e1377",
+      "failures": [
+        "(fail) computed symbol members keep their declaration keys through the model [33.34ms]"
+      ]
+    },
+    {
+      "name": "typescript-computed-key-loses-owner",
+      "sha256": "ac5820f875ba9e0be461d37c68f417a0d8a647978254385d46df08e6f75c6eee",
+      "failures": [
+        "(fail) computed symbol members keep their declaration keys through the model [18.89ms]"
+      ]
+    },
+    {
+      "name": "typescript-computed-key-unchecked-expression",
+      "sha256": "da81b7cd04a4c59de021d0925a180a7e874ce2bdba929f7d47fdb5b164880c15",
+      "failures": [
+        "(fail) computed member expressions outside symbol paths are refused explicitly [950.03ms]"
+      ]
+    },
+    {
+      "name": "typescript-computed-key-optional-path-narrowed",
+      "sha256": "e1a84401f08a45f2cad0274de1d08f2d799a4584b2c5ba24e7f3a6267b71a88c",
+      "failures": [
+        "(fail) computed member expressions outside symbol paths are refused explicitly [950.26ms]"
+      ]
+    },
+    {
+      "name": "typescript-inventory-literal-collides-with-symbol",
+      "sha256": "0f3c7efde68167b0126fdfa8fcf871f71ecbac28e81b4a38baf7538b4d39cf42",
+      "failures": [
+        "(fail) computed symbol declarations remain usable by strict TypeScript consumers [11.33ms]"
+      ]
+    },
+    {
+      "name": "webapi-constructor-unread",
+      "sha256": "058c50391397cfebedccd5d8b64a821823b88dc290ffa91ab9fc271821c289b8",
+      "failures": [
+        "(fail) the webapi crate binds what it bound of TypeScript's DOM [292.82ms]"
+      ]
+    },
+    {
+      "name": "webapi-symbol-key-unformatted",
+      "sha256": "0afdff6515fbe8a21e95ae75ddb67755c3436cea1d760b98a3d1225681aee931",
+      "failures": [
+        "(fail) the webapi crate binds what it bound of TypeScript's DOM [282.37ms]"
+      ]
+    }
+  ],
+  "fullCompilerGate": {
+    "executed": false,
+    "reason": "Compiler-machine heavy build reservation; review has not been activated or landed."
+  },
+  "dependency": "No dependency on the separate library-selection review. The eight-file patch applies directly to published main. Broader generation and SDK milestone remain incomplete.",
+  "firstStaticFailure": "Duplicate source-owner mutation list corrected by merging entries into the existing TypeScript catalog; no test weakened.",
+  "firstConsumerFailure": "WebAPI reader still assumed string keys; migrated to model-owned memberKey, restoring unchanged existing coverage. No baseline members removed."
+}

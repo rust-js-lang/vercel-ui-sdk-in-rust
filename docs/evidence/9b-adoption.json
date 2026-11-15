@@ -1,0 +1,87 @@
+{
+  "date": "2026-11-15",
+  "compiler": "9b14a0670e5e96672b834d798f558ebae0718855",
+  "activeSeries": [],
+  "compilerBinary": {
+    "sha256": "738424f16c90d001cee9b4f5047405e6a36bd102a3c3dba6dadaf486e082ce92",
+    "buildIdentity": "563a29b90e11bca6",
+    "proof": "Actual build.rs identity owner compiled and run independently for both clean published shared checkout and clean private submodule; both match the copied binary’s rustc -vV build identity. No compiler build and no shared writes."
+  },
+  "native": {
+    "passed": 21,
+    "failed": 0
+  },
+  "compiled": {
+    "passed": 20,
+    "failed": 0,
+    "files": 10
+  },
+  "clippy": {
+    "exitCode": 0,
+    "warningsDenied": true
+  },
+  "referenceTypesSource": {
+    "passed": 72,
+    "failed": 9,
+    "tests": 81,
+    "files": 19,
+    "assertions": 317313,
+    "seconds": 2.66
+  },
+  "chromium": {
+    "rerun": false,
+    "reason": "Complete run awaits a short window in the compiler coordinator’s active heavy-machine reservation. Historical22/2 result is not relabelled as this pin’s run."
+  },
+  "generatedFilesReviewed": [
+    "foundation/kernel/details.js",
+    "foundation/number/steps.js",
+    "foundation/platform/platform.js"
+  ],
+  "adopted": [
+    1833,
+    1909
+  ],
+  "retired": [
+    "1833 compiler review patch",
+    "1833 output preview"
+  ],
+  "setup": {
+    "command": "bun install --frozen-lockfile --force",
+    "note": "Initial tests hit stale copied local runtime exports; documented root refresh fixes that setup mismatch. Only refreshed results above describe SDK behavior."
+  },
+  "remainingFailures": {
+    "existing": 8,
+    "newUnicodeBoundary": 1914,
+    "getterWrongAnswer": 1908,
+    "createDetails": "constructor and declaration vocabulary incomplete",
+    "closest": 1902
+  },
+  "unicodeOracle": {
+    "inputCodePoints": [
+      "U+0277",
+      "U+A7DD"
+    ],
+    "host": {
+      "lower": [
+        "U+0277",
+        "U+A7DD"
+      ],
+      "upper": [
+        "U+0277",
+        "U+A7DD"
+      ]
+    },
+    "rust": {
+      "lower": [
+        "U+0277",
+        "U+0277"
+      ],
+      "upper": [
+        "U+A7DD",
+        "U+A7DD"
+      ]
+    },
+    "note": "Observed native Rust and Bun on the same machine. No fixed JS Unicode version is assumed."
+  },
+  "milestone": "Incomplete core/Web/docs/examples/Pages. No deployment claimed. Unshipped1903/1912 reviews stay outside the active series."
+}

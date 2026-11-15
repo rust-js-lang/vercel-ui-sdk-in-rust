@@ -1,0 +1,11 @@
+bun test v1.4.4 (38afee6c8)
+
+symbols.test.ts:
+(pass) computed symbol members keep their declaration keys through the model [143.07ms]
+(pass) computed symbol declarations remain usable by strict TypeScript consumers [121.70ms]
+(pass) computed member expressions outside symbol paths are refused explicitly [21.98ms]
+
+ 3 pass
+ 0 fail
+ 14 expect() calls
+Ran 3 tests across 1 file. [328.00ms]

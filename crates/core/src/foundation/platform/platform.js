@@ -2,7 +2,7 @@
 
 /** Rust adaptation of UI SDK foundation/platform/platform.ts; see UPSTREAM.md. */
 import { isBrowser } from "./env.js";
-import { $unwrap } from "@rust-js/std";
+import { $toLowercase, $toUppercase, $unwrap } from "@rust-js/std";
 
 let platformOverride;
 let apple;
@@ -169,17 +169,17 @@ export function ariaKeyshortcuts(shortcut, apple) {
   return shortcut
     .split("+")
     .map((key) => {
-      const lower = key.toLowerCase();
+      const lower = $toLowercase(key);
       let result;
       if (lower === "mod") {
         result = apple ? "Meta" : "Control";
       } else {
         if (!keyNames[lower]) {
           if (key.length === 1) {
-            return key.toUpperCase();
+            return $toUppercase(key);
           } else {
             const first = key[0];
-            return first.toUpperCase() + key.slice(1);
+            return $toUppercase(first) + key.slice(1);
           }
         }
         const name = keyNames[lower];
@@ -208,14 +208,14 @@ export function formatShortcut(shortcut, apple) {
 // typed character isn't the key itself. Option+N on a Mac types "˜", and other
 // alphabets type their own letters. Every other key matches by `event.key`.
 function matchesKey(event, key) {
-  const typed = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+  const typed = event.key.length === 1 ? $toLowercase(event.key) : event.key;
   if (key === "Space") {
     return typed === " ";
   }
   if (!/^[A-Z0-9]$/.test(key)) {
-    return typed.toLowerCase() === key.toLowerCase();
+    return $toLowercase(typed) === $toLowercase(key);
   }
-  if (typed === key.toLowerCase()) {
+  if (typed === $toLowercase(key)) {
     return true;
   }
   // A Latin letter or digit that isn't this key is another key on this layout.

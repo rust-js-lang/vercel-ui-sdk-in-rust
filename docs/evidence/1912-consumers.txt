@@ -1,0 +1,19 @@
+$ bun scripts/taskTime.ts run final-native-inventory-consumers -- bun test test/typescript-symbols.test.ts test/webapi-coverage.test.ts test/node-coverage.test.ts --parallel -t "computed|binds what it bound"
+bun test v1.4.4 (38afee6c8) 14x PARALLEL
+
+test/typescript-symbols.test.ts:
+(pass) computed symbol members keep their declaration keys through the model [55.59ms]
+(pass) computed symbol declarations remain usable by strict TypeScript consumers [276.01ms]
+(pass) computed member expressions outside symbol paths are refused explicitly [32.98ms]
+
+test/webapi-coverage.test.ts:
+(pass) the webapi crate binds what it bound of TypeScript's DOM [663.53ms]
+
+test/node-coverage.test.ts:
+(pass) the node crate binds what it bound of Node.js [1410.27ms]
+
+ 5 pass
+ 2 filtered out
+ 0 fail
+ 18 expect() calls
+Ran 5 tests across 3 files. [1484.00ms]
