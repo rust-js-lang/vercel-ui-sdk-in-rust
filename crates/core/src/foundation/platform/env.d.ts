@@ -6,4 +6,4 @@ export const isBrowser: boolean;
 export function isIOS(): boolean;
 
 /** Whether an element lays out right to left, from its computed direction. False on the server. */
-export function isRTL(el?: Element | null | undefined): boolean;
+export function isRTL(el: Element | null | undefined): boolean;

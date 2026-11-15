@@ -1,11 +1,9 @@
 # Compiler patch series
 
-Published base: bc26493ed327ea7e70219c6071776bfb04d9a5ac. series.json is the sole ordered active-patch list.
+Published gitlink: 4c07105be615eadc254f2896ba329fcf551102a3. series.json is the sole ordered active list and is empty. #1867 and #1899 are upstream; their duplicate implementation patches are retired.
 
-1899-unsafe-optional-call.patch is exported from local detached review commit e40d8c7. It preserves the safe helper and adds unsafe optional_call_unchecked for a final receiver-interface assertion. Ordinary method extraction, preceding path steps and safe optional calls remain checked. Existing js::cast is retained as the sole unchecked assertion API. There are no runtime class/realm checks.
+1833-eager-local-cleanup.review.patch is an unshipped review exported from private commit46b6f78957ae0fc9e89068b0c8512e9abd678001, based on the gitlink. It is deliberately absent from series.json. The six focused tests, eight new mutants and native corpus pass. The full gate remains unapproved because the new metamorphic case exposes pre-existing P0 #1909. No waiver was added. See docs/evidence/1833-validation.json for exact first/follow-up scopes.
 
-The focused compiler run passes eight tests/35 assertions; the complete local check:fast --all passes in 403 seconds. All five affected owner mutants are caught. See docs/evidence/1899-validation.json and 1899-full-check.txt. Documentation/comments were updated after the gate; implementation and mutations did not change. The local review commit is not a published compiler revision; the gitlink remains the published base, and setup applies this exact patch idempotently.
+The separate port-previews directory also holds unfinished selector work (#1902) and the scope-guard output preview. Neither is an active compiler patch or a claimed completed port. New numeric wrong answer #1908 and borrowed-box callback wrong answer #1909 are assigned upstream. createDetails remains missing.
 
-#1867 is now upstream in the pinned base. Its duplicate patch is removed; historical proof remains in docs/evidence/1867-validation.json.
-
-The composedClosest production change is unfinished because of generated-source gap #1902. Its separately stored port preview is not an active compiler patch. createDetails remains missing and has executable runtime/declaration contracts for the compiler team. No complete milestone or Pages deployment is claimed.
+Rebase/revalidate the scope review after #1909 lands, then activate only a validated patch or adopt the published fix directly. Historical #1867/#1899 evidence remains available. Complete milestone-one and Pages deployment are still open.

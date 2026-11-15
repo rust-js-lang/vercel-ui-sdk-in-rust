@@ -1,0 +1,177 @@
+$ bun scripts/taskTime.ts run local-key-full-gate -- bun run check:fast --all
+$ bun scripts/checkFast.ts --all
+cargo build 518 ms (usual 500 ms)
+pruning what tests keep 5.4 s (usual 6.0 s)
+pruning kept compiles 3.6 s (usual 3.3 s): 20 MB kept, another build's dropped
+node bindings build 3.1 s (usual 3.1 s)
+no test map of HEAD or an ancestor of it on this machine: `bun run test-map` records one: the corpus with std's iterator structs runs whole
+test/child.test.ts: warning: child observed 426 ms past its 1000 ms deadline (/Users/tunguyen/.bun/bin/bun -e): a blocked parent or a slow child
+ok   check:fast the consumer net 46 s
+ok   check:fast the std net 2.8 s
+ok   check:fast the async table 49 s
+ok   check:fast corpus 9/14 49 s (usual 1 min 34 s)
+ok   check:fast corpus 11/14 52 s (usual 1 min 13 s)
+ok   check:fast corpus 3/14 54 s (usual 1 min 11 s)
+ok   check:fast corpus 5/14 55 s (usual 1 min 7 s)
+ok   check:fast corpus 4/14 55 s (usual 59 s)
+ok   check:fast corpus 13/14 55 s (usual 1 min 18 s)
+ok   check:fast corpus 7/14 55 s (usual 1 min 7 s)
+ok   check:fast corpus 12/14 56 s (usual 1 min 15 s)
+ok   check:fast mutations the change adds 1 min 48 s (usual 1 min 56 s)
+ok   check:fast corpus 2/14 59 s (usual 1 min 16 s)
+ok   check:fast corpus 10/14 1 min 1 s (usual 1 min 15 s)
+FAIL cargo test (18s), its whole output: /Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/rust-js/.cache/check-logs/2026-11-15T04-52-27-058Z-66025
+ok   check:fast clippy 36 s (usual 26 s)  ⚠ slower than usual: why?
+ok   check:fast corpus 8/14 49 s (usual 1 min 16 s)
+ok   check:fast corpus 6/14 50 s (usual 1 min 7 s)
+ok   check:fast corpus 14/14 50 s (usual 1 min 6 s)
+ok   check:fast the declarations' TypeScript callers 52 s
+ok   check:fast corpus 1/14 55 s (usual 1 min 16 s)
+ok   check:fast the metamorphic sample 13/14 33 s (usual 29 s)
+ok   check:fast the bounds matrix 2/14 42 s
+ok   check:fast the bounds matrix 7/14 49 s
+ok   check:fast the bounds matrix 8/14 48 s
+ok   check:fast the bounds matrix 4/14 47 s
+ok   check:fast the bounds matrix 11/14 48 s
+ok   check:fast the bounds matrix 1/14 49 s
+ok   check:fast the bounds matrix 6/14 49 s
+ok   check:fast the bounds matrix 5/14 49 s
+ok   check:fast the bounds matrix 12/14 46 s
+ok   check:fast the bounds matrix 9/14 49 s
+ok   check:fast the bounds matrix 10/14 48 s
+ok   check:fast the bounds matrix 3/14 46 s
+ok   check:fast the metamorphic sample 11/14 14 s (usual 13 s)
+ok   check:fast the Vite example's build 15 s (usual 9.5 s)  ⚠ slower than usual: why?
+ok   check:fast the bounds matrix 13/14 38 s
+ok   check:fast the bounds matrix 14/14 38 s
+ok   check:fast the `&mut` matrix's sample 13 s (usual 8.2 s)
+ok   check:fast the metamorphic sample 6/14 18 s (usual 16 s)
+ok   check:fast the metamorphic sample 10/14 13 s (usual 13 s)
+ok   check:fast the metamorphic sample 14/14 14 s (usual 14 s)
+ok   check:fast the object model's sample 1 min 27 s (usual 1 min 2 s)  ⚠ slower than usual: why?
+ok   check:fast the metamorphic sample 1/14 36 s (usual 36 s)
+ok   check:fast the metamorphic sample 3/14 30 s (usual 30 s)
+FAIL the metamorphic rewrites of the change's cases (164s), its whole output: /Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/rust-js/.cache/check-logs/2026-11-15T04-52-27-058Z-66025
+ok   check:fast the metamorphic sample 9/14 49 s (usual 44 s)
+ok   check:fast the metamorphic sample 4/14 9.5 s (usual 12 s)
+ok   check:fast the metamorphic sample 7/14 10 s (usual 14 s)
+ok   check:fast the metamorphic sample 2/14 21 s (usual 26 s)
+ok   check:fast the metamorphic sample 12/14 14 s (usual 19 s)
+ok   check:fast fmt 8.9 s (usual 9.6 s)
+ok   check:fast the `None` matrix's sample 3.1 s (usual 4.5 s)
+ok   check:fast the metamorphic sample 8/14 11 s (usual 17 s)
+ok   check:fast the metamorphic sample 5/14 9.8 s (usual 16 s)
+FAIL test/architecture.test.ts (9s), its whole output: /Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/rust-js/.cache/check-logs/2026-11-15T04-52-27-058Z-66025
+ok   check:fast the browsers' test files 5 min 15 s (usual 4 min 47 s) (9 files)
+ok   check:fast typecheck 573 ms (usual 550 ms)
+ok   check:fast the crate corpus 1 min 42 s (usual 1 min 44 s)
+the cores 88% busy on average, under half busy 14% of the time
+
+── the metamorphic rewrites of the change's cases ──
+c rewrites of the change's cases, part 1/1] (fail) local_with_scope_guards.rs, rewritten [161375.94ms]
+[the metamorphic rewrites of the change's cases, part 1/1] (pass) a push's sample is stable: a case added changes only whether it's sampled [2.04ms]
+[the metamorphic rewrites of the change's cases, part 1/1] (pass) emi-prune makes each block no run reaches `unreachable!()`, and keeps what one reaches [826.47ms]
+[the metamorphic rewrites of the change's cases, part 1/1] (pass) emi-insert adds code never run: a borrow after each `let`, and a call of each function that takes nothing [16.83ms]
+[the metamorphic rewrites of the change's cases, part 1/1] (pass) a case that compares functions is moved into no library [55.30ms]
+[the metamorphic rewrites of the change's cases, part 1/1] (pass) a listed rewrite is read under its issue or its decision, and a malformed line is refused [0.43ms]
+[the metamorphic rewrites of the change's cases, part 1/1] (pass) loud makes the case's drops, clones, calls and steps a numbered line each [169.26ms]
+[the metamorphic rewrites of the change's cases, part 1/1] (pass) loud-call panics at the middle call, and what's held is dropped as it unwinds [279.76ms]
+[the metamorphic rewrites of the change's cases, part 1/1] (pass) opaque gives each iterator on as an `impl Iterator`, promising what it is, and leaves one whose use needs more [375.31ms]
+[the metamorphic rewrites of the change's cases, part 1/1] (pass) dyn-fn calls each closure through a `Box<dyn Fn>` of rustc's types [170.12ms]
+[the metamorphic rewrites of the change's cases, part 1/1] (pass) a fact's neighbour is never run, and a case with nothing for it to name is no variant [34.23ms]
+[the metamorphic rewrites of the change's cases, part 1/1] (pass) generic-instances calls each consumer and adapter of an iterator the case makes in generic code, given another instance [107.00ms]
+[the metamorphic rewrites of the change's cases, part 1/1] (pass) generic-instances copies, clones, wraps in `Some` and drops in generic code each value the case does [114.24ms]
+[the metamorphic rewrites of the change's cases, part 1/1] (pass) generic-instances keeps each place's cost of a case that says its point is what it skips at once [198.87ms]
+[the metamorphic rewrites of the change's cases, part 1/1] 
+[the metamorphic rewrites of the change's cases, part 1/1] 1 tests failed:
+[the metamorphic rewrites of the change's cases, part 1/1] (fail) local_with_scope_guards.rs, rewritten [161375.94ms]
+[the metamorphic rewrites of the change's cases, part 1/1] 
+[the metamorphic rewrites of the change's cases, part 1/1]  21 pass
+[the metamorphic rewrites of the change's cases, part 1/1]  1 fail
+[the metamorphic rewrites of the change's cases, part 1/1]  65 expect() calls
+[the metamorphic rewrites of the change's cases, part 1/1] Ran 22 tests across 1 file. [164.11s]
+── the metamorphic rewrites of the change's cases, part 1/1 failed ──
+the metamorphic rewrites of the change's cases failed in 164 s
+
+
+── cargo test ──
+
+running 129 tests
+........................................................... 59/129
+lower::crate_facts::tests::each_crate_fact_says_whether_a_consumer_needs_it --- FAILED
+.....................................................................
+failures:
+
+---- lower::crate_facts::tests::each_crate_fact_says_whether_a_consumer_needs_it stdout ----
+
+thread 'lower::crate_facts::tests::each_crate_fact_says_whether_a_consumer_needs_it' (191216241) panicked at src/lower/crate_facts.rs:365:9:
+assertion `left == right` failed
+  left: 67
+ right: 66
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    lower::crate_facts::tests::each_crate_fact_says_whether_a_consumer_needs_it
+
+test result: FAILED. 128 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+error: test failed, to rerun pass `--bin rust-js`
+
+
+── test/architecture.test.ts ──
+ss) each decision has a status, and one amended names what amended it [75.69ms]
+(pass) shortcuts to recognition are in shortcuts.rs, and only shorten [30.86ms]
+(pass) the dispatchers of what's called don't grow [1.01ms]
+(pass) the std collections a JS array is are one list's [26.98ms]
+(pass) an operator trait's operator is one list's [22.23ms]
+(pass) recognition depends on neither destructors nor effects [3.59ms]
+(pass) library identity checks and method tables stay in recognition [26.84ms]
+(pass) std's crates are known by std_crate, not by their names [35.28ms]
+(pass) a std type is known by its StdItem [30.56ms]
+(pass) a binding's keyword name is its raw identifier [27.04ms]
+(pass) a binding is written with no allow of unused variables [217.15ms]
+(pass) a binding's optional argument is an Option of its one function [1525.14ms]
+(pass) JSON of no replacer and no indentation is stringify's [155.61ms]
+(pass) only recognition spells std's names [48.60ms]
+(pass) each std item is known by what std gives it [1358.26ms]
+(pass) an app's Rust is compiled one way, rust-js build [425.77ms]
+(pass) the crates rust-js compiles are the ones the tooling names, a binding crate saying it's one [367.49ms]
+(pass) whether an item is rust-js's is compiled_by_rust_js alone [41.72ms]
+(pass) a raw pointer is one by raw_pointee alone [24.42ms]
+(pass) native and WASI compiler dependency versions agree [0.56ms]
+(pass) the WASI build depends on each of rustc's crates the compiler links [0.30ms]
+(pass) crate analysis cannot emit functions or invoke linking [6.35ms]
+(pass) lowering returns symbolic output and leaves linking to the driver [0.25ms]
+(pass) a type known by its bounds is one by known_by_bounds alone [47.20ms]
+(pass) a whole body's facts are its BodyFacts, read once [0.19ms]
+(pass) a std call's kind is chosen of what it reads alone [0.39ms]
+(pass) a declared function's parameters are its JsSignature's alone [2.43ms]
+(pass) what a module exports an item as is exported_as's alone [120.66ms]
+(pass) an arrow that passes on what it's given is passed_on's alone [215.09ms]
+(pass) only refusal.rs words a refusal [31.91ms]
+(pass) the readability baseline is blessed after the snapshots [0.21ms]
+(pass) Bun's version is package.json's packageManager alone [2.15ms]
+(pass) tests find what they build through target [25.54ms]
+(pass) a compiler file is at most the cap [67.31ms]
+(pass) a test file is at most the cap [47.17ms]
+(pass) a file near the cap doesn't grow: it's split by concept first [410.04ms]
+(pass) no thread-local or static holds rustc's ids but the lowering session's caches [41.04ms]
+(pass) trait selection is asked through `traits::select` alone [22.59ms]
+(pass) no caller of substitute falls back to the expression unrenamed [24.85ms]
+(pass) a bare template value is made only of text, a number or a bool [38.55ms]
+
+1 tests failed:
+(fail) each module of the front end is in the architecture [14.79ms]
+
+ 69 pass
+ 1 fail
+ 3559 expect() calls
+Ran 70 tests across 1 file. [9.04s]
+
+
+each failing job's whole output: /Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/rust-js/.cache/check-logs/2026-11-15T04-52-27-058Z-66025
+
+3 failed in 465s
+error: script "check:fast" exited with code 1
+error: script "task" exited with code 1

@@ -317,3 +317,19 @@ test("copying a flattened range never reads an absent nested range property", ()
   expect(expected).toBe(1.5);
   expect(ported.stepOnGrid(1.3, movement, range)).toBe(expected);
 });
+
+test("scrubTo reads the threshold receiver once when a valid getter changes its value", () => {
+  const rows = [original, ported].map(implementation => {
+    let reads = 0;
+    const range = {
+      min:0, max:10, step:1,
+      get snap() {
+        reads++;
+        return {points:[2], threshold:reads === 1 ? 1 : 0.01};
+      },
+    };
+    return {result:implementation.scrubTo(1.3, range, {ease:false}), reads};
+  });
+  expect(rows[0]).toEqual({result:{value:2,point:2},reads:3});
+  expect(rows[1]).toEqual(rows[0]);
+});

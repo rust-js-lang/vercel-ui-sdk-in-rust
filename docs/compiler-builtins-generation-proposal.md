@@ -1,6 +1,6 @@
 # Proposal: one TypeScript authority for JavaScript builtins
 
-Status: proposed for compiler-lead review; no generator or dependency changes implemented by this document. Tracks rust-js #1903, #1904 and the SDK's week-info blocker #1831. Milestone one still requires the complete core, Web Components, docs/examples and verified Pages site.
+Status: approved by the compiler lead on 2026-11-15 under the user decision; no generator or dependency changes implemented by this document. Tracks rust-js #1903, #1904 and the SDK's week-info blocker #1831. Milestone one still requires the complete core, Web Components, docs/examples and verified Pages site.
 
 ## Evidence and immediate library selection
 
@@ -17,7 +17,7 @@ Proposed #1903 implementation:
 3. Use this one session/library selection for both member coverage and argument-union conformance. Remove the old year regex and the typescript-es dependency. The parser's existing exact pin becomes the library pin too, already satisfying the approved 7.0.2+ minimum.
 4. Keep definitions as the single update command. Its metadata requests must run through Bun, preserving its existing release cool-off and approved release channels. Include the builtins regeneration/coverage report as well as the required webapi and existing React-port checks. Do not silently bless removed members.
 
-This approach needs lead confirmation before implementation because it removes the obsolete second library pin rather than replacing it with another alias.
+The lead approved this approach. One condition remains for implementation: test a stable 7.x parser first and use it if compatible. Retain the beta only if the canonical parser API needs it, with the precise compatibility evidence in an ADR. The single pin must govern both parser and library.
 
 ## Generation boundary
 

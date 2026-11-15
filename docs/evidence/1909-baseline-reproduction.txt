@@ -1,0 +1,13 @@
+native {
+  outcome: {
+    value: null,
+  },
+  stdout: "called\n",
+}
+js {
+  outcome: {
+    error: "TypeError: run is not a function. (In 'run()', 'run' is an instance of Object)",
+  },
+  stdout: "",
+}
+directory /Users/tunguyen/Documents/GitHub/vercel-ui-sdk-in-rust/rust-js/target/fixtures/xdc6b7c9d/dyn-fn-baseline_0

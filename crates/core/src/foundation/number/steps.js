@@ -122,7 +122,7 @@ export function stepOnGrid(value, movement, range) {
 export function stepBy(value, movement, range, options) {
   const defaults = {};
   const snap = (options ?? defaults).snap ?? true;
-  if (typeof movement.bound !== "string") {
+  if (!("bound" in movement)) {
     const next = stepOnGrid(value, movement, range);
     if (!snap || range.snap == null) {
       return next;
@@ -164,7 +164,10 @@ export function scrubTo(value, range, options) {
     }
   }
   if (nearest === undefined) {
-    return { value: snapToStep(value, range) };
+    return {
+      value: snapToStep(value, range),
+      point: undefined,
+    };
   }
   const point = clamp(nearest, range.min, range.max);
   if (ease == null || ease === false || !(threshold > 0)) {

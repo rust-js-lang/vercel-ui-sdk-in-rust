@@ -45,7 +45,7 @@ pub struct DirectionalMove {
 }
 
 pub struct BoundMove {
-    #[cfg_attr(rust_js, rust_js::test)]
+    #[cfg_attr(rust_js, rust_js::test(key))]
     pub bound: NumberBound,
 }
 
@@ -252,6 +252,7 @@ pub struct ScrubOptions<'a> {
 /// A scrubbed value and the snap point it is pulled toward.
 pub struct NumberScrub {
     pub value: f64,
+    #[cfg_attr(rust_js, rust_js::present)]
     pub point: Option<f64>,
 }
 

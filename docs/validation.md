@@ -2,7 +2,27 @@
 
 2026-11-15. Milestone one remains open: complete core, Web Components, Rust docs/live examples, and an actual verified GitHub Pages deployment are required.
 
-## Current unsafe-boundary checkpoint
+## Current published-contract checkpoint
+
+The compiler gitlink is published 4c07105. It contains #1845, #1846 and #1899; no active compiler patch remains. The SDK adopts present(value)/present(el), a present point field, and test(key) on the bound variant. ISO-date/RTL required-input types and the required undefined point key now match the original. The union test uses membership without reading the value.
+
+The SDK was regenerated through the canonical host with RUST_JS_COMPILER selecting a copied binary from a clean published compiler checkout. Its production sources match 4c07105. The native suite passes 21 tests; compiled Rust invariants pass 20 tests across 10 files. Strict Clippy passes with warnings denied. The complete reference/type/source suite reports 73 passes and 8 failures across 81 tests in 19 files, with 317,495 assertions (2.25 seconds). The complete Chromium suite is 22 pass, 2 fail across 24 cases: both failures are the unfinished composedClosest API. No production Pages deployment is claimed.
+
+The remaining numeric trace exposes P0 #1908: Option::map_or duplicates the snap getter. A conforming changing getter yields value2/point2 upstream versus value1/pointundefined in the port. The dedicated result regression remains red. m1-lisa owns the compiler fix and the Option-combinator sweep; no application workaround was added.
+
+### Unshipped scope-guard review
+
+Private review 46b6f78957ae0fc9e89068b0c8512e9abd678001 is based on 4c07105. The initializer owner now supplies the complete eager-key set, including constants with no callable initializer-effects entry. The existing unwinding owner proves the actual callback and consumes the canonical function/closure body maps. Lazy, unknown and throwing controls remain conservative. Required stack-overflow guards remain accepted output.
+
+Six focused tests pass 52 assertions. All eight new owner mutants are caught; all 14 native corpus shards pass. The first full check:fast --all ends after 465 seconds with three failures. Two bookkeeping failures are corrected afterward: the fact-count contract is now67 and the architecture has the complete module path. All129 native compiler tests and all70 architecture tests/3559 assertions then pass. Implementation and mutation logic did not change after the gate.
+
+The remaining failure is the new corpus's dyn-fn metamorphic rewrite, which exposes pre-existing P0 #1909. A separate seven-line program reproduces it against the clean upstream binary: native Rust prints called, JavaScript throws TypeError without calling the callback. No waiver or known-failure entry was added. The review patch and output preview are retained outside the active series; the SDK runtime is regenerated from the published compiler, without this review applied.
+
+See [structured evidence](evidence/1833-validation.json), [complete first gate](evidence/1833-first-check.txt), [native follow-up](evidence/1833-native-follow-up.txt), [architecture follow-up](evidence/1833-architecture-follow-up.txt), and the [baseline reproduction](evidence/1909-borrowed-box-fn.rs). The review waits for #1909 before landing and revalidation. These timings describe different workloads, not an isolated speed-up.
+
+Published main has since moved to 363522b with Unicode and library-contract changes. Those incoming changes have been fetched and inspected; adoption requires a separate source/behavior audit and is not silently folded into this fixed-base checkpoint.
+
+## Historical unsafe-boundary checkpoint (2680f61)
 
 Published compiler base bc26493 includes #1867; the duplicate implementation patch is retired. The sole active patch is #1899, preserving checked optional_call and introducing unsafe optional_call_unchecked through the same native path owner. The existing js::cast remains the single unchecked assertion API. The user explicitly approved preserving the upstream JavaScript behavior on 2026-11-15. Setup is idempotent on two consecutive runs.
 
@@ -68,9 +88,10 @@ Both generated function bodies match the pinned original after TypeScript erasur
 
 ## Retained gaps
 
-- #1845: required own point with undefined and required input arity remain failing. No assertions are weakened.
-- #1846: union property classification reads a getter where the original tests membership; the evaluation-order regression remains failing.
-- Generic closest: optional_call exists and inheritance constraints are fixed; the native selector/generic result binding is still required. Complete-export, browser and separate strict consumer failures remain visible.
+- #1845 and #1846 are adopted in this checkpoint: required input arity, the own point key and bound membership now match the original.
+- #1908: Option::map_or duplicates an observable getter, changing both evaluation order and the numeric result. Both regressions remain failing.
+- Generic closest: the unsafe generic selector preview compiles and passes its scoped browser checks, but source fidelity #1902 remains open. The production export, browser and strict-consumer failures remain visible.
+- #1909 blocks landing the unshipped #1833 review; borrowed boxed callbacks must remain callable through every reference depth.
 - #1867: now adopted through published bc26493; the old patch is retired.
 - Full change-source/createDetails vocabulary and scope-guard output #1833, projection output #1814, undo-stack output #1815/#1816, Date numeric binding coverage #1837 and Locale week-info/library-version policy #1831 remain part of the audit.
 

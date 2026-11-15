@@ -30,6 +30,7 @@ thread_local! {
 
 /// Whether a value is a real ISO calendar date.
 #[cfg_attr(rust_js, rust_js::name = "isISODate")]
+#[cfg_attr(rust_js, rust_js::present(value))]
 pub fn is_iso_date(value: Option<&js::Unknown>) -> js::Is<IsoDate> {
     js::Is::when(value, |text| date_parts(Some(text)).is_some())
 }

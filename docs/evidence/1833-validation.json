@@ -1,0 +1,181 @@
+{
+  "date": "2026-11-15",
+  "base": "4c07105be615eadc254f2896ba329fcf551102a3",
+  "review": "46b6f78957ae0fc9e89068b0c8512e9abd678001",
+  "shipped": false,
+  "activeSeries": [],
+  "patchSha256": "39452feed5b43bec966a18d42fe9d4680b28ac2b621a5dda1a3ec37e28377450",
+  "focused": {
+    "passed": 6,
+    "failed": 0,
+    "assertions": 52
+  },
+  "corpus": {
+    "parts": 14,
+    "exitCodes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "newCase": "local_with_scope_guards.rs",
+    "existingGoldensChanged": 0
+  },
+  "mutants": [
+    {
+      "name": "local-with-callback-assumed-nonthrowing",
+      "sha256": "81eb6cf29a36032b8a897a315e7ef086e38f0970ff2fcc73a71154e8b33dfcac",
+      "modified": "2026-11-15T04:54:15.376Z",
+      "failingTests": [
+        "(fail) a LocalKey with callback that can panic keeps abort-safe cleanup [544.49ms]"
+      ]
+    },
+    {
+      "name": "local-with-callback-proof-discarded",
+      "sha256": "a097b1bfac12ae81b97b797b5a8f58ccfb8f5384b4064f297ad22048dc31f39a",
+      "modified": "2026-11-15T04:54:14.650Z",
+      "failingTests": [
+        "(fail) a proved nonthrowing LocalKey with restore uses one finally [0.90ms]"
+      ]
+    },
+    {
+      "name": "local-with-generic-callback-unproved",
+      "sha256": "7b7ab8df1934c37c2885d94ea7c487b6b14cc60eddab60a570c0b2378056f8ed",
+      "modified": "2026-11-15T04:54:14.783Z",
+      "failingTests": [
+        "(fail) a generic LocalKey with restore proves its instantiated callback [215.04ms]"
+      ]
+    },
+    {
+      "name": "local-with-lazy-initializer-unseen",
+      "sha256": "16be032d25c75c105f3a5188a1652357bcbd97961ba948d7071a537db2d25f0b",
+      "modified": "2026-11-15T04:54:15.388Z",
+      "failingTests": [
+        "(fail) a lazy LocalKey initializer remains a possible panic in its drop [631.80ms]"
+      ]
+    },
+    {
+      "name": "local-with-eager-key-unproved",
+      "sha256": "0740164956039e206267a73f1945b8d60f5db06132f79714b9461e3bcb868efe",
+      "modified": "2026-11-15T04:54:14.782Z",
+      "failingTests": [
+        "(fail) a proved nonthrowing LocalKey with restore uses one finally [0.17ms]"
+      ]
+    },
+    {
+      "name": "local-with-unrelated-callee-trusted",
+      "sha256": "d728854fffa1597fc1a59890e7917025e864947a5febeec21b2f7bc55f51e512",
+      "modified": "2026-11-15T04:54:15.382Z",
+      "failingTests": [
+        "(fail) an unrelated function receiving a key and callback is not LocalKey with [583.42ms]"
+      ]
+    },
+    {
+      "name": "eager-key-includes-lazy-initializers",
+      "sha256": "fa5ff8de7fdff7e905bbe4c8c706a90841eeba51f3bc891dfe16f3000450a132",
+      "modified": "2026-11-15T04:54:15.385Z",
+      "failingTests": [
+        "(fail) a lazy LocalKey initializer remains a possible panic in its drop [556.61ms]"
+      ]
+    },
+    {
+      "name": "eager-key-excludes-constant-initializers",
+      "sha256": "8229706cc8dcbb68ec5a1661b253145be3c605b9a73433f9af67ca085850781e",
+      "modified": "2026-11-15T04:54:14.781Z",
+      "failingTests": [
+        "(fail) a proved nonthrowing LocalKey with restore uses one finally [0.36ms]"
+      ]
+    }
+  ],
+  "firstFullGate": {
+    "command": "bun run check:fast --all",
+    "seconds": 465,
+    "exitCode": 1,
+    "failures": [
+      "native fact-count contract expected66 vs added67th fact",
+      "architecture path omitted analysis/ prefix",
+      "new corpus dyn-fn metamorphic rewrite exposes pre-existing P0 #1909"
+    ]
+  },
+  "followUp": {
+    "nativeCompilerTests": {
+      "passed": 129,
+      "failed": 0
+    },
+    "architecture": {
+      "passed": 70,
+      "failed": 0,
+      "assertions": 3559
+    },
+    "implementationChangedAfterGate": false,
+    "note": "Only cfg(test) expected cardinality, architecture path and TESTS documentation changed after terminal gate. The P0 remains unwaived."
+  },
+  "sdkPreview": {
+    "native": {
+      "passed": 21,
+      "failed": 0
+    },
+    "referenceTypesBeforeNewP0Case": {
+      "passed": 73,
+      "failed": 7,
+      "tests": 80,
+      "assertions": 317493
+    },
+    "chromium": {
+      "passed": 22,
+      "failed": 2,
+      "tests": 24
+    }
+  },
+  "blockers": [
+    1908,
+    1909
+  ],
+  "baselineP0": {
+    "issue": 1909,
+    "reproduction": "docs/evidence/1909-borrowed-box-fn.rs",
+    "nativeStdout": "called\n",
+    "javascript": "TypeError: run is not a function",
+    "binarySha256": "8df2659a2ac79f97f766493e4047ffc9e19b49b7dff1c460a83becd5e18ea28b",
+    "sourceCheckout": "clean published a86fba95; no production src differences from 4c07105"
+  },
+  "next": "Land #1909, rebase review and rerun affected/full required checks before activating #1833.",
+  "landingBlocker": 1909,
+  "sdkWrongAnswer": 1908,
+  "reviewStatus": "unshipped; no active patch or waiver",
+  "sdkPublished": {
+    "compiler": "4c07105be615eadc254f2896ba329fcf551102a3",
+    "activeSeries": [],
+    "native": {
+      "passed": 21,
+      "failed": 0
+    },
+    "compiled": {
+      "passed": 20,
+      "failed": 0,
+      "files": 10
+    },
+    "clippy": {
+      "exitCode": 0,
+      "warningsDenied": true
+    },
+    "referenceTypesSource": {
+      "passed": 73,
+      "failed": 8,
+      "tests": 81,
+      "files": 19,
+      "assertions": 317495,
+      "seconds": 2.25
+    }
+  }
+}

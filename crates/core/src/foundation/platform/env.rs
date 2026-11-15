@@ -20,6 +20,7 @@ pub fn is_ios() -> bool {
 
 /// Whether an element lays out right to left, from its computed direction. False on the server.
 #[cfg_attr(rust_js, rust_js::name = "isRTL")]
+#[cfg_attr(rust_js, rust_js::present(el))]
 pub fn is_rtl(el: Option<&Element>) -> bool {
     el.is_some_and(|el| {
         IS_BROWSER.with(|browser| *browser)

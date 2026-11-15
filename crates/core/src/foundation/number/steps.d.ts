@@ -80,7 +80,7 @@ export interface ScrubOptions {
 /** A scrubbed value and the snap point it is pulled toward. */
 export interface NumberScrub {
     value: number;
-    point?: number | undefined;
+    point: number | undefined;
 }
 
 /** Finds the nearest snap point, or the grid, with an optional easing curve. */
