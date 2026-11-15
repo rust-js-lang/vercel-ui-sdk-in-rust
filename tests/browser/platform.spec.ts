@@ -111,3 +111,43 @@ test("composed closest reads optional method once and retains receiver without r
   expect(results[1]).toEqual(results[0]);
   expect(results[0]).toEqual({same:true, calls:["get",["invoke",true,"button"]]});
 });
+
+test("composed closest preserves real selectors, null results and cross-realm identity", async ({page}) => {
+  await page.goto("/");
+  const rows = await page.evaluate(async () => {
+    const modules = [await import("/reference/platform.js"), await import("/ported/platform.js")];
+    const frame = document.createElement("iframe");
+    frame.srcdoc = "<!doctype html><body></body>";
+    const loaded = new Promise(resolve => frame.addEventListener("load", resolve, {once:true}));
+    document.body.append(frame);
+    await loaded;
+    const rows = [];
+    for (const doc of [document, frame.contentDocument!]) {
+      const host = doc.createElement("section");
+      const shadow = host.attachShadow({mode:"open"});
+      const slot = doc.createElement("slot");
+      shadow.append(slot);
+      const button = doc.createElement("button");
+      button.textContent = "label";
+      host.append(button);
+      doc.body.append(host);
+      const text = button.firstChild!;
+      rows.push(modules.map(module => ({
+        button: module.composedClosest(button, "button") === button,
+        // The original follows the slot before the light-DOM parent.
+        slot: module.composedClosest(text, "slot") === slot,
+        host: module.composedClosest(text, "section") === host,
+        missing: module.composedClosest(text, ".missing") === null,
+        // The original generic selector promise is intentionally unchecked.
+        arbitraryElement: module.composedClosest(host, "section") === host,
+      })));
+      host.remove();
+    }
+    frame.remove();
+    return rows;
+  });
+  for (const row of rows) {
+    expect(row[1]).toEqual(row[0]);
+    expect(row[0]).toEqual({button:true,slot:true,host:true,missing:true,arbitraryElement:true});
+  }
+});

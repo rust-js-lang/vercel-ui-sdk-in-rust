@@ -1,2 +1,4 @@
 # Unified patches keep meaningful blank context lines, including at EOF.
 patches/rust-js/*.patch whitespace=-blank-at-eol,-blank-at-eof
+
+patches/port-previews/*.patch whitespace=-blank-at-eol,-blank-at-eof

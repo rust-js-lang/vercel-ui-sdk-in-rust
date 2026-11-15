@@ -1,0 +1,415 @@
+diff --git a/TESTS.md b/TESTS.md
+index 294ab5a..778f837 100644
+--- a/TESTS.md
++++ b/TESTS.md
+@@ -52,7 +52,13 @@ Added focused #1861 coverage on 2026-11-15: a seventh source-workspace case chec
+ 
+ Added #1867 coverage on 2026-11-15: a dedicated real-WebAPI aggregate-argument test covers objects and arrays, getter evaluation order and every thrown-value boundary, plus generated-source shape. Native owner counterexamples reject getters, computed keys, spreads and closure-written values. Two mutations remove the fix or its safety predicate. The initial object regression fails on main after ten runtime rows pass. The expanded focused case passes 34 assertions and the native safety unit passes; all 18 moved/new owner mutations are caught. The first complete ec7990f gate finishes in 429 seconds with only a newly adopted snapshot mismatch and an improved readability baseline; both are regenerated and reviewed before the final suite check.
+ 
+-Historical suite totals below are not a recount.
++Added #1899 coverage on 2026-11-15: four optional-call cases prove the
++unchecked Node receiver, rustc's unsafe requirement, the safe helper's strict
++receiver and ordinary extraction's strict receiver. With the existing checked
++downcast cases, the focused run passes eight tests and 35 assertions. All five
++added or retargeted path-owner mutants are caught. The complete local
++check:fast --all passes in 403 seconds on bc26493 plus this patch. This is a
++local gate measurement; historical suite totals below are not a recount.
+ 
+ Added on 2026-11-15: `test/intl-arguments.test.ts` checks native Intl calls
+ in Bun and Chromium, derives accepted Rust callers from pinned TypeScript
+diff --git a/builtins/src/lib.rs b/builtins/src/lib.rs
+index a04e3ee..0510181 100644
+--- a/builtins/src/lib.rs
++++ b/builtins/src/lib.rs
+@@ -901,7 +901,8 @@ pub const fn null<T>() -> Option<T> {
+ /// that may be `undefined` is cast to an `Option`, never to what's in one:
+ /// `Some(cast::<fn()>(v))` of an `undefined` is `undefined`, which is the
+ /// `Option`'s `None`, as JS has `Some` of a function as the function
+-/// itself; `cast::<Option<fn()>>(v)` says so.
++/// itself; `cast::<Option<fn()>>(v)` says so. A target native interface must
++/// be satisfied by the value, including for a generic target or another realm.
+ #[cfg_attr(rust_js, rust_js::link_name = "this")]
+ pub unsafe fn cast<T>(this: Option<&Unknown>) -> T {
+     unreachable!()
+@@ -1255,18 +1256,32 @@ pub trait MethodCall<M>: sealed::Path {
+ /// [`value.method?.(args)`](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Operators/Optional_chaining):
+ /// the method a path names, read once, called with its value as its
+ /// `this` where it's there, `Some` of what it gives, and `None` where it's
+-/// `undefined` or `null`, as a hop that may be a `Text` node calls
+-/// `closest`: `js::optional_call((hop, Element::closest), (selector,))` is
++/// `undefined` or `null`: `js::optional_call((hop, Element::closest), (selector,))` is
+ /// `hop.closest?.(selector)`. A member that's there and no function is
+ /// called, JS's `TypeError` a panic. Rust evaluates the value and then
+ /// the arguments before the call, so they run whether it's there or not
+-/// (#1859, ADR 1156).
++/// (#1859, ADR 1156). The receiver must satisfy the selected native interface;
++/// use [`optional_call_unchecked`] to assert an unrelated receiver's contract.
++///
+ #[cfg_attr(rust_js, rust_js::link_name = "?.()")]
+ pub fn optional_call<P: MethodCall<M>, M>(path: P, args: P::Arguments) -> Option<P::Output> {
+     let _ = (path, args);
+     unreachable!()
+ }
+ 
++/// Like [`optional_call`], allowing the final method to belong to a different
++/// native interface. No runtime receiver check is added.
++///
++/// # Safety
++/// When the method returns normally, it must satisfy its selected binding's
++/// argument and result contract for this receiver. Missing and null members
++/// retain optional-call behavior; non-callable members throw as JavaScript does.
++#[cfg_attr(rust_js, rust_js::link_name = "?.() unchecked")]
++pub unsafe fn optional_call_unchecked<P: MethodCall<M>, M>(path: P, args: P::Arguments) -> Option<P::Output> {
++    let _ = (path, args);
++    unreachable!()
++}
++
+ /// `Method` of each path of a value and a method of up to 16 parameters.
+ macro_rules! methods {
+     ($(($($a:ident),*))*) => {
+diff --git a/docs/decisions/1156-an-optional-call-is-one-read.md b/docs/decisions/1156-an-optional-call-is-one-read.md
+index 4aba94b..a3056ed 100644
+--- a/docs/decisions/1156-an-optional-call-is-one-read.md
++++ b/docs/decisions/1156-an-optional-call-is-one-read.md
+@@ -71,3 +71,32 @@ hop.closest?.(selector)
+ - Mutations optional-call-arguments-in-place, optional-call-nested-unboxed,
+   optional-call-of-undefined-results, optional-call-of-a-getter and
+   optional-call-flattened-boxed.
++
++
++## Amendment: the documented Node lookup is an unsafe signature choice (#1899)
++
++The initial example was tested only with an Element receiver. Its documented
++Node receiver passed rustc's MethodCall bound but was refused by the shared
++strict binding-path check, even though absence is the point of this call.
++
++The safe optional_call binding retains its checked native receiver. The separate
++unsafe optional_call_unchecked explicitly asserts the final receiver's method
++signature: a normal return must obey its selected native argument/result
++contract. This is the standard checked/unchecked API distinction, as in get and
++get_unchecked, rather than two APIs for the same guarantee. The user approved
++preserving the SDK's unchecked JavaScript boundaries on 2026-11-15. Neither API
++adds a runtime class/realm check.
++
++defined_path remains the single owner of native path validation. Its explicit
++PathEnd policy permits only the final optional method's receiver to be
++asserted by this unsafe call. Ordinary method reads, mandatory path steps,
++native method form, argument binding and result/nullability rules retain
++their checks. Getters and undefined-valued method results remain refused.
++Rust still evaluates receiver and arguments in its order (ADR 0262 case R);
++the new receiver support accepts no additional semantic difference.
++
++The focused Node case checks generated source/declarations, absent/null/found
++results, a non-callable property, single getter read, exact receiver, an own
++call getter that must not run, and thrown-value identity. Rust rejects a call
++without an unsafe boundary; ordinary extraction still rejects an unrelated
++receiver. Full validation is pending the coordinated machine window.
+diff --git a/docs/guide/interop/global-scope.md b/docs/guide/interop/global-scope.md
+index 9a5e205..f48acfd 100644
+--- a/docs/guide/interop/global-scope.md
++++ b/docs/guide/interop/global-scope.md
+@@ -414,6 +414,17 @@ an argument mustn't run without the method, test it first with
+ asking first and then calling makes. A getter isn't called, and a method
+ that may give `undefined`, which `?.` gives of one that isn't there too,
+ is refused, saying to read it once with `js::method`.
++For an unchecked final receiver, use `unsafe { js::optional_call_unchecked(path, args) }`.
++The caller must guarantee the selected native signature when a member call
++returns normally. Its final method may belong to another interface, as a
++Node's optional Element::closest does; no class/realm check is inserted.
++The safe `optional_call`, ordinary method extraction, and all preceding native
++path steps remain checked.
++
++`unsafe { js::cast::<T>(value) }` asserts a target interface without an
++`instanceof` check. This existing unchecked cast emits the value itself,
++including for a generic target or an object from another realm. The caller
++owns this promise; no second unchecked cast API is provided.
+ 
+ `js::method` of such a path is the method read as a value, the JS
+ function itself, called with `function::call`, which gives its `this`:
+diff --git a/scripts/mutations/lower/mir/calls/defined.ts b/scripts/mutations/lower/mir/calls/defined.ts
+index b662866..16d774c 100644
+--- a/scripts/mutations/lower/mir/calls/defined.ts
++++ b/scripts/mutations/lower/mir/calls/defined.ts
+@@ -156,7 +156,7 @@ export const mutations: Mutation[] = [
+     breaks:
+       "a path whose step is no method of what the one before gives, `(Doc::make, Page::doc)`, is asked as if it were",
+     file: "src/lower/mir/calls/defined.rs",
+-    find: "                    if !bindings::is_method(tcx, f) || (of != Some(before.peel_refs()) && !any && !extends) {\n",
++    find: "                    if !bindings::is_method(tcx, f) || (!unchecked && incompatible) {\n",
+     replace: "                    if !bindings::is_method(tcx, f) {\n",
+     tests: [
+       "test/lowering-bindings.test.ts",
+@@ -412,8 +412,8 @@ export const mutations: Mutation[] = [
+     breaks:
+       "`js::method((js::class::<HTMLElement>().prototype(), HTMLElement::focus))`, a path from any value, is refused as a step of no method of it (rd181)",
+     file: "src/lower/mir/calls/defined.rs",
+-    find: "(of != Some(before.peel_refs()) && !any && !extends)",
+-    replace: "(of != Some(before.peel_refs()) && !extends)",
++    find: "of != Some(before.peel_refs()) && !any && !extends",
++    replace: "of != Some(before.peel_refs()) && !extends",
+     tests: ["test/lowering-is-function.test.ts", "-t", "js::method"],
+   },
+   {
+@@ -421,8 +421,8 @@ export const mutations: Mutation[] = [
+     breaks:
+       "`js::is_function((style, CSSStyleDeclaration::set_property as fn(..)))` of an element's `CSSStyleProperties`, which extends it, is refused (rd232)",
+     file: "src/lower/mir/calls/defined.rs",
+-    find: "&& !any && !extends)",
+-    replace: "&& !any)",
++    find: "&& !any && !extends;",
++    replace: "&& !any;",
+     tests: ["test/lowering-is-function.test.ts", "-t", "path from a value"],
+   },
+   {
+diff --git a/scripts/mutations/lower/mir/calls/method_paths.ts b/scripts/mutations/lower/mir/calls/method_paths.ts
+index 9fe0203..7e6fdf8 100644
+--- a/scripts/mutations/lower/mir/calls/method_paths.ts
++++ b/scripts/mutations/lower/mir/calls/method_paths.ts
+@@ -3,6 +3,22 @@
+ import type { Mutation } from "../../../../mutations";
+ 
+ export const mutations: Mutation[] = [
++  {
++    name: "optional-call-safe-receiver-unchecked",
++    breaks: "a safe optional call accepts an unrelated native receiver without an unsafe promise",
++    file: "src/lower/mir/calls/method_paths.rs",
++    find: "if unchecked {",
++    replace: "if true {",
++    tests: ["test/js-optional-call.test.ts", "-t", "a safe optional native call"],
++  },
++  {
++    name: "optional-call-native-receiver-checked",
++    breaks: "the documented optional Node member is rejected as though it must be declared on Node",
++    file: "src/lower/mir/calls/method_paths.rs",
++    find: "PathEnd::UncheckedMethod",
++    replace: "PathEnd::Checked",
++    tests: ["test/js-optional-call.test.ts", "-t", "documented Node receiver"],
++  },
+   {
+     name: "method-path-step-unread",
+     breaks:
+diff --git a/src/lower/bindings/forms.rs b/src/lower/bindings/forms.rs
+index 850a486..c13e5c9 100644
+--- a/src/lower/bindings/forms.rs
++++ b/src/lower/bindings/forms.rs
+@@ -96,7 +96,7 @@ pub(in crate::lower) enum JsForm {
+     /// `?.()`: a path's method read once and called with its value as its
+     /// `this` where it's there, `value.method?.(args)`, `js::optional_call`'s
+     /// (#1859).
+-    OptionalCall,
++    OptionalCall { unchecked: bool },
+     /// `is when`: whether a value is its type argument's, as JS tells one,
+     /// and a test holds of it, `typeof value === "string" && test(value)`,
+     /// `js::Is::when`'s (#1828).
+@@ -191,7 +191,8 @@ pub(in crate::lower) fn js_form(tcx: TyCtxt<'_>, def_id: DefId) -> JsForm {
+         "class" => return JsForm::Class,
+         "downcast" => return JsForm::Downcast,
+         "is when" => return JsForm::IsWhen,
+-        "?.()" => return JsForm::OptionalCall,
++        "?.()" => return JsForm::OptionalCall { unchecked: false },
++        "?.() unchecked" => return JsForm::OptionalCall { unchecked: true },
+         "null" => return JsForm::Null,
+         "typeof object" => return JsForm::TypeofObject,
+         "function" => return JsForm::WithThis,
+diff --git a/src/lower/mir/calls/defined.rs b/src/lower/mir/calls/defined.rs
+index 32e3fbe..2cdfaf1 100644
+--- a/src/lower/mir/calls/defined.rs
++++ b/src/lower/mir/calls/defined.rs
+@@ -7,6 +7,14 @@ use super::*;
+ use crate::lower::bindings::Asked;
+ use crate::lower::mir::locals::user_variable;
+ 
++/// Whether the final member's native receiver is proved by the path, or
++/// asserted by the caller of the unsafe optional-call binding.
++#[derive(Clone, Copy)]
++pub(super) enum PathEnd {
++    Checked,
++    UncheckedMethod,
++}
++
+ impl<'a, 'tcx> FnCx<'a, 'tcx> {
+     /// `js::is_defined(binding)`: `typeof MessageChannel !== "undefined"`,
+     /// of the global its argument names (ADR 0597), and `js::is_function`'s
+@@ -58,12 +66,13 @@ impl<'a, 'tcx> FnCx<'a, 'tcx> {
+         {
+             let steps = &self.steps_named(body, &arg.node, steps)[..];
+             if let Some(value_ty) = value_first(steps) {
+-                let (path, read) = self.defined_path(&steps[1..], Some(value_ty), asked.function(), span)?;
++                let (path, read) =
++                    self.defined_path(&steps[1..], Some(value_ty), PathEnd::Checked, asked.function(), span)?;
+                 self.asked_of_number(asked, read, span)?;
+                 let value = self.path_value(state, &arg.node, asked.function(), (span, out))?;
+                 return self.mir_defined_parts(Some(path), Some(value), asked, span);
+             }
+-            let (path, read) = self.defined_path(steps, None, asked.function(), span)?;
++            let (path, read) = self.defined_path(steps, None, PathEnd::Checked, asked.function(), span)?;
+             self.asked_of_number(asked, read, span)?;
+             return self.mir_defined_parts(Some(path), None, asked, span);
+         }
+@@ -433,6 +442,7 @@ impl<'a, 'tcx> FnCx<'a, 'tcx> {
+         &self,
+         steps: &[ty::Ty<'tcx>],
+         from: Option<ty::Ty<'tcx>>,
++        end: PathEnd,
+         function: &str,
+         span: Span,
+     ) -> R<(String, ty::Ty<'tcx>)> {
+@@ -480,7 +490,12 @@ impl<'a, 'tcx> FnCx<'a, 'tcx> {
+                         }
+                         _ => false,
+                     };
+-                    if !bindings::is_method(tcx, f) || (of != Some(before.peel_refs()) && !any && !extends) {
++                    // Only the final optional member may belong to another
++                    // native interface; optional_call_unchecked owns that promise.
++                    // All preceding steps and ordinary method reads stay checked.
++                    let unchecked = matches!(end, PathEnd::UncheckedMethod) && k + 1 == steps.len();
++                    let incompatible = of != Some(before.peel_refs()) && !any && !extends;
++                    if !bindings::is_method(tcx, f) || (!unchecked && incompatible) {
+                         return Err(refused());
+                     }
+                     match path.is_empty() {
+diff --git a/src/lower/mir/calls/method_paths.rs b/src/lower/mir/calls/method_paths.rs
+index 55cd231..6a2468f 100644
+--- a/src/lower/mir/calls/method_paths.rs
++++ b/src/lower/mir/calls/method_paths.rs
+@@ -3,6 +3,7 @@
+ //! any shape, `listener.handleEvent`, read only as its value's method
+ //! (rd334, ADR 1025 amended).
+ 
++use super::defined::PathEnd;
+ use super::*;
+ 
+ impl<'a, 'tcx> FnCx<'a, 'tcx> {
+@@ -45,7 +46,7 @@ impl<'a, 'tcx> FnCx<'a, 'tcx> {
+         {
+             return self.mir_keyed_method(state, &arg.node, span, out).map(Some);
+         }
+-        let (path, _) = self.defined_path(&steps[1..], Some(value_ty), "js::method", span)?;
++        let (path, _) = self.defined_path(&steps[1..], Some(value_ty), PathEnd::Checked, "js::method", span)?;
+         let value = self.path_value(state, &arg.node, "js::method", (span, out))?;
+         let getters = (steps[1..].iter()).any(|&step| {
+             crate::lower::fn_def(step)
+@@ -113,11 +114,17 @@ impl<'a, 'tcx> FnCx<'a, 'tcx> {
+     ) -> R<Option<Expr>> {
+         let tcx = self.tcx;
+         let body = state.body;
+-        if !bindings::is_binding(tcx, def_id)
+-            || !matches!(bindings::js_form(tcx, def_id), bindings::JsForm::OptionalCall)
+-        {
++        if !bindings::is_binding(tcx, def_id) {
+             return Ok(None);
+         }
++        let bindings::JsForm::OptionalCall { unchecked } = bindings::js_form(tcx, def_id) else {
++            return Ok(None);
++        };
++        let end = if unchecked {
++            PathEnd::UncheckedMethod
++        } else {
++            PathEnd::Checked
++        };
+         let refused = |cx: &Self, what: &str| Err(cx.unsupported(span, what));
+         let [path, given] = args else {
+             return refused(self, "`js::optional_call` of what isn't a path and its arguments");
+@@ -149,7 +156,7 @@ impl<'a, 'tcx> FnCx<'a, 'tcx> {
+             );
+             return Err(crate::lower::refusal::error(tcx, span, what));
+         }
+-        let (named, _) = self.defined_path(&steps[1..], Some(value_ty), "js::optional_call", span)?;
++        let (named, _) = self.defined_path(&steps[1..], Some(value_ty), end, "js::optional_call", span)?;
+         // What it gives: refused where `?.`'s `undefined` couldn't tell it.
+         let output = tcx
+             .fn_sig(method)
+diff --git a/test/js-optional-call.test.ts b/test/js-optional-call.test.ts
+index 0247dc7..a31e2bc 100644
+--- a/test/js-optional-call.test.ts
++++ b/test/js-optional-call.test.ts
+@@ -91,3 +91,89 @@ test("an optional call of a getter or of what may give undefined is refused, say
+     expect([body, refused.exitCode === 0, refused.stderr.toString().includes(refusal)]).toEqual([body, false, true]);
+   }
+ });
++
++
++// #1899: the helper's documented hop is a Node, so closest can be absent.
++// The native signature is selected by the method token, not by a cast that
++// turns a text node or shadow root into an Element.
++test("an optional call accepts its documented Node receiver", async () => {
++  const dir = fixture("js-optional-call-node");
++  writeFileSync(join(dir, "lib.rs"), `use webapi::{Element, Node};
++
++/// # Safety
++/// Any present closest must satisfy the selected native method signature.
++pub unsafe fn closest_of(hop: &Node, selector: &str) -> Option<&'static Element> {
++    unsafe { js::optional_call_unchecked((hop, Element::closest), (selector,)) }.flatten()
++}
++
++/// # Safety
++/// Any present closest must satisfy the selected native method signature.
++pub unsafe fn found(hop: &Node, selector: &str) -> u32 {
++    match unsafe { js::optional_call_unchecked((hop, Element::closest), (selector,)) } {
++        None => 0,
++        Some(None) => 1,
++        Some(Some(_)) => 2,
++    }
++}
++`);
++  const built = Bun.spawnSync([compiler, "--declarations", join(dir, "lib.rs"), "-o", join(dir, "lib.js"), ...flags], {cwd:root, stderr:"pipe", timeout:60_000});
++  expect([built.exitCode, built.stderr.toString()]).toEqual([0, ""]);
++  const js = readFileSync(join(dir, "lib.js"), "utf8");
++  expect(js).toContain("return hop.closest?.(selector) ?? undefined;");
++  expect(js).not.toContain("instanceof");
++  expect(readFileSync(join(dir, "lib.d.ts"), "utf8")).toContain("closestOf(hop: Node, selector: string): Element | null | undefined;");
++  const lib = await import(join(dir, "lib.js"));
++  expect([lib.found({}, "a"), lib.found({closest:()=>null}, "a"), lib.found({closest:()=>({})}, "a")]).toEqual([0, 1, 2]);
++  expect(() => lib.closestOf({closest:0}, "a")).toThrow(TypeError);
++  const calls:unknown[] = [];
++  const receiver = {};
++  const result = {};
++  function closest(this:unknown, selector:string) {calls.push(["call", this === receiver, selector]); return result;}
++  Object.defineProperty(closest, "call", {get() {throw Error("own call was read");}});
++  Object.defineProperty(receiver, "closest", {get() {calls.push("get"); return closest;}});
++  expect(lib.closestOf(receiver, "button")).toBe(result);
++  expect(calls).toEqual(["get", ["call", true, "button"]]);
++  const marker = {};
++  const throwing = Object.defineProperty({}, "closest", {get() {throw marker;}});
++  let thrown:unknown;
++  try {lib.closestOf(throwing, "a");} catch (error) {thrown = error;}
++  expect(thrown).toBe(marker);
++});
++
++
++test("an unchecked optional native call requires an unsafe Rust boundary", () => {
++  const dir = fixture("js-optional-call-unsafe");
++  writeFileSync(join(dir, "lib.rs"), `use webapi::{Element, Node};
++pub fn call(hop: &Node, selector: &str) {
++    let _ = js::optional_call_unchecked((hop, Element::closest), (selector,));
++}
++`);
++  const built = Bun.spawnSync([compiler, join(dir, "lib.rs"), "-o", join(dir, "lib.js"), ...flags], {cwd:root, stderr:"pipe", timeout:60_000});
++  expect(built.exitCode).not.toBe(0);
++  expect(built.stderr.toString()).toContain("requires unsafe");
++});
++
++test("ordinary native method extraction still checks its receiver interface", () => {
++  const dir = fixture("js-method-node-checked");
++  writeFileSync(join(dir, "lib.rs"), `use webapi::{Element, Node};
++pub fn read(hop: &Node) {
++    let _ = js::method((hop, Element::closest));
++}
++`);
++  const built = Bun.spawnSync([compiler, join(dir, "lib.rs"), "-o", join(dir, "lib.js"), ...flags], {cwd:root, stderr:"pipe", timeout:60_000});
++  expect(built.exitCode).not.toBe(0);
++  expect(built.stderr.toString()).toContain("a step isn't a method of what the one before gives");
++});
++
++
++test("a safe optional native call still checks its receiver interface", () => {
++  const dir = fixture("js-optional-call-node-checked");
++  writeFileSync(join(dir, "lib.rs"), `use webapi::{Element, Node};
++pub fn call(hop: &Node, selector: &str) {
++    let _ = js::optional_call((hop, Element::closest), (selector,));
++}
++`);
++  const built = Bun.spawnSync([compiler, join(dir, "lib.rs"), "-o", join(dir, "lib.js"), ...flags], {cwd:root, stderr:"pipe", timeout:60_000});
++  expect(built.exitCode).not.toBe(0);
++  expect(built.stderr.toString()).toContain("a step isn't a method of what the one before gives");
++});

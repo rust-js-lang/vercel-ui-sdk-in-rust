@@ -98,3 +98,9 @@ test("platform overrides preserve initial hydration values and shortcut defaults
 test("platform runtime exports match the complete original module", () => {
   expect(Object.keys(ported).sort()).toEqual(Object.keys(original).sort());
 });
+
+test("composed closest retains the complete original source structure", () => {
+  const transpiler = new Bun.Transpiler({loader:"js", minifyWhitespace:true, minifySyntax:false, minifyIdentifiers:false});
+  expect(transpiler.transformSync(ported.composedClosest.toString()))
+    .toBe(transpiler.transformSync(original.composedClosest.toString()));
+});

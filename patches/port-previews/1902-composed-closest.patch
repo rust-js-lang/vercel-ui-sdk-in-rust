@@ -1,0 +1,174 @@
+diff --git a/crates/core/src/foundation/platform/platform.d.ts b/crates/core/src/foundation/platform/platform.d.ts
+index d278196..631ca56 100644
+--- a/crates/core/src/foundation/platform/platform.d.ts
++++ b/crates/core/src/foundation/platform/platform.d.ts
+@@ -17,6 +17,12 @@ export function supportsTopLayer(): boolean;
+ export function portalTarget(container?: PortalTarget | null | undefined): PortalTarget | null;
+ 
+ // The focused element, inside shadow roots too.
++/**
++ * # Safety
++ * The values asserted by the original must satisfy their HTMLElement and
++ * ShadowRoot interfaces, including repeated reads, and the returned active
++ * element must be an HTMLElement. The assertions remain unchecked in JS.
++ */
+ export function activeElement(doc?: Document | null | undefined): HTMLElement | null;
+ 
+ // The node, then each element it shows through in an outer tree: the slot
+@@ -28,6 +34,17 @@ export function composedHops(node: Node): Node[];
+ // shadow root of a custom element inside a popup. `Node.contains` stops at them.
+ export function composedContains(container: Node, node: Node): boolean;
+ 
++// The nearest element around `node` that matches `selector`, across shadow
++// roots, like an item around a custom element's own label. `closest` stops at them.
++/**
++ * # Safety
++ * Any present closest method must satisfy Element::closest's contract,
++ * and every non-null result must satisfy the interface represented by `T`.
++ * The caller owns the original unchecked generic selector assertion; this
++ * function deliberately adds no runtime class or realm check.
++ */
++export function composedClosest<T extends Element>(node: Node, selector: string): T | null;
++
+ // Whether the user asked for less motion. Animations jump instead.
+ export function prefersReducedMotion(): boolean;
+ 
+diff --git a/crates/core/src/foundation/platform/platform.js b/crates/core/src/foundation/platform/platform.js
+index d3467ed..b3b2933 100644
+--- a/crates/core/src/foundation/platform/platform.js
++++ b/crates/core/src/foundation/platform/platform.js
+@@ -92,6 +92,12 @@ export function portalTarget(container) {
+ }
+ 
+ // The focused element, inside shadow roots too.
++/**
++ * # Safety
++ * The values asserted by the original must satisfy their HTMLElement and
++ * ShadowRoot interfaces, including repeated reads, and the returned active
++ * element must be an HTMLElement. The assertions remain unchecked in JS.
++ */
+ export function activeElement(doc) {
+   doc ??= document;
+   let active = doc.activeElement;
+@@ -127,6 +133,25 @@ export function composedContains(container, node) {
+   return composedHops(node).some((hop) => container.contains(hop));
+ }
+ 
++// The nearest element around `node` that matches `selector`, across shadow
++// roots, like an item around a custom element's own label. `closest` stops at them.
++/**
++ * # Safety
++ * Any present closest method must satisfy Element::closest's contract,
++ * and every non-null result must satisfy the interface represented by `T`.
++ * The caller owns the original unchecked generic selector assertion; this
++ * function deliberately adds no runtime class or realm check.
++ */
++export function composedClosest(node, selector) {
++  for (const hop of composedHops(node)) {
++    const found = hop.closest?.(selector);
++    if (found) {
++      return found ?? null;
++    }
++  }
++  return null;
++}
++
+ // Whether the user asked for less motion. Animations jump instead.
+ export function prefersReducedMotion() {
+   return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+diff --git a/crates/core/src/foundation/platform/platform.rs b/crates/core/src/foundation/platform/platform.rs
+index f8e93a8..0511e0a 100644
+--- a/crates/core/src/foundation/platform/platform.rs
++++ b/crates/core/src/foundation/platform/platform.rs
+@@ -5,7 +5,7 @@ use std::cell::{Cell, RefCell};
+ use std::collections::HashMap;
+ use std::rc::Rc;
+ use webapi::{
+-    Document, DocumentFragment, Element, HTMLElement, KeyboardEvent, Node, ShadowRoot,
++    Document, DocumentFragment, Element, HTMLElement, IsA, KeyboardEvent, Node, ShadowRoot,
+     window_global,
+ };
+ 
+@@ -117,8 +117,12 @@ pub fn portal_target(container: Option<PortalTarget<'_>>) -> Option<PortalTarget
+ }
+ 
+ // The focused element, inside shadow roots too.
++/// # Safety
++/// The values asserted by the original must satisfy their HTMLElement and
++/// ShadowRoot interfaces, including repeated reads, and the returned active
++/// element must be an HTMLElement. The assertions remain unchecked in JS.
+ #[cfg_attr(rust_js, rust_js::nullable)]
+-pub fn active_element(doc: Option<&Document>) -> Option<&'static HTMLElement> {
++pub unsafe fn active_element(doc: Option<&Document>) -> Option<&'static HTMLElement> {
+     let doc = doc.unwrap_or_else(|| window_global::document());
+     let mut active = doc.active_element();
+     while active
+@@ -171,6 +175,26 @@ pub fn composed_contains(container: &Node, node: &Node) -> bool {
+         .any(|hop| container.contains(Some(hop)))
+ }
+ 
++// The nearest element around `node` that matches `selector`, across shadow
++// roots, like an item around a custom element's own label. `closest` stops at them.
++/// # Safety
++/// Any present closest method must satisfy Element::closest's contract,
++/// and every non-null result must satisfy the interface represented by `T`.
++/// The caller owns the original unchecked generic selector assertion; this
++/// function deliberately adds no runtime class or realm check.
++#[cfg_attr(rust_js, rust_js::nullable)]
++pub unsafe fn composed_closest<T: IsA<Element>>(node: &Node, selector: &str) -> Option<&'static T> {
++    for hop in composed_hops(node) {
++        // SAFETY: the caller guarantees the native method contract on each hop.
++        let found = unsafe { js::optional_call_unchecked((hop, Element::closest), (selector,)) }.flatten();
++        if js::truthy(found) {
++            // SAFETY: the caller guarantees the original closest<T> assertion.
++            return unsafe { js::cast(found.map(js::unknown)) };
++        }
++    }
++    None
++}
++
+ // Whether the user asked for less motion. Animations jump instead.
+ pub fn prefers_reduced_motion() -> bool {
+     js::is_function(window_global::match_media)
+diff --git a/crates/core/src/lib.d.ts b/crates/core/src/lib.d.ts
+index ba83785..d7ded1d 100644
+--- a/crates/core/src/lib.d.ts
++++ b/crates/core/src/lib.d.ts
+@@ -28,7 +28,7 @@ export { layoutBox, layoutOrigin, layoutSize } from "./foundation/platform/layou
+ 
+ export { isBrowser, isIOS, isRTL } from "./foundation/platform/env.js";
+ 
+-export { activeElement, ariaKeyshortcuts, composedContains, composedHops, formatShortcut, hasCommandModifier, initialApple, isApple, matchesShortcut, portalTarget, prefersReducedMotion, setPlatform, supportsTopLayer } from "./foundation/platform/platform.js";
++export { activeElement, ariaKeyshortcuts, composedClosest, composedContains, composedHops, formatShortcut, hasCommandModifier, initialApple, isApple, matchesShortcut, portalTarget, prefersReducedMotion, setPlatform, supportsTopLayer } from "./foundation/platform/platform.js";
+ 
+ export { onScrollbar, pressedScrollbar } from "./foundation/platform/scrollbar.js";
+ 
+diff --git a/crates/core/src/lib.js b/crates/core/src/lib.js
+index 75b5610..f3c6cb9 100644
+--- a/crates/core/src/lib.js
++++ b/crates/core/src/lib.js
+@@ -51,6 +51,7 @@ export { isBrowser, isIOS, isRTL } from "./foundation/platform/env.js";
+ export {
+   activeElement,
+   ariaKeyshortcuts,
++  composedClosest,
+   composedContains,
+   composedHops,
+   formatShortcut,
+diff --git a/crates/core/src/lib.rs b/crates/core/src/lib.rs
+index edd0626..c132862 100644
+--- a/crates/core/src/lib.rs
++++ b/crates/core/src/lib.rs
+@@ -42,9 +42,9 @@ pub use foundation::platform::layout::{
+ pub use foundation::platform::env::{IS_BROWSER, is_ios, is_rtl};
+ 
+ pub use foundation::platform::support::{
+-    Platform, PortalTarget, active_element, aria_keyshortcuts, composed_contains, composed_hops,
+-    format_shortcut, has_command_modifier, initial_apple, is_apple, matches_shortcut,
+-    portal_target, prefers_reduced_motion, set_platform, supports_top_layer,
++    Platform, PortalTarget, active_element, aria_keyshortcuts, composed_closest, composed_contains,
++    composed_hops, format_shortcut, has_command_modifier, initial_apple, is_apple,
++    matches_shortcut, portal_target, prefers_reduced_motion, set_platform, supports_top_layer,
+ };
+ 
+ pub use foundation::platform::scrollbar::{

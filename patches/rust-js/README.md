@@ -1,11 +1,11 @@
 # Compiler patch series
 
-Published compiler base: ec7990f. series.json owns the ordered patch list.
+Published base: bc26493ed327ea7e70219c6071776bfb04d9a5ac. series.json is the sole ordered active-patch list.
 
-1867-stable-literal-arguments.patch applies the validated stable-literal movement correction and its preparatory stability-owner split. It includes the safety proofs, 18 caught owner mutations, 41 reviewed existing corpus snapshots, the std_traits example snapshot and their derived readability report. It reuses the existing recursive stability predicate; no observable Rust/JavaScript difference is accepted.
+1899-unsafe-optional-call.patch is exported from local detached review commit e40d8c7. It preserves the safe helper and adds unsafe optional_call_unchecked for a final receiver-interface assertion. Ordinary method extraction, preceding path steps and safe optional calls remain checked. Existing js::cast is retained as the sole unchecked assertion API. There are no runtime class/realm checks.
 
-The first complete gate on this implementation catches all 18 owner mutants and finishes in 429 seconds with only one newly adopted snapshot mismatch and an improved readability baseline. Those goldens are regenerated and reviewed. The final clean review tree passes check:fast --all in 307 seconds. The implementation and mutation tests do not change between these runs. Exact bases, local review objects, caught-test names and scoped results are retained in docs/evidence/1867-validation.json and the two check logs. The local review objects are not published compiler revisions.
+The focused compiler run passes eight tests/35 assertions; the complete local check:fast --all passes in 403 seconds. All five affected owner mutants are caught. See docs/evidence/1899-validation.json and 1899-full-check.txt. Documentation/comments were updated after the gate; implementation and mutations did not change. The local review commit is not a published compiler revision; the gitlink remains the published base, and setup applies this exact patch idempotently.
 
-The patch is active in setup so a clean checkout reproduces the scrollbar port while upstream review proceeds. Remove it after adopting the published fix and checking the affected SDK paths. Earlier Intl/model, nullish-boundary, harness and inheritance-constraint fixes are already published and have no retained duplicate implementation patch.
+#1867 is now upstream in the pinned base. Its duplicate patch is removed; historical proof remains in docs/evidence/1867-validation.json.
 
-The faithful generic closest result binding is still pending; no unsafe closest assertion is shipped. Historical measurements retain their original scopes in docs/validation.md and docs/mutation-preparation-1861.md.
+The composedClosest production change is unfinished because of generated-source gap #1902. Its separately stored port preview is not an active compiler patch. createDetails remains missing and has executable runtime/declaration contracts for the compiler team. No complete milestone or Pages deployment is claimed.

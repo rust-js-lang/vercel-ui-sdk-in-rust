@@ -160,3 +160,15 @@ for (const kind of ["upstream", "compiled"] as const) test("scrollbar declaratio
     expect(check(file)).toEqual({exitCode: 0, diagnostics: ""});
   } finally {rmSync(directory, {recursive: true, force: true});}
 });
+
+for (const kind of ["upstream", "compiled"] as const) test("change details preserve the complete vocabulary and conditional contracts: " + kind, async () => {
+  const directory = mkdtempSync(join(tmpdir(), "ui-sdk-details-types-"));
+  try {
+    const fixture = await Bun.file(resolve(import.meta.dir, "types/change-details.ts")).text();
+    const reference = resolve(upstream, "packages/core/src/foundation/kernel/details.ts");
+    const target = kind === "upstream" ? reference : resolve(root, "crates/core/src/foundation/kernel/details.js");
+    const file = join(directory, "consumer.ts");
+    await Bun.write(file, fixture.replaceAll("__CANDIDATE_DETAILS__", target).replaceAll("__REFERENCE_DETAILS__", reference));
+    expect(check(file)).toEqual({exitCode:0, diagnostics:""});
+  } finally {rmSync(directory, {recursive:true, force:true});}
+});

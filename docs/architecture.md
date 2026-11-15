@@ -44,6 +44,20 @@ Web registration preserves the ui- prefix, per-entry imports, first-definition-w
 
 Rust APIs should be idiomatic while representing the same capabilities. JS-boundary types preserve native values, optionality, unions and exceptions. Representation decisions need a focused native/reference test and a recorded reason; unsupported compiler behavior is fixed or clearly refused, not hidden behind casts, stand-in bindings or application rewrites.
 
+## Unchecked upstream type promises
+
+User decision, 2026-11-15: preserve the original JavaScript behavior and use
+explicit unsafe Rust entry points for its unchecked type assertions. Do not
+insert runtime class/realm checks or narrow the original JavaScript callers.
+The Rust safety contract states which native interface or reason/event
+relationship the caller must guarantee. This applies to generic selector
+results, asserted focused elements and the change-details constructor.
+
+These assertions implement the original boundary contract; they are not a
+way to hide missing compiler support. Typed generic record construction,
+own accessors and conditional declarations still require the canonical
+compiler/bindings representation.
+
 ## Proof and provenance
 
 The checked-in inventory is derived from the upstream Git-tracked files and manifests. It includes source hashes and distinguishes core, web, documentation, deferred framework documentation, web examples, styles and reference tests. It is evidence of scope, not proof of implementation.

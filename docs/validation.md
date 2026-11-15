@@ -2,7 +2,19 @@
 
 2026-11-15. Milestone one remains open: complete core, Web Components, Rust docs/live examples, and an actual verified GitHub Pages deployment are required.
 
-## Current compiler and SDK checkpoint
+## Current unsafe-boundary checkpoint
+
+Published compiler base bc26493 includes #1867; the duplicate implementation patch is retired. The sole active patch is #1899, preserving checked optional_call and introducing unsafe optional_call_unchecked through the same native path owner. The existing js::cast remains the single unchecked assertion API. The user explicitly approved preserving the upstream JavaScript behavior on 2026-11-15. Setup is idempotent on two consecutive runs.
+
+Focused compiler proof passes eight tests and 35 assertions. The complete check:fast --all passes in 403 seconds, including 313 other test files, nine browser files, native tests, Clippy, formatting and typechecking. All five added/retargeted owner mutants are caught; actual failing test names and SHA-256 log hashes are in [the evidence](evidence/1899-validation.json), with the [whole gate output](evidence/1899-full-check.txt). Post-gate compiler edits are documentation/comments only. This is not an isolated performance comparison.
+
+The unshipped generic closest preview compiles and passes all six platform Chromium comparisons, including cross-realm identities and getter/this behavior. Its generic declaration matches the original. A complete function-source regression exposes redundant found ?? null inside if(found), tracked as #1902. The preview is retained in patches/port-previews/1902-composed-closest.patch and is not part of the active compiler patch series or the production port. No extra runtime class checks or duplicate cast API are introduced.
+
+The actual checkpoint reference/type/source suite is 70 pass, 10 fail, 317,490 assertions across 80 tests in 19 files (2.22 seconds). The expanded original createDetails runtime and declaration contracts separately pass two tests and 56 assertions. Its compiled constructor and aliases remain missing. Complete browser coverage is not claimed from the six preview comparisons.
+
+#1845 and #1846 are reported landed upstream after this fixed validation base; their adoption and SDK annotations are the next checkpoint. The required input/own-key and union-order regressions remain red here.
+
+## Historical scrollbar checkpoint (1dbd56f)
 
 The published compiler base is ec7990f. It includes the prior Intl/model, harness, nullish-boundary and inheritance-constraint work, plus published native trailing-None/undefined argument corrections. The active #1867 patch adds the validated stable-literal movement fix while upstream review proceeds. It is applied through the single series.json list; setup is checked for idempotence. The private review commits are source evidence, not published compiler revisions.
 
@@ -12,7 +24,7 @@ The first complete gate ends in 429 seconds with exactly two expected-output fai
 
 These durations describe different workloads and cache states, not an isolated speed-up: the first gate's mutation job takes 390 seconds and keeps 1 MB of prior compiles; the final run keeps 60 MB and has no uncommitted owner mutations to repeat. The final browser group takes 4m27s, the crate corpus 2m06s, and the last active tail is the normal intervals-shadow check. The reserved window's warm estimate was too low; the team was informed and the machine released at terminal status. Complete [first](evidence/1867-first-check.txt) and [final](evidence/1867-final-check.txt) output is retained.
 
-| Current SDK check | Result |
+| SDK check at 1dbd56f | Result |
 | --- | --- |
 | Normal linked build | pass |
 | Native Rust | 21 pass |
@@ -59,7 +71,7 @@ Both generated function bodies match the pinned original after TypeScript erasur
 - #1845: required own point with undefined and required input arity remain failing. No assertions are weakened.
 - #1846: union property classification reads a getter where the original tests membership; the evaluation-order regression remains failing.
 - Generic closest: optional_call exists and inheritance constraints are fixed; the native selector/generic result binding is still required. Complete-export, browser and separate strict consumer failures remain visible.
-- #1867: source fidelity is validated through the retained patch; published upstream adoption remains pending.
+- #1867: now adopted through published bc26493; the old patch is retired.
 - Full change-source/createDetails vocabulary and scope-guard output #1833, projection output #1814, undo-stack output #1815/#1816, Date numeric binding coverage #1837 and Locale week-info/library-version policy #1831 remain part of the audit.
 
 Published #1862 keeps the document fallback lazy; native, compiled and explicit-document/no-global comparisons pass at the recorded snapshot. Published #1863 removes the two private bool-index cache checks. The nonempty-split helper and broader source/output differences remain under audit.

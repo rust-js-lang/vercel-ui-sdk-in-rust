@@ -1,0 +1,65 @@
+$ bun scripts/taskTime.ts run optional-call-full-gate -- bun run check:fast --all
+$ bun scripts/checkFast.ts --all
+cargo build 238 ms (usual 500 ms)
+pruning what tests keep 6.7 s (usual 5.1 s)
+pruning kept compiles 6.9 s (usual 2.3 s): 0 MB kept, another build's dropped
+node bindings build 3.2 s (usual 3.1 s)
+no test map of HEAD or an ancestor of it on this machine: `bun run test-map` records one: the corpus with std's iterator structs runs whole
+ok   check:fast the bounds matrix 14/14 25 s
+ok   check:fast the bounds matrix 13/14 25 s
+ok   check:fast the bounds matrix 2/14 26 s
+ok   check:fast the bounds matrix 3/14 26 s
+ok   check:fast the bounds matrix 10/14 27 s
+ok   check:fast the bounds matrix 12/14 27 s
+ok   check:fast the bounds matrix 9/14 28 s
+ok   check:fast the bounds matrix 5/14 28 s
+ok   check:fast the bounds matrix 1/14 28 s
+ok   check:fast the bounds matrix 6/14 28 s
+ok   check:fast the bounds matrix 4/14 28 s
+ok   check:fast the bounds matrix 11/14 28 s
+ok   check:fast the bounds matrix 7/14 28 s
+ok   check:fast the bounds matrix 8/14 28 s
+test/child.test.ts: warning: child observed 423 ms past its 1000 ms deadline (/Users/tunguyen/.bun/bin/bun -e): a blocked parent or a slow child
+ok   check:fast corpus 12/14 52 s (usual 1 min 38 s)
+ok   check:fast corpus 11/14 54 s (usual 1 min 32 s)
+ok   check:fast corpus 2/14 54 s (usual 1 min 39 s)
+ok   check:fast corpus 10/14 54 s (usual 1 min 35 s)
+ok   check:fast corpus 8/14 54 s (usual 1 min 35 s)
+ok   check:fast corpus 1/14 57 s (usual 1 min 34 s)
+ok   check:fast corpus 4/14 56 s (usual 1 min 8 s)
+ok   check:fast corpus 13/14 56 s (usual 1 min 37 s)
+ok   check:fast corpus 5/14 56 s (usual 1 min 19 s)
+ok   check:fast corpus 9/14 1 min 1 s (usual 1 min 35 s)
+ok   check:fast the metamorphic sample 13/14 27 s (usual 30 s)
+ok   check:fast the metamorphic sample 2/14 30 s (usual 26 s)
+ok   check:fast the metamorphic sample 3/14 31 s (usual 29 s)
+ok   check:fast clippy 43 s (usual 17 s)  ⚠ slower than usual: why?
+ok   check:fast the metamorphic sample 9/14 48 s (usual 40 s)
+ok   check:fast the metamorphic sample 12/14 20 s (usual 18 s)
+ok   check:fast the metamorphic sample 1/14 36 s (usual 33 s)
+ok   check:fast the Vite example's build 13 s (usual 9.0 s)
+ok   check:fast the `None` matrix's sample 4.7 s (usual 4.1 s)
+ok   check:fast cargo test 54 s (usual 13 s)  ⚠ slower than usual: why?
+ok   check:fast the metamorphic sample 6/14 16 s (usual 16 s)
+ok   check:fast the metamorphic sample 11/14 13 s (usual 13 s)
+ok   check:fast the metamorphic sample 10/14 16 s (usual 12 s)
+ok   check:fast the metamorphic sample 4/14 13 s (usual 12 s)
+ok   check:fast fmt 10 s (usual 9.6 s)
+ok   check:fast the metamorphic sample 7/14 10 s (usual 14 s)
+ok   check:fast the metamorphic sample 8/14 9.9 s (usual 17 s)
+ok   check:fast the metamorphic sample 14/14 7.9 s (usual 14 s)
+ok   check:fast corpus 6/14 29 s (usual 1 min 34 s)
+ok   check:fast corpus 14/14 31 s (usual 1 min 32 s)
+ok   check:fast corpus 7/14 34 s (usual 1 min 33 s)
+ok   check:fast corpus 3/14 39 s (usual 1 min 34 s)
+ok   check:fast the metamorphic sample 5/14 17 s (usual 16 s)
+ok   check:fast the `&mut` matrix's sample 7.9 s (usual 8.3 s)
+ok   check:fast the object model's sample 1 min (usual 1 min 3 s)
+ok   check:fast typecheck 1.2 s (usual 500 ms)
+ok   check:fast the browsers' test files 4 min 48 s (usual 4 min 45 s) (9 files)
+ok   check:fast mutations the change adds 1 min 56 s (usual 2 min 7 s)
+ok   check:fast the crate corpus 1 min 1 s (usual 1 min 48 s)
+ok   check:fast every other test file 5 min 60 s (usual 5 min 22 s) (313 files)
+the cores 89% busy on average, under half busy 9% of the time
+
+all passed: check:fast --all 6 min 43 s (usual 6 min 33 s)

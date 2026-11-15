@@ -1,0 +1,94 @@
+{
+  "base": "bc26493ed327ea7e70219c6071776bfb04d9a5ac",
+  "date": "2026-11-15",
+  "decision": "User approved explicit unsafe Rust boundaries preserving upstream JavaScript behavior.",
+  "compiler": {
+    "focused": {
+      "passed": 8,
+      "failed": 0,
+      "assertions": 35,
+      "seconds": 48.411
+    },
+    "fullGate": {
+      "command": "bun run check:fast --all",
+      "exitCode": 0,
+      "seconds": 403,
+      "otherTestFiles": 313,
+      "browserFiles": 9
+    },
+    "mutants": [
+      {
+        "name": "optional-call-safe-receiver-unchecked",
+        "sha256": "58032fe78c4b87efa6b0aa6c74b4418ad32d5c873e40cf330bc564a796ef746a",
+        "modified": "2026-11-15T04:06:36.418Z",
+        "failingTests": [
+          "(fail) a safe optional native call still checks its receiver interface [177.22ms]"
+        ]
+      },
+      {
+        "name": "optional-call-native-receiver-checked",
+        "sha256": "ae19c482e91937a4bca6e0aa4e9a86721b013f93fc17ab8873fd614b0651f3b2",
+        "modified": "2026-11-15T04:06:36.425Z",
+        "failingTests": [
+          "(fail) an optional call accepts its documented Node receiver [173.62ms]"
+        ]
+      },
+      {
+        "name": "defined-path-step-unchecked",
+        "sha256": "c2096240ad901ff4463c534b6908c4761766cf04d034bc7d48d82e413a5082b8",
+        "modified": "2026-11-15T04:06:36.367Z",
+        "failingTests": [
+          "(fail) js::is_defined of a path of bindings asks each part [122.05ms]"
+        ]
+      },
+      {
+        "name": "method-path-any-value-refused",
+        "sha256": "cd64a3c321121a7b2984cf546be2ed4cadd0eabfc30874ad04fc5749f6d11489",
+        "modified": "2026-11-15T04:06:36.389Z",
+        "failingTests": [
+          "(fail) js::method of a path reads its method as a value, js::or is JS's || [204.03ms]"
+        ]
+      },
+      {
+        "name": "path-step-superclass-refused",
+        "sha256": "2b77a5063cc148b376e6ffa562d57025a738ee95a1c7b22b7d71e679b2631fbc",
+        "modified": "2026-11-15T04:06:36.462Z",
+        "failingTests": [
+          "(fail) js::is_function of a path from a value asks its member [196.22ms]"
+        ]
+      }
+    ]
+  },
+  "sdkPreview": {
+    "compiled": true,
+    "platformBrowserTests": {
+      "passed": 6,
+      "failed": 0
+    },
+    "fullSdkBeforeSourceRegression": {
+      "passed": 72,
+      "failed": 7,
+      "tests": 79,
+      "assertions": 317487
+    },
+    "note": "Preview production changes remain uncommitted pending source fidelity issue #1902. Later added source regression is red; details contract assertions expanded after this suite sample."
+  },
+  "remaining": "https://github.com/rust-js-lang/rust-js/issues/1902",
+  "postGateChanges": "Documentation/comments only; no implementation or mutation changes after the passing full gate.",
+  "checkpointSdk": {
+    "passed": 70,
+    "failed": 10,
+    "tests": 80,
+    "files": 19,
+    "assertions": 317490,
+    "seconds": 2.22
+  },
+  "originalDetailsContracts": {
+    "passed": 2,
+    "failed": 0,
+    "assertions": 56
+  },
+  "reviewCommit": "e40d8c71f52321c3752c2973678beffc637bfbd7",
+  "patchSha256": "3cabb55db9fb3b6cba6a854d932e53933325ccd477c51e528f8e578c12305c32",
+  "reconstruction": "Applied working tree equals review commit; setup idempotent twice."
+}
