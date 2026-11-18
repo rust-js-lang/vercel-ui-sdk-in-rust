@@ -2,7 +2,11 @@
 
 2026-11-15. Milestone one remains open: complete core, Web Components, Rust docs/live examples, and an actual verified GitHub Pages deployment are required.
 
-## Current published compiler adoption (b940756)
+## Current published compiler adoption (9776c84)
+
+The SDK pins published 9776c84a0, adding #2074 (a `position` an `and_then` gives is `indexOf`, tested `!== -1`), #2082 (builtins that run none of the program's code, and a `None` argument and `?.()` of them, so the week memo has no borrow check) and #2106 (a property read of a JS object runs nothing only where a builtin made it). Regeneration moves only week.js: `firstDayOfWeek` loses `$withBorrowMut`, its extension lookup `$position` for `extensionDays.indexOf(extension)`. The active patch series stays empty. Native 23 pass, compiled 22 pass, strict Clippy passes; reference 79 pass/7 fail of 86, the same known failures; Chromium 22 pass/2 known closest failures.
+
+## Previous published compiler adoption (b940756)
 
 The SDK pins published b940756e5, which carries the week module's compiler fixes: the IIFE-free module table (G1), `map_or_else(.., str::to_string)` as `??` (G4), the inline regex (G5), and-then's closure in place (G6), the entry memo's map steps (G3), and `Intl.Locale`'s `Defined`/`WeakKey` (the retired local probe). The active patch series stays empty.
 
