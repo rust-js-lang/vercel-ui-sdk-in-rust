@@ -2,7 +2,11 @@
 
 2026-11-15. Milestone one remains open: complete core, Web Components, Rust docs/live examples, and an actual verified GitHub Pages deployment are required.
 
-## Current published compiler adoption (9776c84)
+## Current published compiler adoption (630af00)
+
+The SDK pins published 630af008d, adding rust-js #2106 to #2116: a builtin's property read, and its method, are its own only of a value a builtin made, and a Rust field read of a struct JS may make or give is JS's own. Regeneration moves only week.js: `firstDayOfWeek`'s memo is `$withBorrowMut(cache, ..)` again, as `resolveFirstDay` may read `locale.week_info`, the legacy `weekInfo` through a cast of the locale it made, which isn't known to be the host's own value (a listed difference in the port map, the lead's decision; whether a program could declare it so is the user's question). The active patch series stays empty. Native 23 pass, compiled 22 pass, strict Clippy passes; reference 79 pass/7 fail of 86, the same known failures; Chromium 22 pass/2 known closest failures.
+
+## Previous published compiler adoption (9776c84)
 
 The SDK pins published 9776c84a0, adding #2074 (a `position` an `and_then` gives is `indexOf`, tested `!== -1`), #2082 (builtins that run none of the program's code, and a `None` argument and `?.()` of them, so the week memo has no borrow check) and #2106 (a property read of a JS object runs nothing only where a builtin made it). Regeneration moves only week.js: `firstDayOfWeek` loses `$withBorrowMut`, its extension lookup `$position` for `extensionDays.indexOf(extension)`. The active patch series stays empty. Native 23 pass, compiled 22 pass, strict Clippy passes; reference 79 pass/7 fail of 86, the same known failures; Chromium 22 pass/2 known closest failures.
 
