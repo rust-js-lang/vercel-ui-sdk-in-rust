@@ -24,10 +24,14 @@ export function chooseSnapTarget(input) {
   const projected = extent + projectDistance(velocity, input.rate);
   const nextInDirection = firstBeyond(candidates, extent, Math.sign(velocity));
   let target = nearestIndex(candidates, projected);
-  const isBehind =
-    velocity > 0
-      ? candidates[target] != null && candidates[target] <= extent + 0.5
-      : candidates[target] != null && candidates[target] >= extent - 0.5;
+  let isBehind;
+  if (velocity > 0) {
+    const candidate = candidates[target];
+    isBehind = candidate != null && candidate <= extent + 0.5;
+  } else {
+    const candidate = candidates[target];
+    isBehind = candidate != null && candidate >= extent - 0.5;
+  }
   if (isBehind && nextInDirection != null) {
     target = nextInDirection;
   }

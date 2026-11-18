@@ -3,7 +3,7 @@
 import type { EventMapOf } from "@rust-js/webapi";
 
 /** Adds a listener and returns what removes it. The same listener and options are retained. */
-export function on<Target, Name extends keyof EventMapOf<Target>>(target: Target, name: Name, listener: (value: EventMapOf<Target>[Name]) => void, options?: AddEventListenerOptions | null | undefined): () => void;
+export function on<Target, Name extends keyof EventMapOf<Target>>(target: Target, name: Name, listener: (event: EventMapOf<Target>[Name]) => void, options?: AddEventListenerOptions | null | undefined): () => void;
 
 // What an onSelect handler receives when no DOM event is left to cancel, like
 // for a shortcut or a controller's call. A real Event, so target, timeStamp

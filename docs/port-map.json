@@ -225,6 +225,27 @@
       ]
     },
     {
+      "source": "packages/core/src/foundation/date/week.ts",
+      "rust": "crates/core/src/foundation/date/week.rs",
+      "status": "implemented",
+      "exports": [
+        "firstDayOfWeek"
+      ],
+      "evidence": [
+        "tests/week.test.ts",
+        "crates/core/src/foundation/date/week.rs",
+        "docs/validation.md"
+      ],
+      "remaining": "Listed output differences: the -u-fw- lookup is a $position with a null test where upstream writes includes/indexOf (#2074); the cache is the map's has/set/get inside $withBorrowMut, where upstream writes get/=== undefined/set (#2082 for the borrow check); weekInfo's catch is catch_unwind's $catchable form; the getWeekInfo comment sits above the if-let's const; getWeekInfo is read through the binding's receiver, tag; the declaration's parameter is `locale?: string | undefined`. Accepted by the user: the lowered extension group held as extension$1, as Rust's to_lowercase keeps its own Unicode tables.",
+      "issues": [
+        "https://github.com/rust-js-lang/rust-js/issues/2074",
+        "https://github.com/rust-js-lang/rust-js/issues/2082"
+      ],
+      "resolvedIssues": [
+        "https://github.com/rust-js-lang/rust-js/issues/2070"
+      ]
+    },
+    {
       "source": "packages/core/src/foundation/kernel/details.ts",
       "rust": "crates/core/src/foundation/kernel/details.rs",
       "status": "partial-pending-compiler",

@@ -2,13 +2,12 @@
 
 /** Rust adaptation of UI SDK foundation/kernel/undo-stack.ts; see UPSTREAM.md. */
 import {
+  $alreadyBorrowed,
   $alreadyMutablyBorrowed,
   $at,
-  $borrow,
   $borrowMut,
   $index,
   $truncate,
-  $unborrow,
 } from "@rust-js/std";
 
 /**
@@ -33,68 +32,53 @@ export function createUndoStack(initial, options) {
     }
     const limit = settings?.limit ?? 100;
     const groupDelay = settings?.groupDelay ?? 500;
-    const history$1 = $borrowMut(history, true);
-    const end = (history$1.index + 1) >>> 0;
-    try {
-      $truncate(history$1.entries, end);
-      const joins =
-        group != null &&
-        group !== "" &&
-        history$1.open != null &&
-        history$1.open.group === group &&
-        time - history$1.open.time < groupDelay;
-      if (joins) {
-        const index = history$1.index;
-        history$1.entries[$at(history$1.entries, index)] = state;
-      } else {
-        history$1.entries.push(state);
-        if (history$1.entries.length > limit + 1) {
-          history$1.entries.shift();
-        }
-        history$1.index = (history$1.entries.length - 1) >>> 0;
-      }
-      history$1.open = group ? { group, time } : undefined;
-    } finally {
-      $unborrow(history$1);
+    if (history.borrows) {
+      $alreadyBorrowed();
     }
+    const end = (history.index + 1) >>> 0;
+    $truncate(history.entries, end);
+    const joins =
+      group != null &&
+      group !== "" &&
+      history.open != null &&
+      history.open.group === group &&
+      time - history.open.time < groupDelay;
+    if (joins) {
+      const index = history.index;
+      history.entries[$at(history.entries, index)] = state;
+    } else {
+      history.entries.push(state);
+      if (history.entries.length > limit + 1) {
+        history.entries.shift();
+      }
+      history.index = (history.entries.length - 1) >>> 0;
+    }
+    history.open = group ? { group, time } : undefined;
   };
   const seal = () => {
     $borrowMut(history).open = undefined;
   };
   const undo = () => {
-    const history$1 = $borrowMut(history, true);
-    history$1.open = undefined;
-    let result;
-    if (history$1.index === 0) {
-      result = undefined;
-      $unborrow(history$1);
-      return result;
+    if (history.borrows) {
+      $alreadyBorrowed();
     }
-    history$1.index = (history$1.index - 1) >>> 0;
-    try {
-      result = $index(history$1.entries, history$1.index);
-    } finally {
-      $unborrow(history$1);
+    history.open = undefined;
+    if (history.index === 0) {
+      return;
     }
-    return result;
+    history.index--;
+    return $index(history.entries, history.index);
   };
   const redo = () => {
-    const history$1 = $borrowMut(history, true);
-    history$1.open = undefined;
-    const index = history$1.index;
-    let result;
-    if (index === (history$1.entries.length - 1) >>> 0) {
-      result = undefined;
-      $unborrow(history$1);
-      return result;
+    if (history.borrows) {
+      $alreadyBorrowed();
     }
-    history$1.index = (history$1.index + 1) >>> 0;
-    try {
-      result = $index(history$1.entries, history$1.index);
-    } finally {
-      $unborrow(history$1);
+    history.open = undefined;
+    if (history.index === (history.entries.length - 1) >>> 0) {
+      return;
     }
-    return result;
+    history.index = (history.index + 1) >>> 0;
+    return $index(history.entries, history.index);
   };
   const canUndo = () => {
     if (history.borrows < 0) {
@@ -103,10 +87,10 @@ export function createUndoStack(initial, options) {
     return history.index > 0;
   };
   const canRedo = () => {
-    const history$1 = $borrow(history, true);
-    const result = history$1.index < (history$1.entries.length - 1) >>> 0;
-    $unborrow(history$1);
-    return result;
+    if (history.borrows < 0) {
+      $alreadyMutablyBorrowed();
+    }
+    return history.index < (history.entries.length - 1) >>> 0;
   };
   const map = (update) => {
     // Release the borrow before user callbacks: they may re-enter the stack.
@@ -118,11 +102,12 @@ export function createUndoStack(initial, options) {
     $borrowMut(history).entries = entries;
   };
   const reset = (state) => {
-    const history$1 = $borrowMut(history, true);
-    history$1.entries = [state];
-    history$1.index = 0;
-    history$1.open = undefined;
-    $unborrow(history$1);
+    if (history.borrows) {
+      $alreadyBorrowed();
+    }
+    history.entries = [state];
+    history.index = 0;
+    history.open = undefined;
   };
   return {
     /** Records an edit. The same group within group_delay joins the last entry. */

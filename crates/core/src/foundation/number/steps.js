@@ -152,7 +152,7 @@ export function scrubTo(value, range, options) {
   const snap = options.snap ?? true;
   const ease = options.ease;
   let nearest;
-  const threshold = range.snap != null ? range.snap.threshold : 0;
+  const threshold = range.snap?.threshold ?? 0;
   if (snap && range.snap != null) {
     for (const point of range.snap.points) {
       if (
@@ -177,13 +177,7 @@ export function scrubTo(value, range, options) {
     };
   }
   const closeness = 1 - Math.abs(point - value) / threshold;
-  let pull;
-  if (typeof ease === "boolean") {
-    pull = closeness;
-  } else {
-    const curve = ease;
-    pull = curve(closeness);
-  }
+  const pull = typeof ease === "boolean" ? closeness : ease(closeness);
   return {
     value: clamp(value + (point - value) * pull, range.min, range.max),
     point,

@@ -19,3 +19,8 @@ On resume:
 3. Continue the approved Locale vertical and native case boundary #1914. Preserve the full source API and remove migrated handwritten specifications.
 4. Resume createDetails after the remaining compiler spread and dictionary-elision contracts land. The user approved preserving unchecked JavaScript promises through explicit unsafe Rust boundaries; no runtime behavior checks or stand-ins are authorized as substitutes.
 5. Continue full core/Web/docs implementation and local verification before the real Pages deployment. React follows this milestone; other framework adapters remain deferred.
+
+## Resumed for the week module - 2026-11-18
+
+At the user's direction (through the rust-js lead), this checkpoint is picked up only for `foundation/date/week`: the compiler pin moves to published b940756e5, week.rs is committed with its generated JS and declarations, tests/week.test.ts runs it against the original under getWeekInfo, the legacy weekInfo getter and the CLDR table alone, and the port map and validation record its listed differences (#2074, #2082). No other module, patch or deployment work is resumed; the plan above stands for whoever resumes the rest.
+

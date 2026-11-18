@@ -2,7 +2,15 @@
 
 2026-11-15. Milestone one remains open: complete core, Web Components, Rust docs/live examples, and an actual verified GitHub Pages deployment are required.
 
-## Current published compiler adoption (705057e)
+## Current published compiler adoption (b940756)
+
+The SDK pins published b940756e5, which carries the week module's compiler fixes: the IIFE-free module table (G1), `map_or_else(.., str::to_string)` as `??` (G4), the inline regex (G5), and-then's closure in place (G6), the entry memo's map steps (G3), and `Intl.Locale`'s `Defined`/`WeakKey` (the retired local probe). The active patch series stays empty.
+
+Native 23 pass (week's 2 added), compiled 22 pass, strict Clippy passes. The complete reference suite is 79 pass/7 fail across 86 cases: week.test.ts' 5 pass against the original module under three hosts, and two numeric cases now pass; the 7 failures are the known createDetails, closest, native case and source-fidelity gaps. Chromium is 22 pass/2 known closest failures.
+
+Regeneration moves four other generated files: events.d.ts' listener parameter is upstream's `event`; steps.js reads `range.snap?.threshold ?? 0` and a one-line `pull`; undo_stack.js loses its try/finally borrow wrappers; projection.js holds `candidates[target]` in a `const` per branch, as a JS-given array's index may be an accessor read once (rust-js 8453fcd13): a correctness-forced difference from upstream's double read, ADR 0262's third case, listed, not accepted.
+
+## Previous published compiler adoption (705057e)
 
 The SDK pins clean published 705057e, including the landed startup fix #1917. Its duplicate inactive review is retired. The actual compiler identity 9bc91a3415a2375b matches source and the binary built in the private full gate; the stale shared 99f binary was not reused. Dependencies were refreshed through the locked Bun install. SDK regeneration changes no output.
 
