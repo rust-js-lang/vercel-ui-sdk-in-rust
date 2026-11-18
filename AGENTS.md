@@ -10,4 +10,4 @@ When a compiler or binding gap appears, add a failing regression, file a generic
 
 Use Bun/Bunx and GitHub CLI. Every shell command has a fitting timeout. Keep tests local; Pages Actions only build/deploy and use current releases pinned to complete commit hashes. Test compiled Rust against actual upstream functions and DOM behavior; add native Rust tests for pure logic. Check exports, source coverage and actual deployed routes as well as test results.
 
-Work on main and push reviewable checkpoints. Commit prefixes: feat(ui-sdk), fix(ui-sdk), perf(ui-sdk), chore(ui-sdk). Include Co-Authored-By: Codex <codex@openai.com>. One agent per machine; no local subagents.
+Work on main and push reviewable checkpoints. Commit prefixes: feat(ui-sdk), fix(ui-sdk), perf(ui-sdk), chore(ui-sdk). One agent per machine; no local subagents.
